@@ -1,16 +1,27 @@
 {
   "schema_version": 1,
-  "generated_at": null,
+  "generated_at": "2026-10-20T22:34:27Z",
   "alerts": [],
   "sources": {
-    "edenor": {"status": "not_checked"},
-    "edesur": {"status": "not_checked"}
+    "edenor": {
+      "status": "error",
+      "url": "https://www.enre.gov.ar/paginacorte/js/data_EDN.js",
+      "checked_at": "2026-10-20T22:34:27Z",
+      "message": "URLError: <urlopen error [SSL: SSLV3_ALERT_HANDSHAKE_FAILURE] sslv3 alert handshake failure (_ssl.c:1010)>"
+    },
+    "edesur": {
+      "status": "error",
+      "url": "https://www.enre.gov.ar/paginacorte/js/data_EDS.js",
+      "checked_at": "2026-10-20T22:34:27Z",
+      "message": "URLError: <urlopen error [SSL: SSLV3_ALERT_HANDSHAKE_FAILURE] sslv3 alert handshake failure (_ssl.c:1010)>"
+    }
   },
   "transport": {
     "57": {
       "status": "not_connected",
       "message": "No hay conexión verificada con una fuente automática de estado de la línea 57.",
-      "reference_url": "https://www.argentina.gob.ar/sube/cuandosubo"
+      "reference_url": "https://www.argentina.gob.ar/sube/cuandosubo",
+      "checked_at": "2026-10-20T22:34:27Z"
     }
   }
 }
