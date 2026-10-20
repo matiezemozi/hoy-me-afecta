@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "generated_at": null,
+  "alerts": [],
+  "sources": {
+    "edenor": {"status": "not_checked"},
+    "edesur": {"status": "not_checked"}
+  },
+  "transport": {
+    "57": {
+      "status": "not_connected",
+      "message": "No hay conexión verificada con una fuente automática de estado de la línea 57.",
+      "reference_url": "https://www.argentina.gob.ar/sube/cuandosubo"
+    }
+  }
+}
