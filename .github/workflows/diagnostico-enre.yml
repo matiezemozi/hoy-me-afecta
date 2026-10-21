@@ -1,0 +1,53 @@
+name: Diagnosticar conexion ENRE
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnostico:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Mostrar entorno
+        run: |
+          python3 --version
+          openssl version
+          curl --version | head -n 1
+      - name: Probar las dos fuentes oficiales por HTTPS
+        shell: bash
+        run: |
+          set +e
+          for nombre in EDN EDS; do
+            url="https://www.enre.gov.ar/paginacorte/js/data_${nombre}.js"
+            echo "::group::Fuente ${nombre}"
+            echo "Prueba A - curl HTTPS normal (certificado verificado)"
+            curl --silent --show-error --location --fail --connect-timeout 8 --max-time 18 --output /dev/null --write-out 'HTTP=%{http_code} TLS=%{ssl_verify_result}\n' "$url"
+            echo "Codigo curl normal: $?"
+            echo "Prueba B - curl TLS 1.2 (certificado verificado)"
+            curl --silent --show-error --location --fail --connect-timeout 8 --max-time 18 --tlsv1.2 --tls-max 1.2 --output /dev/null --write-out 'HTTP=%{http_code} TLS=%{ssl_verify_result}\n' "$url"
+            echo "Codigo curl TLS 1.2: $?"
+            echo "::endgroup::"
+          done
+      - name: Probar Python HTTPS
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import ssl
+          from urllib.request import Request, urlopen
+          print('Python OpenSSL:', ssl.OPENSSL_VERSION)
+          for name in ('EDN', 'EDS'):
+              url = f'https://www.enre.gov.ar/paginacorte/js/data_{name}.js'
+              try:
+                  with urlopen(Request(url, headers={'User-Agent':'HoyMeAfecta/diagnostic'}), timeout=15) as r:
+                      print(name, 'HTTP', r.status, 'Bytes leidos:', len(r.read(256)))
+              except Exception as exc:
+                  print(name, type(exc).__name__, str(exc)[:250])
+          PY
+      - name: Explicar resultado
+        run: |
+          echo 'Las pruebas anteriores son de diagnostico.'
+          echo 'La marca verde del workflow NO implica que las conexiones hayan funcionado.'
+          echo 'Buscar los mensajes Codigo curl normal, Codigo curl TLS 1.2, EDN y EDS en los registros.'
