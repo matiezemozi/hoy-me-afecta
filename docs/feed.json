@@ -1,21 +1,7 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-21T08:49:01Z",
+  "generated_at": "2026-10-21T09:45:29Z",
   "alerts": [
-    {
-      "category": "electricidad",
-      "title": "Interrupción de baja tensión",
-      "company": "Edesur",
-      "partido": "CAPITAL",
-      "localidad": "BOEDO",
-      "users_affected": "32",
-      "expected_restoration": null,
-      "zone_detail": null,
-      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-21T08:49:01Z",
-      "confirmation": "Publicado por ENRE",
-      "id": "cbf11534d57de9f1"
-    },
     {
       "category": "electricidad",
       "title": "Interrupción de baja tensión",
@@ -26,7 +12,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-21T08:49:01Z",
+      "observed_at": "2026-10-21T09:45:29Z",
       "confirmation": "Publicado por ENRE",
       "id": "7d1b6e3b4296f21e"
     },
@@ -36,13 +22,13 @@
       "company": "Edesur",
       "partido": "FLORENCIO VARELA",
       "localidad": "FLORENCIO VARELA",
-      "users_affected": "18",
+      "users_affected": "16",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-21T08:49:01Z",
+      "observed_at": "2026-10-21T09:45:29Z",
       "confirmation": "Publicado por ENRE",
-      "id": "62a3fedc4c5924b9"
+      "id": "e58a3cf75a5322ce"
     },
     {
       "category": "electricidad",
@@ -54,37 +40,23 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-21T08:49:01Z",
+      "observed_at": "2026-10-21T09:45:29Z",
       "confirmation": "Publicado por ENRE",
       "id": "df13c77d1d9b36b3"
-    },
-    {
-      "category": "electricidad",
-      "title": "Interrupción de baja tensión",
-      "company": "Edesur",
-      "partido": "QUILMES",
-      "localidad": "BERNAL",
-      "users_affected": "13",
-      "expected_restoration": null,
-      "zone_detail": null,
-      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-21T08:49:01Z",
-      "confirmation": "Publicado por ENRE",
-      "id": "087f2472167fca9b"
     }
   ],
   "sources": {
     "edenor": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDN.js",
-      "checked_at": "2026-10-21T08:49:01Z",
+      "checked_at": "2026-10-21T09:45:29Z",
       "event_count": 0
     },
     "edesur": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDS.js",
-      "checked_at": "2026-10-21T08:49:01Z",
-      "event_count": 5
+      "checked_at": "2026-10-21T09:45:29Z",
+      "event_count": 3
     }
   },
   "transport": {
@@ -92,7 +64,7 @@
       "status": "not_connected",
       "message": "No hay conexión verificada con una fuente automática de estado de la línea 57.",
       "reference_url": "https://www.argentina.gob.ar/sube/cuandosubo",
-      "checked_at": "2026-10-21T08:49:01Z"
+      "checked_at": "2026-10-21T09:45:29Z"
     }
   }
 }
