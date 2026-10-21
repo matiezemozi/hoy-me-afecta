@@ -1,21 +1,7 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-21T03:45:15Z",
+  "generated_at": "2026-10-21T04:43:54Z",
   "alerts": [
-    {
-      "category": "electricidad",
-      "title": "Interrupción de baja tensión",
-      "company": "Edenor",
-      "partido": "PILAR",
-      "localidad": "VILLA ROSA",
-      "users_affected": "15",
-      "expected_restoration": null,
-      "zone_detail": null,
-      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
-      "observed_at": "2026-10-21T03:45:15Z",
-      "confirmation": "Publicado por ENRE",
-      "id": "02db4a21a46d5e54"
-    },
     {
       "category": "electricidad",
       "title": "Interrupción de baja tensión",
@@ -26,23 +12,9 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-21T03:45:15Z",
+      "observed_at": "2026-10-21T04:43:54Z",
       "confirmation": "Publicado por ENRE",
       "id": "b1f9f91c46029c21"
-    },
-    {
-      "category": "electricidad",
-      "title": "Interrupción de baja tensión",
-      "company": "Edesur",
-      "partido": "CAPITAL",
-      "localidad": "VILLA CRESPO",
-      "users_affected": "22",
-      "expected_restoration": null,
-      "zone_detail": null,
-      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-21T03:45:15Z",
-      "confirmation": "Publicado por ENRE",
-      "id": "39c483c58a45ddba"
     },
     {
       "category": "electricidad",
@@ -54,7 +26,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-21T03:45:15Z",
+      "observed_at": "2026-10-21T04:43:54Z",
       "confirmation": "Publicado por ENRE",
       "id": "7d1b6e3b4296f21e"
     },
@@ -68,7 +40,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-21T03:45:15Z",
+      "observed_at": "2026-10-21T04:43:54Z",
       "confirmation": "Publicado por ENRE",
       "id": "62a3fedc4c5924b9"
     },
@@ -82,7 +54,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-21T03:45:15Z",
+      "observed_at": "2026-10-21T04:43:54Z",
       "confirmation": "Publicado por ENRE",
       "id": "df13c77d1d9b36b3"
     },
@@ -96,7 +68,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-21T03:45:15Z",
+      "observed_at": "2026-10-21T04:43:54Z",
       "confirmation": "Publicado por ENRE",
       "id": "087f2472167fca9b"
     }
@@ -105,14 +77,14 @@
     "edenor": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDN.js",
-      "checked_at": "2026-10-21T03:45:15Z",
-      "event_count": 1
+      "checked_at": "2026-10-21T04:43:54Z",
+      "event_count": 0
     },
     "edesur": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDS.js",
-      "checked_at": "2026-10-21T03:45:15Z",
-      "event_count": 6
+      "checked_at": "2026-10-21T04:43:54Z",
+      "event_count": 5
     }
   },
   "transport": {
@@ -120,7 +92,7 @@
       "status": "not_connected",
       "message": "No hay conexión verificada con una fuente automática de estado de la línea 57.",
       "reference_url": "https://www.argentina.gob.ar/sube/cuandosubo",
-      "checked_at": "2026-10-21T03:45:15Z"
+      "checked_at": "2026-10-21T04:43:54Z"
     }
   }
 }
