@@ -1,7 +1,21 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-21T11:45:07Z",
+  "generated_at": "2026-10-21T12:54:44Z",
   "alerts": [
+    {
+      "category": "electricidad",
+      "title": "Interrupción de media tensión",
+      "company": "Edenor",
+      "partido": "GRAL LAS HERAS",
+      "localidad": "GRAL LAS HERAS",
+      "users_affected": "13",
+      "expected_restoration": "2026-10-21 10:00",
+      "zone_detail": null,
+      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
+      "observed_at": "2026-10-21T12:54:44Z",
+      "confirmation": "Publicado por ENRE",
+      "id": "c8178ce998062e76"
+    },
     {
       "category": "electricidad",
       "title": "Interrupción de media tensión",
@@ -12,7 +26,7 @@
       "expected_restoration": "2026-10-21 11:00",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
-      "observed_at": "2026-10-21T11:45:07Z",
+      "observed_at": "2026-10-21T12:54:44Z",
       "confirmation": "Publicado por ENRE",
       "id": "57d9922bf067e4d9"
     },
@@ -26,7 +40,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
-      "observed_at": "2026-10-21T11:45:07Z",
+      "observed_at": "2026-10-21T12:54:44Z",
       "confirmation": "Publicado por ENRE",
       "id": "1a6936901fab05ab"
     },
@@ -36,13 +50,13 @@
       "company": "Edesur",
       "partido": "ESTEBAN ECHEVERRIA",
       "localidad": "LUIS GUILLON",
-      "users_affected": "24",
+      "users_affected": "27",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-21T11:45:07Z",
+      "observed_at": "2026-10-21T12:54:44Z",
       "confirmation": "Publicado por ENRE",
-      "id": "022010a13c5cfb76"
+      "id": "ed5c25971cbaaf80"
     },
     {
       "category": "electricidad",
@@ -54,7 +68,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-21T11:45:07Z",
+      "observed_at": "2026-10-21T12:54:44Z",
       "confirmation": "Publicado por ENRE",
       "id": "3290bad564026c6c"
     },
@@ -68,7 +82,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-21T11:45:07Z",
+      "observed_at": "2026-10-21T12:54:44Z",
       "confirmation": "Publicado por ENRE",
       "id": "df13c77d1d9b36b3"
     }
@@ -77,13 +91,13 @@
     "edenor": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDN.js",
-      "checked_at": "2026-10-21T11:45:07Z",
-      "event_count": 2
+      "checked_at": "2026-10-21T12:54:44Z",
+      "event_count": 3
     },
     "edesur": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDS.js",
-      "checked_at": "2026-10-21T11:45:07Z",
+      "checked_at": "2026-10-21T12:54:44Z",
       "event_count": 3
     }
   },
@@ -92,7 +106,7 @@
       "status": "not_connected",
       "message": "No hay conexión verificada con una fuente automática de estado de la línea 57.",
       "reference_url": "https://www.argentina.gob.ar/sube/cuandosubo",
-      "checked_at": "2026-10-21T11:45:07Z"
+      "checked_at": "2026-10-21T12:54:44Z"
     }
   }
 }
