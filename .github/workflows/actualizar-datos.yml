@@ -1,27 +1,86 @@
 name: Actualizar datos HOY ME AFECTA
+
 on:
   workflow_dispatch:
   schedule:
     - cron: '13 * * * *'
+
 permissions:
   contents: write
+
+concurrency:
+  group: actualizar-feed-enre
+  cancel-in-progress: false
+
 jobs:
   update:
     runs-on: ubuntu-latest
+    timeout-minutes: 12
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Instalar dependencias
-        run: pip install -r backend/requirements.txt
-      - name: Tests de validación
-        run: python -m unittest discover -s backend/tests -v
+      - name: Obtener proyecto
+        uses: actions/checkout@v4
+
+      # El diagnostico ENRE obtuvo HTTP 200 con el Python del sistema.
+      # No usar actions/setup-python en este trabajo.
+      - name: Preparar Python del sistema
+        shell: bash
+        run: |
+          python3 --version
+          python3 - <<'PY'
+          import ssl
+          print('OpenSSL:', ssl.OPENSSL_VERSION)
+          PY
+          python3 -m venv .venv
+          .venv/bin/python -m pip install -r backend/requirements.txt
+
+      - name: Comprobar el codigo
+        run: .venv/bin/python -m unittest discover -s backend/tests -v
+
       - name: Obtener fuentes y generar informe
-        run: python backend/collector.py
+        run: .venv/bin/python backend/collector.py
+
       - name: Publicar JSON de prueba
+        shell: bash
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add docs/feed.json
-          git diff --cached --quiet || (git commit -m 'Actualizar feed de fuentes' && git push)
+          if ! git diff --cached --quiet; then
+            git commit -m 'Actualizar feed de fuentes'
+            git push
+          else
+            echo 'Sin cambios en el informe'
+          fi
+
+      - name: Comprobar si las fuentes respondieron
+        shell: bash
+        run: |
+          .venv/bin/python - <<'PY'
+          import json
+          import os
+          import sys
+
+          with open('docs/feed.json', encoding='utf-8') as f:
+              feed = json.load(f)
+          sources = feed.get('sources', {})
+          lines = ['## Resultado de las fuentes ENRE', '']
+          successful = 0
+          for company in ('edenor', 'edesur'):
+              item = sources.get(company, {})
+              status = item.get('status', 'desconocido')
+              description = f'- {company}: **{status}**'
+              if status == 'ok':
+                  successful += 1
+                  description += f" ({item.get('event_count', 0)} avisos)"
+              else:
+                  description += f" — {item.get('message', 'Sin detalles')}"
+                  print(f'::warning::{company}: {item.get("message", status)}')
+              lines.append(description)
+          lines.extend(['', f"Avisos totales: {len(feed.get('alerts', []))}"])
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a', encoding='utf-8') as f:
+              f.write('\n'.join(lines) + '\n')
+          print('\n'.join(lines))
+          if successful == 0:
+              print('::error::Ninguna distribuidora pudo consultarse. Revisar los errores de arriba.')
+              sys.exit(1)
+          PY
