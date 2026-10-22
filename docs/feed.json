@@ -1,20 +1,34 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-22T20:43:23Z",
+  "generated_at": "2026-10-22T21:42:38Z",
   "alerts": [
     {
       "category": "electricidad",
-      "title": "Interrupción de media tensión",
+      "title": "Interrupción de baja tensión",
       "company": "Edenor",
-      "partido": "SAN FERNANDO",
-      "localidad": "DELTA 2DA SECCION (SF)",
-      "users_affected": "715",
-      "expected_restoration": "2026-10-22 20:00",
+      "partido": "3 DE FEBRERO",
+      "localidad": "C J LOMAS DEL PALOMAR",
+      "users_affected": "6",
+      "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
-      "observed_at": "2026-10-22T20:43:23Z",
+      "observed_at": "2026-10-22T21:42:38Z",
       "confirmation": "Publicado por ENRE",
-      "id": "f8411f01175b85d1"
+      "id": "ab4c190cb500ff11"
+    },
+    {
+      "category": "electricidad",
+      "title": "Corte programado",
+      "company": "Edesur",
+      "partido": "FLORENCIO VARELA",
+      "localidad": "BOSQUES",
+      "users_affected": "1079",
+      "expected_restoration": "2026-10-22 21:36",
+      "zone_detail": null,
+      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
+      "observed_at": "2026-10-22T21:42:38Z",
+      "confirmation": "Publicado por ENRE",
+      "id": "a9c7d169631f8934"
     },
     {
       "category": "electricidad",
@@ -26,7 +40,7 @@
       "expected_restoration": "Sin datos",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-22T20:43:23Z",
+      "observed_at": "2026-10-22T21:42:38Z",
       "confirmation": "Publicado por ENRE",
       "id": "c25f27629bf6f988"
     },
@@ -40,9 +54,23 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-22T20:43:23Z",
+      "observed_at": "2026-10-22T21:42:38Z",
       "confirmation": "Publicado por ENRE",
       "id": "e52199aa2c28124a"
+    },
+    {
+      "category": "electricidad",
+      "title": "Interrupción de baja tensión",
+      "company": "Edesur",
+      "partido": "CAPITAL",
+      "localidad": "BALVANERA",
+      "users_affected": "19",
+      "expected_restoration": null,
+      "zone_detail": null,
+      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
+      "observed_at": "2026-10-22T21:42:38Z",
+      "confirmation": "Publicado por ENRE",
+      "id": "819f954c4c725635"
     },
     {
       "category": "electricidad",
@@ -54,7 +82,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-22T20:43:23Z",
+      "observed_at": "2026-10-22T21:42:38Z",
       "confirmation": "Publicado por ENRE",
       "id": "267d4463953e5916"
     },
@@ -63,14 +91,14 @@
       "title": "Interrupción de baja tensión",
       "company": "Edesur",
       "partido": "CAPITAL",
-      "localidad": "VILLA LURO",
-      "users_affected": "17",
+      "localidad": "VILLA CRESPO",
+      "users_affected": "21",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-22T20:43:23Z",
+      "observed_at": "2026-10-22T21:42:38Z",
       "confirmation": "Publicado por ENRE",
-      "id": "0c586895c08bbca7"
+      "id": "74968615bc4a3870"
     },
     {
       "category": "electricidad",
@@ -82,7 +110,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-22T20:43:23Z",
+      "observed_at": "2026-10-22T21:42:38Z",
       "confirmation": "Publicado por ENRE",
       "id": "aa99645e07602ddf"
     }
@@ -91,14 +119,14 @@
     "edenor": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDN.js",
-      "checked_at": "2026-10-22T20:43:23Z",
+      "checked_at": "2026-10-22T21:42:38Z",
       "event_count": 1
     },
     "edesur": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDS.js",
-      "checked_at": "2026-10-22T20:43:23Z",
-      "event_count": 5
+      "checked_at": "2026-10-22T21:42:38Z",
+      "event_count": 7
     }
   },
   "transport": {
@@ -106,7 +134,7 @@
       "status": "not_connected",
       "message": "No hay conexión verificada con una fuente automática de estado de la línea 57.",
       "reference_url": "https://www.argentina.gob.ar/sube/cuandosubo",
-      "checked_at": "2026-10-22T20:43:23Z"
+      "checked_at": "2026-10-22T21:42:38Z"
     }
   }
 }
