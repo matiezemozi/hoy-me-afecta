@@ -1,21 +1,7 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-22T06:56:26Z",
+  "generated_at": "2026-10-22T07:54:11Z",
   "alerts": [
-    {
-      "category": "electricidad",
-      "title": "Interrupción de media tensión",
-      "company": "Edenor",
-      "partido": "GRAL LAS HERAS",
-      "localidad": "GRAL LAS HERAS",
-      "users_affected": "728",
-      "expected_restoration": "Sin datos",
-      "zone_detail": null,
-      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
-      "observed_at": "2026-10-22T06:56:26Z",
-      "confirmation": "Publicado por ENRE",
-      "id": "9ce18199198f8378"
-    },
     {
       "category": "electricidad",
       "title": "Interrupción de media tensión",
@@ -26,7 +12,7 @@
       "expected_restoration": "2026-10-22 06:31",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-22T06:56:26Z",
+      "observed_at": "2026-10-22T07:54:11Z",
       "confirmation": "Publicado por ENRE",
       "id": "b0b67becd256b3dd"
     },
@@ -40,7 +26,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-22T06:56:26Z",
+      "observed_at": "2026-10-22T07:54:11Z",
       "confirmation": "Publicado por ENRE",
       "id": "8aec5c4e3e6276b6"
     },
@@ -49,28 +35,14 @@
       "title": "Interrupción de baja tensión",
       "company": "Edesur",
       "partido": "CAPITAL",
-      "localidad": "CAPITAL",
-      "users_affected": "8",
-      "expected_restoration": null,
-      "zone_detail": null,
-      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-22T06:56:26Z",
-      "confirmation": "Publicado por ENRE",
-      "id": "c470ffa33168daad"
-    },
-    {
-      "category": "electricidad",
-      "title": "Interrupción de baja tensión",
-      "company": "Edesur",
-      "partido": "CAPITAL",
       "localidad": "NUEVA POMPEYA",
-      "users_affected": "2",
+      "users_affected": "7",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-22T06:56:26Z",
+      "observed_at": "2026-10-22T07:54:11Z",
       "confirmation": "Publicado por ENRE",
-      "id": "360146090054a762"
+      "id": "3c8637965ae0dde6"
     },
     {
       "category": "electricidad",
@@ -82,7 +54,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-22T06:56:26Z",
+      "observed_at": "2026-10-22T07:54:11Z",
       "confirmation": "Publicado por ENRE",
       "id": "801c0adb0a461632"
     },
@@ -96,7 +68,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-22T06:56:26Z",
+      "observed_at": "2026-10-22T07:54:11Z",
       "confirmation": "Publicado por ENRE",
       "id": "98fa495af8ede0d1"
     },
@@ -110,7 +82,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-22T06:56:26Z",
+      "observed_at": "2026-10-22T07:54:11Z",
       "confirmation": "Publicado por ENRE",
       "id": "8b17d5e8f409b598"
     },
@@ -124,7 +96,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-22T06:56:26Z",
+      "observed_at": "2026-10-22T07:54:11Z",
       "confirmation": "Publicado por ENRE",
       "id": "4bad6b3672030c27"
     },
@@ -138,7 +110,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-22T06:56:26Z",
+      "observed_at": "2026-10-22T07:54:11Z",
       "confirmation": "Publicado por ENRE",
       "id": "cbb7d70303dc3c81"
     }
@@ -147,14 +119,14 @@
     "edenor": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDN.js",
-      "checked_at": "2026-10-22T06:56:26Z",
-      "event_count": 1
+      "checked_at": "2026-10-22T07:54:11Z",
+      "event_count": 0
     },
     "edesur": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDS.js",
-      "checked_at": "2026-10-22T06:56:26Z",
-      "event_count": 9
+      "checked_at": "2026-10-22T07:54:11Z",
+      "event_count": 8
     }
   },
   "transport": {
@@ -162,7 +134,7 @@
       "status": "not_connected",
       "message": "No hay conexión verificada con una fuente automática de estado de la línea 57.",
       "reference_url": "https://www.argentina.gob.ar/sube/cuandosubo",
-      "checked_at": "2026-10-22T06:56:26Z"
+      "checked_at": "2026-10-22T07:54:11Z"
     }
   }
 }
