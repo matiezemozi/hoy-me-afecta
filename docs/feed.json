@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-22T08:50:41Z",
+  "generated_at": "2026-10-22T09:47:35Z",
   "alerts": [
     {
       "category": "electricidad",
@@ -12,7 +12,7 @@
       "expected_restoration": "Sin datos",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
-      "observed_at": "2026-10-22T08:50:41Z",
+      "observed_at": "2026-10-22T09:47:35Z",
       "confirmation": "Publicado por ENRE",
       "id": "38b978baabbfb040"
     },
@@ -23,12 +23,12 @@
       "partido": "CAPITAL FEDERAL",
       "localidad": "PARQUE PATRICIOS",
       "users_affected": "467",
-      "expected_restoration": "2026-10-22 06:31",
+      "expected_restoration": "Sin datos",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-22T08:50:41Z",
+      "observed_at": "2026-10-22T09:47:35Z",
       "confirmation": "Publicado por ENRE",
-      "id": "b0b67becd256b3dd"
+      "id": "48a2f05b51bd1e3d"
     },
     {
       "category": "electricidad",
@@ -36,13 +36,13 @@
       "company": "Edesur",
       "partido": "LOMAS DE ZAMORA",
       "localidad": "INGENIERO BUDGE",
-      "users_affected": "98",
+      "users_affected": "70",
       "expected_restoration": "2026-10-22 08:38",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-22T08:50:41Z",
+      "observed_at": "2026-10-22T09:47:35Z",
       "confirmation": "Publicado por ENRE",
-      "id": "6c13d63b36f30b46"
+      "id": "e3b857ff0c985d92"
     },
     {
       "category": "electricidad",
@@ -50,13 +50,13 @@
       "company": "Edesur",
       "partido": "LOMAS DE ZAMORA",
       "localidad": "ZONA RURAL",
-      "users_affected": "3137",
+      "users_affected": "1718",
       "expected_restoration": "2026-10-22 08:38",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-22T08:50:41Z",
+      "observed_at": "2026-10-22T09:47:35Z",
       "confirmation": "Publicado por ENRE",
-      "id": "8b77c21257637325"
+      "id": "56c7f047c55a959d"
     },
     {
       "category": "electricidad",
@@ -68,7 +68,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-22T08:50:41Z",
+      "observed_at": "2026-10-22T09:47:35Z",
       "confirmation": "Publicado por ENRE",
       "id": "8aec5c4e3e6276b6"
     },
@@ -78,13 +78,13 @@
       "company": "Edesur",
       "partido": "CAPITAL",
       "localidad": "NUEVA POMPEYA",
-      "users_affected": "8",
+      "users_affected": "2",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-22T08:50:41Z",
+      "observed_at": "2026-10-22T09:47:35Z",
       "confirmation": "Publicado por ENRE",
-      "id": "da6467b234541e16"
+      "id": "360146090054a762"
     },
     {
       "category": "electricidad",
@@ -96,7 +96,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-22T08:50:41Z",
+      "observed_at": "2026-10-22T09:47:35Z",
       "confirmation": "Publicado por ENRE",
       "id": "801c0adb0a461632"
     },
@@ -110,37 +110,23 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-22T08:50:41Z",
+      "observed_at": "2026-10-22T09:47:35Z",
       "confirmation": "Publicado por ENRE",
       "id": "98fa495af8ede0d1"
-    },
-    {
-      "category": "electricidad",
-      "title": "Interrupción de baja tensión",
-      "company": "Edesur",
-      "partido": "FLORENCIO VARELA",
-      "localidad": "FLORENCIO VARELA",
-      "users_affected": "13",
-      "expected_restoration": null,
-      "zone_detail": null,
-      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-22T08:50:41Z",
-      "confirmation": "Publicado por ENRE",
-      "id": "8b17d5e8f409b598"
     }
   ],
   "sources": {
     "edenor": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDN.js",
-      "checked_at": "2026-10-22T08:50:41Z",
+      "checked_at": "2026-10-22T09:47:35Z",
       "event_count": 1
     },
     "edesur": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDS.js",
-      "checked_at": "2026-10-22T08:50:41Z",
-      "event_count": 8
+      "checked_at": "2026-10-22T09:47:35Z",
+      "event_count": 7
     }
   },
   "transport": {
@@ -148,7 +134,7 @@
       "status": "not_connected",
       "message": "No hay conexión verificada con una fuente automática de estado de la línea 57.",
       "reference_url": "https://www.argentina.gob.ar/sube/cuandosubo",
-      "checked_at": "2026-10-22T08:50:41Z"
+      "checked_at": "2026-10-22T09:47:35Z"
     }
   }
 }
