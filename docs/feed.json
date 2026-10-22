@@ -1,62 +1,34 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-22T00:55:39Z",
+  "generated_at": "2026-10-22T01:45:37Z",
   "alerts": [
-    {
-      "category": "electricidad",
-      "title": "Corte programado",
-      "company": "Edesur",
-      "partido": "PTE PERON",
-      "localidad": "ZONA RURAL I PP",
-      "users_affected": "375",
-      "expected_restoration": "Sin datos",
-      "zone_detail": null,
-      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-22T00:55:39Z",
-      "confirmation": "Publicado por ENRE",
-      "id": "def8749a33d9dfe9"
-    },
     {
       "category": "electricidad",
       "title": "Interrupción de baja tensión",
       "company": "Edesur",
       "partido": "CAPITAL",
       "localidad": "ALMAGRO",
-      "users_affected": "9",
+      "users_affected": "12",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-22T00:55:39Z",
+      "observed_at": "2026-10-22T01:45:37Z",
       "confirmation": "Publicado por ENRE",
-      "id": "4158ef118be45a8e"
+      "id": "e618cd89770b8175"
     },
     {
       "category": "electricidad",
       "title": "Interrupción de baja tensión",
       "company": "Edesur",
       "partido": "CAPITAL",
-      "localidad": "CAPITAL",
+      "localidad": "NUEVA POMPEYA",
       "users_affected": "1",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-22T00:55:39Z",
+      "observed_at": "2026-10-22T01:45:37Z",
       "confirmation": "Publicado por ENRE",
-      "id": "9848203bae121876"
-    },
-    {
-      "category": "electricidad",
-      "title": "Interrupción de baja tensión",
-      "company": "Edesur",
-      "partido": "CAPITAL",
-      "localidad": "CAPITAL RP",
-      "users_affected": "6",
-      "expected_restoration": null,
-      "zone_detail": null,
-      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-22T00:55:39Z",
-      "confirmation": "Publicado por ENRE",
-      "id": "20d295057ce3a0c0"
+      "id": "267d4463953e5916"
     },
     {
       "category": "electricidad",
@@ -64,13 +36,13 @@
       "company": "Edesur",
       "partido": "CAPITAL",
       "localidad": "PARQUE PATRICIOS",
-      "users_affected": "7",
+      "users_affected": "2",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-22T00:55:39Z",
+      "observed_at": "2026-10-22T01:45:37Z",
       "confirmation": "Publicado por ENRE",
-      "id": "b8dd43aaae3cb053"
+      "id": "801c0adb0a461632"
     },
     {
       "category": "electricidad",
@@ -82,7 +54,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-22T00:55:39Z",
+      "observed_at": "2026-10-22T01:45:37Z",
       "confirmation": "Publicado por ENRE",
       "id": "98fa495af8ede0d1"
     },
@@ -92,13 +64,13 @@
       "company": "Edesur",
       "partido": "FLORENCIO VARELA",
       "localidad": "BOSQUES",
-      "users_affected": "28",
+      "users_affected": "36",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-22T00:55:39Z",
+      "observed_at": "2026-10-22T01:45:37Z",
       "confirmation": "Publicado por ENRE",
-      "id": "5fb3475a65a2cc6e"
+      "id": "1668f7f8a7a449c2"
     },
     {
       "category": "electricidad",
@@ -110,7 +82,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-22T00:55:39Z",
+      "observed_at": "2026-10-22T01:45:37Z",
       "confirmation": "Publicado por ENRE",
       "id": "8b17d5e8f409b598"
     },
@@ -120,27 +92,27 @@
       "company": "Edesur",
       "partido": "PTE PERON",
       "localidad": "PARQUE AMERICANO",
-      "users_affected": "8",
+      "users_affected": "9",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-22T00:55:39Z",
+      "observed_at": "2026-10-22T01:45:37Z",
       "confirmation": "Publicado por ENRE",
-      "id": "d44b1faceb29f9ef"
+      "id": "785938d299c1e438"
     }
   ],
   "sources": {
     "edenor": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDN.js",
-      "checked_at": "2026-10-22T00:55:39Z",
+      "checked_at": "2026-10-22T01:45:37Z",
       "event_count": 0
     },
     "edesur": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDS.js",
-      "checked_at": "2026-10-22T00:55:39Z",
-      "event_count": 9
+      "checked_at": "2026-10-22T01:45:37Z",
+      "event_count": 7
     }
   },
   "transport": {
@@ -148,7 +120,7 @@
       "status": "not_connected",
       "message": "No hay conexión verificada con una fuente automática de estado de la línea 57.",
       "reference_url": "https://www.argentina.gob.ar/sube/cuandosubo",
-      "checked_at": "2026-10-22T00:55:39Z"
+      "checked_at": "2026-10-22T01:45:37Z"
     }
   }
 }
