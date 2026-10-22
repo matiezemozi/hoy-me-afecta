@@ -1,7 +1,21 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-22T07:54:11Z",
+  "generated_at": "2026-10-22T08:50:41Z",
   "alerts": [
+    {
+      "category": "electricidad",
+      "title": "Interrupción de media tensión",
+      "company": "Edenor",
+      "partido": "SAN MIGUEL",
+      "localidad": "SAN MIGUEL",
+      "users_affected": "90",
+      "expected_restoration": "Sin datos",
+      "zone_detail": null,
+      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
+      "observed_at": "2026-10-22T08:50:41Z",
+      "confirmation": "Publicado por ENRE",
+      "id": "38b978baabbfb040"
+    },
     {
       "category": "electricidad",
       "title": "Interrupción de media tensión",
@@ -12,9 +26,37 @@
       "expected_restoration": "2026-10-22 06:31",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-22T07:54:11Z",
+      "observed_at": "2026-10-22T08:50:41Z",
       "confirmation": "Publicado por ENRE",
       "id": "b0b67becd256b3dd"
+    },
+    {
+      "category": "electricidad",
+      "title": "Interrupción de media tensión",
+      "company": "Edesur",
+      "partido": "LOMAS DE ZAMORA",
+      "localidad": "INGENIERO BUDGE",
+      "users_affected": "98",
+      "expected_restoration": "2026-10-22 08:38",
+      "zone_detail": null,
+      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
+      "observed_at": "2026-10-22T08:50:41Z",
+      "confirmation": "Publicado por ENRE",
+      "id": "6c13d63b36f30b46"
+    },
+    {
+      "category": "electricidad",
+      "title": "Interrupción de media tensión",
+      "company": "Edesur",
+      "partido": "LOMAS DE ZAMORA",
+      "localidad": "ZONA RURAL",
+      "users_affected": "3137",
+      "expected_restoration": "2026-10-22 08:38",
+      "zone_detail": null,
+      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
+      "observed_at": "2026-10-22T08:50:41Z",
+      "confirmation": "Publicado por ENRE",
+      "id": "8b77c21257637325"
     },
     {
       "category": "electricidad",
@@ -26,7 +68,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-22T07:54:11Z",
+      "observed_at": "2026-10-22T08:50:41Z",
       "confirmation": "Publicado por ENRE",
       "id": "8aec5c4e3e6276b6"
     },
@@ -36,13 +78,13 @@
       "company": "Edesur",
       "partido": "CAPITAL",
       "localidad": "NUEVA POMPEYA",
-      "users_affected": "7",
+      "users_affected": "8",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-22T07:54:11Z",
+      "observed_at": "2026-10-22T08:50:41Z",
       "confirmation": "Publicado por ENRE",
-      "id": "3c8637965ae0dde6"
+      "id": "da6467b234541e16"
     },
     {
       "category": "electricidad",
@@ -54,7 +96,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-22T07:54:11Z",
+      "observed_at": "2026-10-22T08:50:41Z",
       "confirmation": "Publicado por ENRE",
       "id": "801c0adb0a461632"
     },
@@ -68,7 +110,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-22T07:54:11Z",
+      "observed_at": "2026-10-22T08:50:41Z",
       "confirmation": "Publicado por ENRE",
       "id": "98fa495af8ede0d1"
     },
@@ -82,50 +124,22 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-22T07:54:11Z",
+      "observed_at": "2026-10-22T08:50:41Z",
       "confirmation": "Publicado por ENRE",
       "id": "8b17d5e8f409b598"
-    },
-    {
-      "category": "electricidad",
-      "title": "Interrupción de baja tensión",
-      "company": "Edesur",
-      "partido": "LOMAS DE ZAMORA",
-      "localidad": "TEMPERLEY",
-      "users_affected": "1",
-      "expected_restoration": null,
-      "zone_detail": null,
-      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-22T07:54:11Z",
-      "confirmation": "Publicado por ENRE",
-      "id": "4bad6b3672030c27"
-    },
-    {
-      "category": "electricidad",
-      "title": "Interrupción de baja tensión",
-      "company": "Edesur",
-      "partido": "PTE PERON",
-      "localidad": "PARQUE AMERICANO",
-      "users_affected": "10",
-      "expected_restoration": null,
-      "zone_detail": null,
-      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-22T07:54:11Z",
-      "confirmation": "Publicado por ENRE",
-      "id": "cbb7d70303dc3c81"
     }
   ],
   "sources": {
     "edenor": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDN.js",
-      "checked_at": "2026-10-22T07:54:11Z",
-      "event_count": 0
+      "checked_at": "2026-10-22T08:50:41Z",
+      "event_count": 1
     },
     "edesur": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDS.js",
-      "checked_at": "2026-10-22T07:54:11Z",
+      "checked_at": "2026-10-22T08:50:41Z",
       "event_count": 8
     }
   },
@@ -134,7 +148,7 @@
       "status": "not_connected",
       "message": "No hay conexión verificada con una fuente automática de estado de la línea 57.",
       "reference_url": "https://www.argentina.gob.ar/sube/cuandosubo",
-      "checked_at": "2026-10-22T07:54:11Z"
+      "checked_at": "2026-10-22T08:50:41Z"
     }
   }
 }
