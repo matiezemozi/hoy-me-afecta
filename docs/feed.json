@@ -1,7 +1,21 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-23T09:45:27Z",
+  "generated_at": "2026-10-23T10:42:57Z",
   "alerts": [
+    {
+      "category": "electricidad",
+      "title": "Interrupción de media tensión",
+      "company": "Edenor",
+      "partido": "HURLINGHAM",
+      "localidad": "HURLINGHAM",
+      "users_affected": "912",
+      "expected_restoration": "2026-10-23 11:00",
+      "zone_detail": null,
+      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
+      "observed_at": "2026-10-23T10:42:57Z",
+      "confirmation": "Publicado por ENRE",
+      "id": "28c3f0760cbb7c3f"
+    },
     {
       "category": "electricidad",
       "title": "Interrupción de media tensión",
@@ -12,23 +26,9 @@
       "expected_restoration": "2026-10-23 08:00",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
-      "observed_at": "2026-10-23T09:45:27Z",
+      "observed_at": "2026-10-23T10:42:57Z",
       "confirmation": "Publicado por ENRE",
       "id": "20e3dafd730cbefe"
-    },
-    {
-      "category": "electricidad",
-      "title": "Interrupción de media tensión",
-      "company": "Edesur",
-      "partido": "ALMIRANTE BROWN",
-      "localidad": "MINISTRO RIVADAVIA",
-      "users_affected": "543",
-      "expected_restoration": "2026-10-23 10:09",
-      "zone_detail": null,
-      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-23T09:45:27Z",
-      "confirmation": "Publicado por ENRE",
-      "id": "8cc10ccd9c3d68e6"
     },
     {
       "category": "electricidad",
@@ -40,7 +40,7 @@
       "expected_restoration": "Sin datos",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-23T09:45:27Z",
+      "observed_at": "2026-10-23T10:42:57Z",
       "confirmation": "Publicado por ENRE",
       "id": "54d0ece00430e4e0"
     },
@@ -50,27 +50,13 @@
       "company": "Edesur",
       "partido": "FLORENCIO VARELA",
       "localidad": "FLORENCIO VARELA",
-      "users_affected": "10",
-      "expected_restoration": "2026-10-23 10:09",
-      "zone_detail": null,
-      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-23T09:45:27Z",
-      "confirmation": "Publicado por ENRE",
-      "id": "f42ce2f7ea675190"
-    },
-    {
-      "category": "electricidad",
-      "title": "Interrupción de media tensión",
-      "company": "Edesur",
-      "partido": "FLORENCIO VARELA",
-      "localidad": "FLORENCIO VARELA",
       "users_affected": "1017",
-      "expected_restoration": "2026-10-23 06:57",
+      "expected_restoration": "Sin datos",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-23T09:45:27Z",
+      "observed_at": "2026-10-23T10:42:57Z",
       "confirmation": "Publicado por ENRE",
-      "id": "b84117184e9d9db9"
+      "id": "c2709a137166da5a"
     },
     {
       "category": "electricidad",
@@ -82,23 +68,9 @@
       "expected_restoration": "2026-10-23 08:23",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-23T09:45:27Z",
+      "observed_at": "2026-10-23T10:42:57Z",
       "confirmation": "Publicado por ENRE",
       "id": "d4107a869c394fd1"
-    },
-    {
-      "category": "electricidad",
-      "title": "Interrupción de media tensión",
-      "company": "Edesur",
-      "partido": "SAN VICENTE",
-      "localidad": "DOMSELAAR",
-      "users_affected": "2",
-      "expected_restoration": "2026-10-23 10:09",
-      "zone_detail": null,
-      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-23T09:45:27Z",
-      "confirmation": "Publicado por ENRE",
-      "id": "5ec72e072314ddc4"
     },
     {
       "category": "electricidad",
@@ -110,7 +82,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-23T09:45:27Z",
+      "observed_at": "2026-10-23T10:42:57Z",
       "confirmation": "Publicado por ENRE",
       "id": "1d2d11c84959617c"
     },
@@ -124,7 +96,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-23T09:45:27Z",
+      "observed_at": "2026-10-23T10:42:57Z",
       "confirmation": "Publicado por ENRE",
       "id": "da8e6ccb2c6cbbfe"
     },
@@ -134,41 +106,13 @@
       "company": "Edesur",
       "partido": "CAPITAL",
       "localidad": "CAPITAL",
-      "users_affected": "9",
+      "users_affected": "11",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-23T09:45:27Z",
+      "observed_at": "2026-10-23T10:42:57Z",
       "confirmation": "Publicado por ENRE",
-      "id": "7ce2e4198477d3bb"
-    },
-    {
-      "category": "electricidad",
-      "title": "Interrupción de baja tensión",
-      "company": "Edesur",
-      "partido": "CAPITAL",
-      "localidad": "LINIERS",
-      "users_affected": "24",
-      "expected_restoration": null,
-      "zone_detail": null,
-      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-23T09:45:27Z",
-      "confirmation": "Publicado por ENRE",
-      "id": "d0eaa6f29bf54dce"
-    },
-    {
-      "category": "electricidad",
-      "title": "Interrupción de baja tensión",
-      "company": "Edesur",
-      "partido": "CAPITAL",
-      "localidad": "SAN CRISTOBAL",
-      "users_affected": "5",
-      "expected_restoration": null,
-      "zone_detail": null,
-      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-23T09:45:27Z",
-      "confirmation": "Publicado por ENRE",
-      "id": "e42956bf9e3e06cc"
+      "id": "7c22dee745d3ef82"
     },
     {
       "category": "electricidad",
@@ -180,7 +124,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-23T09:45:27Z",
+      "observed_at": "2026-10-23T10:42:57Z",
       "confirmation": "Publicado por ENRE",
       "id": "eccb4e951885063d"
     },
@@ -194,7 +138,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-23T09:45:27Z",
+      "observed_at": "2026-10-23T10:42:57Z",
       "confirmation": "Publicado por ENRE",
       "id": "66a6d5e48c85fec8"
     },
@@ -208,7 +152,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-23T09:45:27Z",
+      "observed_at": "2026-10-23T10:42:57Z",
       "confirmation": "Publicado por ENRE",
       "id": "924c05f983846301"
     }
@@ -217,14 +161,14 @@
     "edenor": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDN.js",
-      "checked_at": "2026-10-23T09:45:27Z",
-      "event_count": 1
+      "checked_at": "2026-10-23T10:42:57Z",
+      "event_count": 2
     },
     "edesur": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDS.js",
-      "checked_at": "2026-10-23T09:45:27Z",
-      "event_count": 14
+      "checked_at": "2026-10-23T10:42:57Z",
+      "event_count": 9
     }
   },
   "transport": {
@@ -232,7 +176,7 @@
       "status": "not_connected",
       "message": "No hay conexión verificada con una fuente automática de estado de la línea 57.",
       "reference_url": "https://www.argentina.gob.ar/sube/cuandosubo",
-      "checked_at": "2026-10-23T09:45:27Z"
+      "checked_at": "2026-10-23T10:42:57Z"
     }
   }
 }
