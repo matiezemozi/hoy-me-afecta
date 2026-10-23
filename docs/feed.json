@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-23T15:48:56Z",
+  "generated_at": "2026-10-23T16:46:58Z",
   "alerts": [
     {
       "category": "electricidad",
@@ -12,7 +12,7 @@
       "expected_restoration": "Sin datos",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
-      "observed_at": "2026-10-23T15:48:56Z",
+      "observed_at": "2026-10-23T16:46:58Z",
       "confirmation": "Publicado por ENRE",
       "id": "a053f7e39757d539"
     },
@@ -22,13 +22,13 @@
       "company": "Edenor",
       "partido": "SAN FERNANDO",
       "localidad": "SAN FERNANDO",
-      "users_affected": "2157",
+      "users_affected": "122",
       "expected_restoration": "2026-10-23 16:00",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
-      "observed_at": "2026-10-23T15:48:56Z",
+      "observed_at": "2026-10-23T16:46:58Z",
       "confirmation": "Publicado por ENRE",
-      "id": "af78b11451046b8f"
+      "id": "dc3a63603e5267f4"
     },
     {
       "category": "electricidad",
@@ -40,7 +40,7 @@
       "expected_restoration": "2026-10-23 15:00",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-23T15:48:56Z",
+      "observed_at": "2026-10-23T16:46:58Z",
       "confirmation": "Publicado por ENRE",
       "id": "5dc4a19485c0c462"
     },
@@ -54,7 +54,7 @@
       "expected_restoration": "2026-10-23 15:00",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-23T15:48:56Z",
+      "observed_at": "2026-10-23T16:46:58Z",
       "confirmation": "Publicado por ENRE",
       "id": "bd5f97e986dd2287"
     },
@@ -68,7 +68,7 @@
       "expected_restoration": "2026-10-23 15:28",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-23T15:48:56Z",
+      "observed_at": "2026-10-23T16:46:58Z",
       "confirmation": "Publicado por ENRE",
       "id": "851dda4fee154544"
     },
@@ -82,7 +82,7 @@
       "expected_restoration": "2026-10-23 15:11",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-23T15:48:56Z",
+      "observed_at": "2026-10-23T16:46:58Z",
       "confirmation": "Publicado por ENRE",
       "id": "8051127e3d42768d"
     },
@@ -90,15 +90,29 @@
       "category": "electricidad",
       "title": "Interrupción de baja tensión",
       "company": "Edesur",
-      "partido": "AVELLANEDA",
-      "localidad": "VILLA DOMINICO",
-      "users_affected": "12",
+      "partido": "ALMIRANTE BROWN",
+      "localidad": "BURZACO",
+      "users_affected": "8",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-23T15:48:56Z",
+      "observed_at": "2026-10-23T16:46:58Z",
       "confirmation": "Publicado por ENRE",
-      "id": "e3261e19298c6583"
+      "id": "3988a8d52566cd97"
+    },
+    {
+      "category": "electricidad",
+      "title": "Interrupción de baja tensión",
+      "company": "Edesur",
+      "partido": "AVELLANEDA",
+      "localidad": "VILLA DOMINICO",
+      "users_affected": "14",
+      "expected_restoration": null,
+      "zone_detail": null,
+      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
+      "observed_at": "2026-10-23T16:46:58Z",
+      "confirmation": "Publicado por ENRE",
+      "id": "d1f85cc17f2a53e8"
     },
     {
       "category": "electricidad",
@@ -110,7 +124,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-23T15:48:56Z",
+      "observed_at": "2026-10-23T16:46:58Z",
       "confirmation": "Publicado por ENRE",
       "id": "f59ba12d25e6cb12"
     },
@@ -119,28 +133,14 @@
       "title": "Interrupción de baja tensión",
       "company": "Edesur",
       "partido": "CAPITAL",
-      "localidad": "PARQUE AVELLANEDA",
-      "users_affected": "1",
-      "expected_restoration": null,
-      "zone_detail": null,
-      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-23T15:48:56Z",
-      "confirmation": "Publicado por ENRE",
-      "id": "2033e6518826949f"
-    },
-    {
-      "category": "electricidad",
-      "title": "Interrupción de baja tensión",
-      "company": "Edesur",
-      "partido": "CAPITAL",
       "localidad": "PARQUE CHACABUCO",
-      "users_affected": "8",
+      "users_affected": "9",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-23T15:48:56Z",
+      "observed_at": "2026-10-23T16:46:58Z",
       "confirmation": "Publicado por ENRE",
-      "id": "c46bca2d21acc41d"
+      "id": "8fb64292b9bef02f"
     },
     {
       "category": "electricidad",
@@ -148,13 +148,13 @@
       "company": "Edesur",
       "partido": "CAPITAL",
       "localidad": "RECOLETA",
-      "users_affected": "4",
+      "users_affected": "5",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-23T15:48:56Z",
+      "observed_at": "2026-10-23T16:46:58Z",
       "confirmation": "Publicado por ENRE",
-      "id": "b1f9f91c46029c21"
+      "id": "5ab3a4101d6c6c93"
     },
     {
       "category": "electricidad",
@@ -166,7 +166,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-23T15:48:56Z",
+      "observed_at": "2026-10-23T16:46:58Z",
       "confirmation": "Publicado por ENRE",
       "id": "f21e6bdcf665bdd8"
     },
@@ -180,7 +180,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-23T15:48:56Z",
+      "observed_at": "2026-10-23T16:46:58Z",
       "confirmation": "Publicado por ENRE",
       "id": "f77cfb3ae87eeac4"
     }
@@ -189,13 +189,13 @@
     "edenor": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDN.js",
-      "checked_at": "2026-10-23T15:48:56Z",
+      "checked_at": "2026-10-23T16:46:58Z",
       "event_count": 2
     },
     "edesur": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDS.js",
-      "checked_at": "2026-10-23T15:48:56Z",
+      "checked_at": "2026-10-23T16:46:58Z",
       "event_count": 11
     }
   },
@@ -204,7 +204,7 @@
       "status": "not_connected",
       "message": "No hay conexión verificada con una fuente automática de estado de la línea 57.",
       "reference_url": "https://www.argentina.gob.ar/sube/cuandosubo",
-      "checked_at": "2026-10-23T15:48:56Z"
+      "checked_at": "2026-10-23T16:46:58Z"
     }
   }
 }
