@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-23T11:45:23Z",
+  "generated_at": "2026-10-23T12:53:45Z",
   "alerts": [
     {
       "category": "electricidad",
@@ -12,7 +12,7 @@
       "expected_restoration": "Sin datos",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
-      "observed_at": "2026-10-23T11:45:23Z",
+      "observed_at": "2026-10-23T12:53:45Z",
       "confirmation": "Publicado por ENRE",
       "id": "b3aa1250fb645b50"
     },
@@ -22,13 +22,13 @@
       "company": "Edenor",
       "partido": "LA MATANZA",
       "localidad": "VILLA MADERO",
-      "users_affected": "5713",
+      "users_affected": "1375",
       "expected_restoration": "Sin datos",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
-      "observed_at": "2026-10-23T11:45:23Z",
+      "observed_at": "2026-10-23T12:53:45Z",
       "confirmation": "Publicado por ENRE",
-      "id": "48c2e59b6a33fb8b"
+      "id": "a053f7e39757d539"
     },
     {
       "category": "electricidad",
@@ -40,7 +40,7 @@
       "expected_restoration": "Sin datos",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
-      "observed_at": "2026-10-23T11:45:23Z",
+      "observed_at": "2026-10-23T12:53:45Z",
       "confirmation": "Publicado por ENRE",
       "id": "822cbdbe586e4d8c"
     },
@@ -54,7 +54,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-23T11:45:23Z",
+      "observed_at": "2026-10-23T12:53:45Z",
       "confirmation": "Publicado por ENRE",
       "id": "1d2d11c84959617c"
     },
@@ -68,7 +68,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-23T11:45:23Z",
+      "observed_at": "2026-10-23T12:53:45Z",
       "confirmation": "Publicado por ENRE",
       "id": "da8e6ccb2c6cbbfe"
     },
@@ -78,27 +78,27 @@
       "company": "Edesur",
       "partido": "CAPITAL",
       "localidad": "CAPITAL",
-      "users_affected": "13",
+      "users_affected": "14",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-23T11:45:23Z",
+      "observed_at": "2026-10-23T12:53:45Z",
       "confirmation": "Publicado por ENRE",
-      "id": "944a62a024692d2d"
+      "id": "c698c2ca3cc8e12e"
     },
     {
       "category": "electricidad",
       "title": "Interrupción de baja tensión",
       "company": "Edesur",
       "partido": "CAPITAL",
-      "localidad": "VILLA CRESPO",
-      "users_affected": "40",
+      "localidad": "VILLA DEL PARQUE",
+      "users_affected": "14",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-23T11:45:23Z",
+      "observed_at": "2026-10-23T12:53:45Z",
       "confirmation": "Publicado por ENRE",
-      "id": "0447bda0d885460d"
+      "id": "8ae3f8bf93f1eecc"
     },
     {
       "category": "electricidad",
@@ -110,7 +110,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-23T11:45:23Z",
+      "observed_at": "2026-10-23T12:53:45Z",
       "confirmation": "Publicado por ENRE",
       "id": "924c05f983846301"
     }
@@ -119,13 +119,13 @@
     "edenor": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDN.js",
-      "checked_at": "2026-10-23T11:45:23Z",
+      "checked_at": "2026-10-23T12:53:45Z",
       "event_count": 3
     },
     "edesur": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDS.js",
-      "checked_at": "2026-10-23T11:45:23Z",
+      "checked_at": "2026-10-23T12:53:45Z",
       "event_count": 5
     }
   },
@@ -134,7 +134,7 @@
       "status": "not_connected",
       "message": "No hay conexión verificada con una fuente automática de estado de la línea 57.",
       "reference_url": "https://www.argentina.gob.ar/sube/cuandosubo",
-      "checked_at": "2026-10-23T11:45:23Z"
+      "checked_at": "2026-10-23T12:53:45Z"
     }
   }
 }
