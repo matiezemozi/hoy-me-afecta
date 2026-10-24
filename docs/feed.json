@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-24T20:10:47Z",
+  "generated_at": "2026-10-24T20:39:22Z",
   "alerts": [
     {
       "category": "electricidad",
@@ -12,7 +12,7 @@
       "expected_restoration": "Sin datos",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
-      "observed_at": "2026-10-24T20:10:47Z",
+      "observed_at": "2026-10-24T20:39:22Z",
       "confirmation": "Publicado por ENRE",
       "id": "2e5436e0b8492419"
     },
@@ -26,7 +26,7 @@
       "expected_restoration": "Sin datos",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
-      "observed_at": "2026-10-24T20:10:47Z",
+      "observed_at": "2026-10-24T20:39:22Z",
       "confirmation": "Publicado por ENRE",
       "id": "c5c4374172855f65"
     },
@@ -40,7 +40,7 @@
       "expected_restoration": "Sin datos",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-24T20:10:47Z",
+      "observed_at": "2026-10-24T20:39:22Z",
       "confirmation": "Publicado por ENRE",
       "id": "5c68b08629072c57"
     },
@@ -50,13 +50,13 @@
       "company": "Edesur",
       "partido": "ALMIRANTE BROWN",
       "localidad": "ADROGUE",
-      "users_affected": "135",
+      "users_affected": "138",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-24T20:10:47Z",
+      "observed_at": "2026-10-24T20:39:22Z",
       "confirmation": "Publicado por ENRE",
-      "id": "7d3c90717368580f"
+      "id": "b2acd48de63b9765"
     },
     {
       "category": "electricidad",
@@ -64,13 +64,13 @@
       "company": "Edesur",
       "partido": "ALMIRANTE BROWN",
       "localidad": "MARMOL",
-      "users_affected": "6",
+      "users_affected": "8",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-24T20:10:47Z",
+      "observed_at": "2026-10-24T20:39:22Z",
       "confirmation": "Publicado por ENRE",
-      "id": "9e1f20840db201d4"
+      "id": "dd90680fab0c55f1"
     },
     {
       "category": "electricidad",
@@ -82,7 +82,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-24T20:10:47Z",
+      "observed_at": "2026-10-24T20:39:22Z",
       "confirmation": "Publicado por ENRE",
       "id": "6051afefca1959c2"
     },
@@ -96,7 +96,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-24T20:10:47Z",
+      "observed_at": "2026-10-24T20:39:22Z",
       "confirmation": "Publicado por ENRE",
       "id": "430d0ec87b30d3ba"
     },
@@ -110,7 +110,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-24T20:10:47Z",
+      "observed_at": "2026-10-24T20:39:22Z",
       "confirmation": "Publicado por ENRE",
       "id": "dfc6b20bedcfe35a"
     },
@@ -120,13 +120,13 @@
       "company": "Edesur",
       "partido": "CAPITAL",
       "localidad": "MONSERRAT",
-      "users_affected": "9",
+      "users_affected": "10",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-24T20:10:47Z",
+      "observed_at": "2026-10-24T20:39:22Z",
       "confirmation": "Publicado por ENRE",
-      "id": "7272c11bcc8159db"
+      "id": "04457b0a7ec2fcad"
     },
     {
       "category": "electricidad",
@@ -134,13 +134,13 @@
       "company": "Edesur",
       "partido": "CAPITAL",
       "localidad": "PARQUE CHACABUCO",
-      "users_affected": "3",
+      "users_affected": "4",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-24T20:10:47Z",
+      "observed_at": "2026-10-24T20:39:22Z",
       "confirmation": "Publicado por ENRE",
-      "id": "46c916898cad7379"
+      "id": "65cac69d3aa8d67a"
     },
     {
       "category": "electricidad",
@@ -152,7 +152,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-24T20:10:47Z",
+      "observed_at": "2026-10-24T20:39:22Z",
       "confirmation": "Publicado por ENRE",
       "id": "46b06626b572c50b"
     },
@@ -162,26 +162,26 @@
       "company": "Edesur",
       "partido": "ESTEBAN ECHEVERRIA",
       "localidad": "MONTE GRANDE",
-      "users_affected": "8",
+      "users_affected": "9",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-24T20:10:47Z",
+      "observed_at": "2026-10-24T20:39:22Z",
       "confirmation": "Publicado por ENRE",
-      "id": "abe8a44a09a4eacd"
+      "id": "445268c081ded094"
     }
   ],
   "sources": {
     "edenor": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDN.js",
-      "checked_at": "2026-10-24T20:10:47Z",
+      "checked_at": "2026-10-24T20:39:22Z",
       "event_count": 2
     },
     "edesur": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDS.js",
-      "checked_at": "2026-10-24T20:10:47Z",
+      "checked_at": "2026-10-24T20:39:22Z",
       "event_count": 10
     }
   },
@@ -190,7 +190,7 @@
       "status": "not_connected",
       "message": "No hay conexión verificada con una fuente automática de estado de la línea 57.",
       "reference_url": "https://www.argentina.gob.ar/sube/cuandosubo",
-      "checked_at": "2026-10-24T20:10:47Z"
+      "checked_at": "2026-10-24T20:39:22Z"
     }
   }
 }
