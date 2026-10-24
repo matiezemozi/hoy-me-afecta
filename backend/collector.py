@@ -1,4 +1,4 @@
-"""Collect ENRE electricity outages and manually sourced bus notices.
+"""Collect ENRE electricity outages and optional documented bus notices.
 
 Important: data_EDN.js/data_EDS.js are *undocumented* sources. Their schema and
 availability can change; the program records errors instead of guessing.
@@ -135,12 +135,15 @@ def load_bus_alerts(path, generated_at):
         return []
     notices = json.loads(path.read_text(encoding='utf-8'))
     if not isinstance(notices, list):
-        raise ValueError('manual/linea57_alertas.json debe ser una lista')
+        raise ValueError('El archivo manual de colectivos debe ser una lista')
     output = []
     current = checked_datetime(generated_at)
     for item in notices:
         try:
-            if item['line'] != '57':
+            line = str(item['line']).strip()
+            if not re.fullmatch(r'[0-9A-Za-z-]{1,12}', line):
+                continue
+            if item.get('country', 'Argentina') != 'Argentina':
                 continue
             date = checked_datetime(item['verified_at'])
             end = checked_datetime(item['ends_at'])
@@ -152,12 +155,12 @@ def load_bus_alerts(path, generated_at):
             if not item.get('title') or not item.get('description'):
                 continue
             entry = {
-                'id': '57-' + hashlib.sha256(json.dumps(item,sort_keys=True).encode()).hexdigest()[:14],
-                'category': 'colectivo', 'line': '57',
+                'id': 'bus-' + hashlib.sha256(json.dumps(item,sort_keys=True).encode()).hexdigest()[:14],
+                'category': 'colectivo', 'country': 'Argentina', 'line': line,
                 'branch': str(item.get('branch','')).strip(),
                 'title': str(item['title']), 'description': str(item['description']),
                 'observed_at': item['verified_at'], 'valid_until': item['ends_at'],
-                'source_url': source, 'confirmation': 'Aviso verificado manualmente; consultar fuente',
+                'source_url': source, 'confirmation': 'Aviso documental cargado manualmente; verificar en la fuente',
             }
             output.append(entry)
         except (KeyError, ValueError, TypeError):
@@ -191,8 +194,18 @@ def collect(dest, manual):
     try:
         manual_alerts = load_bus_alerts(manual, timestamp)
         output['alerts'].extend(manual_alerts)
-        if manual_alerts:
-            output['transport']['57']['status'] = 'manual_notices'
+        for notice in manual_alerts:
+            line = notice['line']
+            if line not in output['transport']:
+                output['transport'][line] = {
+                    'status': 'not_connected',
+                    'message': 'Sin conexión automática verificada con este operador.',
+                    'checked_at': timestamp,
+                }
+            output['transport'][line]['documented_notices'] = (
+                output['transport'][line].get('documented_notices', 0) + 1
+            )
+            # 'documented_notices' does not imply live vehicle data.
     except (ValueError, OSError) as exc:
         output['transport']['57']['manual_error'] = str(exc)[:150]
     dest.parent.mkdir(parents=True, exist_ok=True)
