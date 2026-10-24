@@ -41,21 +41,31 @@ public class MainActivity extends Activity {
     private static final int GREY = Color.rgb(93, 107, 125);
     private static final String[] COUNTRIES = {
             "Argentina", "Bolivia", "Chile", "Colombia", "Costa Rica", "Cuba",
-            "Ecuador", "El Salvador", "Guatemala", "Honduras", "M\u00e9xico",
-            "Nicaragua", "Panam\u00e1", "Paraguay", "Per\u00fa", "Puerto Rico",
-            "Rep\u00fablica Dominicana", "Uruguay", "Venezuela"
+            "Ecuador", "El Salvador", "Guatemala", "Honduras", "México",
+            "Nicaragua", "Panamá", "Paraguay", "Perú", "Puerto Rico",
+            "República Dominicana", "Uruguay", "Venezuela"
     };
     private LinearLayout root;
-    private EditText placeField, branchField;
+    private EditText placeField, lineField, branchField;
     private Spinner countrySpinner;
     private SharedPreferences prefs;
     private JSONObject feed;
-    private String connection = "Sin datos descargados todav\u00eda";
+    private String connection = "Sin datos descargados todavía";
     private boolean refreshing = false;
 
     @Override public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         prefs = getSharedPreferences("hoy_me_afecta", MODE_PRIVATE);
+        // Show the last downloaded report immediately, even without a network.
+        // Its age and each source's age are still checked before showing incidents.
+        try {
+            String cached = prefs.getString("cached_feed", "");
+            if (!cached.isEmpty() && cached.length() < 2_000_000) {
+                JSONObject previous = new JSONObject(cached);
+                if (previous.optInt("schema_version") == 1) feed = previous;
+            }
+        } catch (Exception ignored) { feed = null; }
+        if (feed != null) connection = "Último informe guardado; comprobando actualización…";
         draw();
         refresh();
     }
@@ -136,10 +146,11 @@ public class MainActivity extends Activity {
 
         root.addView(text("HOY ME AFECTA", 26, INK, true));
         root.addView(text("Lo que te conviene saber antes de salir", 14, GREY, false));
+        root.addView(text("Piloto v3 · fuentes verificables, sin inventar estados de servicio", 12, GREY, false));
         LinearLayout status = card();
         status.addView(text(connection, 14, BLUE, false));
         if (feed != null) {
-            status.addView(text("\u00daltima recopilaci\u00f3n: " + formatUtc(feed.optString("generated_at", "")),
+            status.addView(text("Última recopilación: " + formatUtc(feed.optString("generated_at", "")),
                     12, GREY, false));
         }
         if (refreshing) status.addView(text("Descargando el informe...", 13, GREY, false));
@@ -147,7 +158,7 @@ public class MainActivity extends Activity {
 
         title("Tus preferencias");
         LinearLayout setup = card();
-        setup.addView(text("Pa\u00eds", 13, GREY, true));
+        setup.addView(text("País", 13, GREY, true));
         countrySpinner = new Spinner(this);
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_spinner_item, COUNTRIES);
@@ -158,37 +169,45 @@ public class MainActivity extends Activity {
             if (COUNTRIES[i].equals(savedCountry)) { countrySpinner.setSelection(i); break; }
         }
         setup.addView(countrySpinner);
-        setup.addView(text("Partido, barrio o localidad que te interesa", 13, GREY, true));
-        placeField = edit("Ejemplo: Recoleta", prefs.getString("place", ""));
+        setup.addView(text("Zonas de interés (separadas por punto y coma)", 13, GREY, true));
+        placeField = edit("Ejemplo: Pilar; Recoleta", prefs.getString("place", ""));
         setup.addView(placeField);
-        setup.addView(text("L\u00ednea favorita: 57 \u00b7 ramal (solo piloto argentino)",
-                13, GREY, true));
+        setup.addView(text("Línea de colectivo favorita (piloto argentino)", 13, GREY, true));
+        lineField = edit("Ejemplo: 57", prefs.getString("line", "57"));
+        setup.addView(lineField);
+        setup.addView(text("Ramal (opcional)", 13, GREY, true));
         branchField = edit("Ejemplo: Q", prefs.getString("branch", ""));
         setup.addView(branchField);
-        setup.addView(text("No se necesita GPS. La cobertura se ampliar\u00e1 progresivamente.",
+        setup.addView(text("No se necesita GPS. La cobertura se ampliará progresivamente.",
                 12, GREY, false));
         setup.addView(button("Guardar y actualizar", () -> {
             String country = String.valueOf(countrySpinner.getSelectedItem());
             prefs.edit().putString("country", country)
                     .putString("place", placeField.getText().toString().trim())
+                    .putString("line", lineField.getText().toString().trim())
                     .putString("branch", branchField.getText().toString().trim())
                     .apply();
             draw();
             refresh();
         }));
 
-        title("Electricidad \u00b7 fuentes oficiales");
+        title("Tu informe personal");
+        personalReport();
+        title("Electricidad · fuentes oficiales");
         electricity();
-        title("Transporte \u00b7 colectivos");
+        title("Transporte · colectivos");
         buses();
-        title("Informaci\u00f3n y fuentes");
+        title("Información y fuentes");
         LinearLayout notes = card();
         notes.addView(text("Piloto: la fuente conectada actualmente es el ENRE para Edenor y Edesur. " +
                 "No cubre todas las localidades ni distribuidoras de Argentina.", 13, GREY, false));
-        notes.addView(text("Un aviso publicado se refiere a un \u00e1rea; no confirma el estado de " +
+        notes.addView(text("Un aviso publicado se refiere a un área; no confirma el estado de " +
                 "cada domicilio. Ausencia de avisos no equivale a servicio normal.", 13, GREY, false));
-        notes.addView(text("Los avisos solo se muestran mientras el informe tiene menos de " +
-                "3 horas. La aplicaci\u00f3n no sustituye las alertas oficiales.", 13, GREY, false));
+        notes.addView(text("El informe y cada fuente eléctrica deben tener menos de " +
+                "3 horas para mostrar avisos como recientes. La aplicación no sustituye las alertas oficiales.",
+                13, GREY, false));
+        notes.addView(text("Las zonas se comparan por nombre exacto con partido o localidad. " +
+                "No se comprueba si un corte alcanza una dirección específica.", 12, GREY, false));
     }
 
     private static String norm(String raw) {
@@ -220,6 +239,82 @@ public class MainActivity extends Activity {
         return age >= -60000L && age < MAX_FEED_AGE_MS;
     }
 
+    private String favoriteLine() {
+        String line = prefs.getString("line", "57").trim();
+        return line.isEmpty() ? "57" : line;
+    }
+
+    // Exact normalized match prevents accidentally including similarly named towns.
+    private boolean selectedAreaMatches(String partido, String localidad) {
+        String raw = prefs.getString("place", "");
+        for (String segment : raw.split("[;,]")) {
+            String wanted = norm(segment);
+            if (!wanted.isEmpty() && (wanted.equals(norm(partido)) ||
+                    wanted.equals(norm(localidad)))) return true;
+        }
+        return false;
+    }
+
+    private boolean sourceFresh(JSONObject source) {
+        if (source == null || !"ok".equals(usable(source, "status"))) return false;
+        Date checked = parseUtc(usable(source, "checked_at"));
+        if (checked == null) return false;
+        long age = System.currentTimeMillis() - checked.getTime();
+        return age >= -60000L && age < MAX_FEED_AGE_MS;
+    }
+
+    private int matchingElectricityCount() {
+        if (!"Argentina".equals(selectedCountry()) || !isFresh() || feed == null) return 0;
+        JSONArray entries = feed.optJSONArray("alerts");
+        JSONObject sources = feed.optJSONObject("sources");
+        if (entries == null || sources == null) return 0;
+        int count = 0;
+        for (int i = 0; i < entries.length(); i++) {
+            JSONObject a = entries.optJSONObject(i);
+            if (a == null || !"electricidad".equals(usable(a, "category"))) continue;
+            if (!selectedAreaMatches(usable(a, "partido"), usable(a, "localidad"))) continue;
+            if (sourceFresh(sources.optJSONObject(usable(a,"company").toLowerCase(Locale.ROOT)))) count++;
+        }
+        return count;
+    }
+
+    private void personalReport() {
+        LinearLayout box = card();
+        if (!"Argentina".equals(selectedCountry())) {
+            box.addView(text("Cobertura en preparación para " + selectedCountry() +
+                    ". El país se puede seleccionar, pero todavía no tenemos conectores locales.",
+                    13, GREY, false));
+            return;
+        }
+        if (!isFresh()) {
+            box.addView(text("No hay un informe suficientemente reciente. " +
+                    "No es posible conocer el estado actual de tus zonas.", 13, GREY, false));
+            return;
+        }
+        if (prefs.getString("place", "").trim().isEmpty()) {
+            box.addView(text("Elegí una o varias zonas para comenzar.", 13, GREY, false));
+            return;
+        }
+        JSONObject sources = feed.optJSONObject("sources");
+        if (sources == null || (!sourceFresh(sources.optJSONObject("edenor")) &&
+                !sourceFresh(sources.optJSONObject("edesur")))) {
+            box.addView(text("Ninguna fuente eléctrica dispone de una consulta reciente validada.",
+                    13, GREY, false));
+            return;
+        }
+        int count = matchingElectricityCount();
+        box.addView(text(count == 0 ? "Sin avisos eléctricos coincidentes en las fuentes disponibles" :
+                        count + (count == 1 ? " aviso eléctrico coincidente" : " avisos eléctricos coincidentes"),
+                15, count == 0 ? GREY : INK, true));
+        box.addView(text("Zona(s): " + prefs.getString("place", "Sin configurar") +
+                " · Cobertura parcial: ENRE para Edenor/Edesur, no todas las distribuidoras.",
+                12, GREY, false));
+        box.addView(text("Colectivo " + favoriteLine() + ": sin conexión automática verificada de demoras.",
+                12, GREY, false));
+        if (count == 0) box.addView(text("Ausencia de reportes no significa ausencia de problemas.",
+                12, GREY, false));
+    }
+
     private static String usable(JSONObject obj, String key) {
         if (obj == null || obj.isNull(key)) return "";
         return obj.optString(key, "").trim();
@@ -228,14 +323,14 @@ public class MainActivity extends Activity {
     private void electricity() {
         LinearLayout c = card();
         if (!"Argentina".equals(selectedCountry())) {
-            c.addView(text("Todav\u00eda no hay fuentes el\u00e9ctricas conectadas para " +
-                    selectedCountry() + ". La cobertura est\u00e1 en preparaci\u00f3n.", 14, GREY, false));
+            c.addView(text("Todavía no hay fuentes eléctricas conectadas para " +
+                    selectedCountry() + ". La cobertura está en preparación.", 14, GREY, false));
             return;
         }
         c.addView(text("Cobertura piloto: Edenor y Edesur (AMBA). " +
-                "Otras distribuidoras todav\u00eda no est\u00e1n conectadas.", 12, GREY, false));
+                "Otras distribuidoras todavía no están conectadas.", 12, GREY, false));
         if (feed == null) {
-            c.addView(text("Sin informaci\u00f3n descargada. No se puede determinar el estado del servicio.",
+            c.addView(text("Sin información descargada. No se puede determinar el estado del servicio.",
                     14, GREY, false));
             return;
         }
@@ -248,22 +343,22 @@ public class MainActivity extends Activity {
             JSONObject src = sources.optJSONObject(company);
             String state = usable(src, "status");
             String checked = formatUtc(usable(src, "checked_at"));
-            if ("ok".equals(state)) {
-                c.addView(text(company.toUpperCase(Locale.ROOT) + ": fuente consultada \u00b7 " + checked,
+            if (sourceFresh(src) && isFresh()) {
+                c.addView(text(company.toUpperCase(Locale.ROOT) + ": fuente consultada · " + checked,
                         12, BLUE, false));
             } else {
                 c.addView(text(company.toUpperCase(Locale.ROOT) +
-                        ": consulta fallida o no verificada", 12, GREY, true));
+                        ": fuente sin datos recientes verificados", 12, GREY, true));
             }
         }
         if (!isFresh()) {
             c.addView(text("Informe desactualizado: no se muestran cortes como actuales. " +
-                    "Intent\u00e1 actualizar.", 14, GREY, true));
+                    "Intentá actualizar.", 14, GREY, true));
             return;
         }
         String area = prefs.getString("place", "").trim();
         if (area.isEmpty()) {
-            c.addView(text("Eleg\u00ed una localidad o partido para filtrar avisos.", 14, GREY, false));
+            c.addView(text("Elegí una localidad o partido para filtrar avisos.", 14, GREY, false));
             return;
         }
         JSONArray alerts = feed.optJSONArray("alerts");
@@ -273,19 +368,18 @@ public class MainActivity extends Activity {
             if (a == null || !"electricidad".equals(usable(a, "category"))) continue;
             String partido = usable(a, "partido");
             String localidad = usable(a, "localidad");
-            String search = norm(area);
-            if (!norm(partido).equals(search) && !norm(localidad).equals(search)) continue;
+            if (!selectedAreaMatches(partido, localidad)) continue;
             JSONObject src = sources.optJSONObject(usable(a, "company").toLowerCase(Locale.ROOT));
-            if (src == null || !"ok".equals(usable(src, "status"))) continue;
-            String place = partido + (localidad.isEmpty() ? "" : " \u00b7 " + localidad);
-            c.addView(text("\u2022 " + a.optString("title", "Interrupci\u00f3n informada"),
+            if (!sourceFresh(src)) continue;
+            String place = partido + (localidad.isEmpty() ? "" : " · " + localidad);
+            c.addView(text("• " + a.optString("title", "Interrupción informada"),
                     15, INK, true));
-            c.addView(text(usable(a, "company") + " \u00b7 " + place, 13, GREY, false));
+            c.addView(text(usable(a, "company") + " · " + place, 13, GREY, false));
             String users = usable(a, "users_affected");
             if (!users.isEmpty()) c.addView(text("Usuarios afectados reportados: " + users,
                     13, GREY, false));
             String restoration = usable(a, "expected_restoration");
-            if (!restoration.isEmpty()) c.addView(text("Reposici\u00f3n estimada: " + restoration,
+            if (!restoration.isEmpty()) c.addView(text("Reposición estimada: " + restoration,
                     13, GREY, false));
             c.addView(text("Observado: " + formatUtc(usable(a, "observed_at")),
                     12, GREY, false));
@@ -297,7 +391,7 @@ public class MainActivity extends Activity {
             if (shown >= 15) break;
         }
         if (shown == 0) {
-            c.addView(text("No hay avisos coincidentes para \u00ab" + area + "\u00bb " +
+            c.addView(text("No hay avisos coincidentes para «" + area + "» " +
                     "en las fuentes conectadas. Esto NO garantiza suministro normal " +
                     "ni cobertura de esa zona.", 13, GREY, false));
         }
@@ -306,41 +400,52 @@ public class MainActivity extends Activity {
     private void buses() {
         LinearLayout c = card();
         if (!"Argentina".equals(selectedCountry())) {
-            c.addView(text("Todav\u00eda no hay operadores de colectivos conectados para " +
+            c.addView(text("Todavía no hay operadores de transporte conectados para " +
                     selectedCountry() + ".", 14, GREY, false));
             return;
         }
+        String line = favoriteLine();
         String branch = prefs.getString("branch", "").trim();
-        c.addView(text("L\u00ednea 57" + (branch.isEmpty() ? "" : " \u00b7 Ramal " + branch),
+        c.addView(text("Línea " + line + (branch.isEmpty() ? "" : " · Ramal " + branch),
                 18, INK, true));
-        c.addView(text("Estado en tiempo real: no conectado ni verificado.", 14, GREY, false));
+        c.addView(text("Posiciones, llegadas y demoras: no hay una conexión automática verificada.",
+                13, GREY, false));
+        int found = 0;
         if (feed != null && isFresh()) {
             JSONArray alerts = feed.optJSONArray("alerts");
-            int found = 0;
             if (alerts != null) for (int i = 0; i < alerts.length(); i++) {
                 JSONObject a = alerts.optJSONObject(i);
                 if (a == null || !"colectivo".equals(usable(a, "category")) ||
-                        !"57".equals(usable(a, "line"))) continue;
+                        !line.equalsIgnoreCase(usable(a, "line"))) continue;
+                String country = usable(a, "country");
+                if (!country.isEmpty() && !"Argentina".equalsIgnoreCase(country)) continue;
                 String eventBranch = usable(a, "branch");
                 if (!branch.isEmpty() && !eventBranch.isEmpty() &&
                         !norm(branch).equals(norm(eventBranch))) continue;
-                c.addView(text("Aviso verificado: " + usable(a, "title"), 14, INK, true));
+                Date verified = parseUtc(usable(a, "observed_at"));
+                Date end = parseUtc(usable(a, "valid_until"));
+                long now = System.currentTimeMillis();
+                if (verified == null || end == null || verified.getTime() > now + 60000L ||
+                        now - verified.getTime() > 24L * 60 * 60 * 1000 || end.getTime() <= now) continue;
+                c.addView(text("Aviso documentado: " + usable(a, "title"), 14, INK, true));
                 c.addView(text(usable(a, "description"), 13, GREY, false));
-                c.addView(text("Verificado: " + formatUtc(usable(a, "observed_at")),
-                        12, GREY, false));
+                c.addView(text("Ramal: " + (eventBranch.isEmpty() ? "no especificado" : eventBranch) +
+                        " · Registrado: " + formatUtc(usable(a, "observed_at")), 12, GREY, false));
                 String link = usable(a, "source_url");
                 if (link.startsWith("https://"))
-                    c.addView(button("Abrir fuente del aviso", () -> open(link)));
+                    c.addView(button("Consultar fuente del aviso", () -> open(link)));
                 found++;
+                if (found >= 12) break;
             }
-            if (found == 0) c.addView(text("No hay avisos manuales vigentes registrados. " +
-                    "Esto no significa que el servicio sea normal.", 13, GREY, false));
-        } else {
-            c.addView(text("No se dispone de avisos recientes de la l\u00ednea 57.",
-                    13, GREY, false));
         }
-        c.addView(button("Consultar Cu\u00e1ndo SUBO", () ->
+        if (found == 0) c.addView(text("No tenemos avisos documentados vigentes para esta línea. " +
+                "Esto no confirma que el servicio sea normal.", 13, GREY, false));
+        c.addView(button("Consultar Cuándo SUBO", () ->
                 open("https://www.argentina.gob.ar/sube/cuandosubo")));
+        if ("57".equals(line)) {
+            c.addView(button("Ver recorridos oficiales de la línea 57", () ->
+                    open("https://www.argentina.gob.ar/sites/default/files/recorridos_web_0/057.pdf")));
+        }
     }
 
     private void open(String url) {
@@ -380,9 +485,10 @@ public class MainActivity extends Activity {
                     throw new Exception("Formato de datos desconocido");
                 runOnUiThread(() -> {
                     feed = result;
+                    prefs.edit().putString("cached_feed", result.toString()).apply();
                     refreshing = false;
                     connection = isFresh()
-                            ? "Informe descargado. Revis\u00e1 las fuentes y la cobertura."
+                            ? "Informe descargado. Revisá las fuentes y la cobertura."
                             : "Informe antiguo: no se muestran avisos como vigentes.";
                     draw();
                 });
@@ -390,9 +496,9 @@ public class MainActivity extends Activity {
                 String detail = ex.getMessage();
                 runOnUiThread(() -> {
                     refreshing = false;
-                    feed = null;
-                    connection = "No se pudo descargar el informe: " +
-                            (detail == null ? "error de conexi\u00f3n" : detail);
+                    // Keep the cached feed, but NEVER bypass its expiration check.
+                    connection = "Sin actualización de red; informe guardado sujeto a vigencia. Error: " +
+                            (detail == null ? "error de conexión" : detail);
                     draw();
                 });
             } finally {
