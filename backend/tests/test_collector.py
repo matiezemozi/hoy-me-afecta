@@ -29,6 +29,59 @@ class CollectorTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             collector.unpack_js('alert(1); var data = {}')
 
+    def test_other_line_notice_is_allowed_but_not_live(self):
+        now = datetime.now(timezone.utc)
+        fmt = lambda d: d.isoformat(timespec='seconds').replace('+00:00', 'Z')
+        item = {'line':'60', 'branch':'', 'title':'Prueba', 'description':'Solo test',
+                'source_url':'https://example.org/aviso',
+                'verified_at':fmt(now-timedelta(minutes=5)),
+                'ends_at':fmt(now+timedelta(hours=2))}
+        with TemporaryDirectory() as folder:
+            path = Path(folder) / 'avisos.json'
+            path.write_text(json.dumps([item]), encoding='utf-8')
+            events = collector.load_bus_alerts(path, fmt(now))
+            self.assertEqual(len(events), 1)
+            self.assertEqual(events[0]['line'], '60')
+            self.assertEqual(events[0]['country'], 'Argentina')
+
+    def test_expired_notice_rejected(self):
+        now = datetime.now(timezone.utc)
+        fmt = lambda d: d.isoformat(timespec='seconds').replace('+00:00', 'Z')
+        item = {'line':'57','title':'Prueba','description':'Solo test',
+                'source_url':'https://example.org/aviso',
+                'verified_at':fmt(now-timedelta(minutes=5)),
+                'ends_at':fmt(now-timedelta(minutes=1))}
+        with TemporaryDirectory() as folder:
+            path = Path(folder) / 'avisos.json'
+            path.write_text(json.dumps([item]), encoding='utf-8')
+            self.assertEqual(collector.load_bus_alerts(path, fmt(now)), [])
+
+    def test_collector_reports_multiple_lines_as_documented_not_live(self):
+        from unittest.mock import patch
+        now = datetime.now(timezone.utc)
+        fmt = lambda d: d.isoformat(timespec='seconds').replace('+00:00', 'Z')
+        manual = [
+            {'line':'57', 'title':'Prueba 57','description':'No real',
+             'source_url':'https://example.org/57', 'verified_at':fmt(now),
+             'ends_at':fmt(now+timedelta(hours=1))},
+            {'line':'60', 'title':'Prueba 60','description':'No real',
+             'source_url':'https://example.org/60', 'verified_at':fmt(now),
+             'ends_at':fmt(now+timedelta(hours=1))},
+        ]
+        with TemporaryDirectory() as folder:
+            root = Path(folder)
+            source = root/'manual.json'
+            target = root/'feed.json'
+            source.write_text(json.dumps(manual), encoding='utf-8')
+            with patch.object(collector,'now_utc',return_value=fmt(now)), \
+                 patch.object(collector,'fetch_js',return_value={'cortesServicioBaja': []}):
+                collector.collect(target, source)
+            result = json.loads(target.read_text(encoding='utf-8'))
+            self.assertEqual(result['transport']['57']['status'], 'not_connected')
+            self.assertEqual(result['transport']['60']['status'], 'not_connected')
+            self.assertEqual(result['transport']['60']['documented_notices'], 1)
+            self.assertEqual(len(result['alerts']), 2)
+
     def test_bus_notice_must_be_fresh_and_sourced(self):
         now = datetime.now(timezone.utc)
         fmt = lambda date: date.isoformat().replace('+00:00','Z')
