@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-25T01:41:05Z",
+  "generated_at": "2026-10-25T02:52:33Z",
   "alerts": [
     {
       "category": "electricidad",
@@ -9,40 +9,12 @@
       "partido": "LOMAS DE ZAMORA",
       "localidad": "ZONA RURAL",
       "users_affected": "748",
-      "expected_restoration": "2026-10-24 23:12",
+      "expected_restoration": "Sin datos",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T01:41:05Z",
+      "observed_at": "2026-10-25T02:52:33Z",
       "confirmation": "Publicado por ENRE",
-      "id": "bf7a0a6dd3de8e73"
-    },
-    {
-      "category": "electricidad",
-      "title": "Corte programado",
-      "company": "Edesur",
-      "partido": "QUILMES",
-      "localidad": "QUILMES OESTE",
-      "users_affected": "614",
-      "expected_restoration": "2026-10-25 01:16",
-      "zone_detail": null,
-      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T01:41:05Z",
-      "confirmation": "Publicado por ENRE",
-      "id": "d5e99d75ff60b5ab"
-    },
-    {
-      "category": "electricidad",
-      "title": "Corte programado",
-      "company": "Edesur",
-      "partido": "QUILMES",
-      "localidad": "SAN FRANCISCO SOLANO (Q)",
-      "users_affected": "396",
-      "expected_restoration": "2026-10-25 01:48",
-      "zone_detail": null,
-      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T01:41:05Z",
-      "confirmation": "Publicado por ENRE",
-      "id": "9819e06577a32b63"
+      "id": "044a556b9143152b"
     },
     {
       "category": "electricidad",
@@ -54,7 +26,7 @@
       "expected_restoration": "2026-10-25 00:37",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T01:41:05Z",
+      "observed_at": "2026-10-25T02:52:33Z",
       "confirmation": "Publicado por ENRE",
       "id": "98566104fe447b51"
     },
@@ -64,13 +36,13 @@
       "company": "Edesur",
       "partido": "ALMIRANTE BROWN",
       "localidad": "MARMOL",
-      "users_affected": "10",
+      "users_affected": "16",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T01:41:05Z",
+      "observed_at": "2026-10-25T02:52:33Z",
       "confirmation": "Publicado por ENRE",
-      "id": "7c1decafcd6a4cd2"
+      "id": "5a62cd4c4c9990da"
     },
     {
       "category": "electricidad",
@@ -82,7 +54,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T01:41:05Z",
+      "observed_at": "2026-10-25T02:52:33Z",
       "confirmation": "Publicado por ENRE",
       "id": "e009e51824077cad"
     },
@@ -96,7 +68,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T01:41:05Z",
+      "observed_at": "2026-10-25T02:52:33Z",
       "confirmation": "Publicado por ENRE",
       "id": "dfc6b20bedcfe35a"
     },
@@ -110,7 +82,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T01:41:05Z",
+      "observed_at": "2026-10-25T02:52:33Z",
       "confirmation": "Publicado por ENRE",
       "id": "58ee12436e4059fb"
     },
@@ -118,51 +90,76 @@
       "category": "electricidad",
       "title": "Interrupción de baja tensión",
       "company": "Edesur",
-      "partido": "CAPITAL",
-      "localidad": "PARQUE CHACABUCO",
-      "users_affected": "8",
-      "expected_restoration": null,
-      "zone_detail": null,
-      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T01:41:05Z",
-      "confirmation": "Publicado por ENRE",
-      "id": "c46bca2d21acc41d"
-    },
-    {
-      "category": "electricidad",
-      "title": "Interrupción de baja tensión",
-      "company": "Edesur",
       "partido": "LOMAS DE ZAMORA",
       "localidad": "INGENIERO BUDGE",
-      "users_affected": "21",
+      "users_affected": "24",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T01:41:05Z",
+      "observed_at": "2026-10-25T02:52:33Z",
       "confirmation": "Publicado por ENRE",
-      "id": "7f30b6ebc03a27a0"
+      "id": "7255f83d4be3c9d7"
     }
   ],
   "sources": {
     "edenor": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDN.js",
-      "checked_at": "2026-10-25T01:41:05Z",
+      "checked_at": "2026-10-25T02:52:33Z",
       "event_count": 0
     },
     "edesur": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDS.js",
-      "checked_at": "2026-10-25T01:41:05Z",
-      "event_count": 10
+      "checked_at": "2026-10-25T02:52:33Z",
+      "event_count": 7
     }
+  },
+  "banking": {
+    "status": "published_reference_2026",
+    "year": 2026,
+    "country": "Argentina",
+    "source_url": "https://www.bcra.gob.ar/consulta-feriados-bancarios-2026/",
+    "source_reviewed_at": "2026-10-24",
+    "message": "Calendario oficial consultado en la fecha indicada; no es un control en vivo de sucursales.",
+    "upcoming": [
+      {
+        "date": "2026-11-09",
+        "reason": "Feriado nacional por visita del Papa León XIV"
+      },
+      {
+        "date": "2026-11-10",
+        "reason": "Feriado bancario por visita del Papa León XIV"
+      },
+      {
+        "date": "2026-11-23",
+        "reason": "Día de la Soberanía Nacional"
+      },
+      {
+        "date": "2026-12-07",
+        "reason": "Día no laborable con fines turísticos"
+      },
+      {
+        "date": "2026-12-08",
+        "reason": "Inmaculada Concepción de María"
+      }
+    ]
+  },
+  "coverage": {
+    "trains": "manual_notices_only",
+    "bank_holidays": "published_reference_2026",
+    "bank_incidents": "manual_notices_only",
+    "water": "manual_notices_only",
+    "traffic": "manual_notices_only",
+    "public_operations": "manual_public_impacts_only"
   },
   "transport": {
     "57": {
       "status": "not_connected",
       "message": "No hay conexión verificada con una fuente automática de estado de la línea 57.",
       "reference_url": "https://www.argentina.gob.ar/sube/cuandosubo",
-      "checked_at": "2026-10-25T01:41:05Z"
+      "checked_at": "2026-10-25T02:52:33Z"
     }
-  }
+  },
+  "public_notice_count": 0
 }
