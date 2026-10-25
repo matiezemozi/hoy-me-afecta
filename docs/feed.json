@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-25T03:44:47Z",
+  "generated_at": "2026-10-25T04:42:58Z",
   "alerts": [
     {
       "category": "electricidad",
@@ -12,37 +12,9 @@
       "expected_restoration": "Sin datos",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T03:44:47Z",
+      "observed_at": "2026-10-25T04:42:58Z",
       "confirmation": "Publicado por ENRE",
       "id": "044a556b9143152b"
-    },
-    {
-      "category": "electricidad",
-      "title": "Interrupción de media tensión",
-      "company": "Edesur",
-      "partido": "ALMIRANTE BROWN",
-      "localidad": "GLEW",
-      "users_affected": "133",
-      "expected_restoration": "Sin datos",
-      "zone_detail": null,
-      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T03:44:47Z",
-      "confirmation": "Publicado por ENRE",
-      "id": "13cfac9f36e9bae9"
-    },
-    {
-      "category": "electricidad",
-      "title": "Interrupción de baja tensión",
-      "company": "Edesur",
-      "partido": "ALMIRANTE BROWN",
-      "localidad": "MARMOL",
-      "users_affected": "18",
-      "expected_restoration": null,
-      "zone_detail": null,
-      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T03:44:47Z",
-      "confirmation": "Publicado por ENRE",
-      "id": "e47e0f361b22783c"
     },
     {
       "category": "electricidad",
@@ -54,7 +26,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T03:44:47Z",
+      "observed_at": "2026-10-25T04:42:58Z",
       "confirmation": "Publicado por ENRE",
       "id": "dfc6b20bedcfe35a"
     },
@@ -68,23 +40,37 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T03:44:47Z",
+      "observed_at": "2026-10-25T04:42:58Z",
       "confirmation": "Publicado por ENRE",
       "id": "58ee12436e4059fb"
+    },
+    {
+      "category": "electricidad",
+      "title": "Interrupción de baja tensión",
+      "company": "Edesur",
+      "partido": "CAPITAL",
+      "localidad": "VILLA CRESPO",
+      "users_affected": "36",
+      "expected_restoration": null,
+      "zone_detail": null,
+      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
+      "observed_at": "2026-10-25T04:42:58Z",
+      "confirmation": "Publicado por ENRE",
+      "id": "0b8da25243d00d75"
     }
   ],
   "sources": {
     "edenor": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDN.js",
-      "checked_at": "2026-10-25T03:44:47Z",
+      "checked_at": "2026-10-25T04:42:58Z",
       "event_count": 0
     },
     "edesur": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDS.js",
-      "checked_at": "2026-10-25T03:44:47Z",
-      "event_count": 5
+      "checked_at": "2026-10-25T04:42:58Z",
+      "event_count": 4
     }
   },
   "banking": {
@@ -130,7 +116,7 @@
       "status": "not_connected",
       "message": "No hay conexión verificada con una fuente automática de estado de la línea 57.",
       "reference_url": "https://www.argentina.gob.ar/sube/cuandosubo",
-      "checked_at": "2026-10-25T03:44:47Z"
+      "checked_at": "2026-10-25T04:42:58Z"
     }
   },
   "public_notice_count": 0
