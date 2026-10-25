@@ -20,6 +20,7 @@ from bank_calendar import banking_calendar, refresh_official_calendar
 from public_notices import import_public_notices
 from subte_status import collect_subte
 from change_tracking import compare_feeds
+from notification_events import journal
 
 BASE = 'https://www.enre.gov.ar/paginacorte/js/'
 FEEDS = {'edenor': BASE + 'data_EDN.js', 'edesur': BASE + 'data_EDS.js'}
@@ -248,6 +249,7 @@ def collect(dest, manual, public_manual=None, *, fetch_subte=None, fetch_banking
         output['public_notice_error'] = str(exc)[:180]
         output['public_notice_count'] = 0
     output['change_tracking'] = compare_feeds(previous, output)
+    output['notification_events'] = journal(previous, output)
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_text(json.dumps(output, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     print(f'Feed written to {dest}: {len(output["alerts"])} alerts')
