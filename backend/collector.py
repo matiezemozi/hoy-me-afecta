@@ -16,7 +16,7 @@ from urllib.request import Request, urlopen
 
 import json5
 
-from bank_calendar import banking_calendar
+from bank_calendar import banking_calendar, refresh_official_calendar
 from public_notices import import_public_notices
 from subte_status import collect_subte
 
@@ -110,7 +110,11 @@ def parse_enre(document, company, fetched_at):
                 'partido': str(partido).strip(),
                 'localidad': str(localidad).strip(),
                 'users_affected': str(users).strip() if users != '' else None,
-                'expected_restoration': str(normalizacion).strip() if normalizacion else None,
+                'expected_restoration': (str(normalizacion).strip() if normalizacion and
+                                     normal(normalizacion).strip() not in
+                                     ('sin datos', 'sin dato', 's/d', 'n/d',
+                                      'no informado', 'no informada', 'null', 'none', '-')
+                                     else None),
                 'zone_detail': str(zone).strip() if zone else None,
                 'source_url': f'https://www.enre.gov.ar/paginacorte/tabla_cortes_{company}.html',
                 'observed_at': fetched_at,
@@ -172,12 +176,12 @@ def load_bus_alerts(path, generated_at):
     return output
 
 
-def collect(dest, manual, public_manual=None, *, fetch_subte=None):
+def collect(dest, manual, public_manual=None, *, fetch_subte=None, fetch_banking=None):
     timestamp = now_utc()
     output = {
         'schema_version': 1, 'generated_at': timestamp, 'alerts': [],
         'sources': {},
-        'banking': banking_calendar(),
+        'banking': fetch_banking(timestamp) if fetch_banking is not None else banking_calendar(),
         'coverage': {
             'trains': 'manual_notices_only', 'bank_holidays': 'published_reference_2026',
             'bank_incidents': 'manual_notices_only', 'water': 'manual_notices_only',
@@ -252,4 +256,4 @@ if __name__ == '__main__':
     parser.add_argument('--public-manual', default='manual/avisos_publicos.json')
     args = parser.parse_args()
     collect(Path(args.output), Path(args.manual), Path(args.public_manual),
-            fetch_subte=collect_subte)
+            fetch_subte=collect_subte, fetch_banking=refresh_official_calendar)
