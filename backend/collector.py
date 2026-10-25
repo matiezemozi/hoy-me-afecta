@@ -16,6 +16,9 @@ from urllib.request import Request, urlopen
 
 import json5
 
+from bank_calendar import banking_calendar
+from public_notices import import_public_notices
+
 BASE = 'https://www.enre.gov.ar/paginacorte/js/'
 FEEDS = {'edenor': BASE + 'data_EDN.js', 'edesur': BASE + 'data_EDS.js'}
 MAX_BYTES = 4_000_000
@@ -168,11 +171,17 @@ def load_bus_alerts(path, generated_at):
     return output
 
 
-def collect(dest, manual):
+def collect(dest, manual, public_manual=None):
     timestamp = now_utc()
     output = {
         'schema_version': 1, 'generated_at': timestamp, 'alerts': [],
         'sources': {},
+        'banking': banking_calendar(),
+        'coverage': {
+            'trains': 'manual_notices_only', 'bank_holidays': 'published_reference_2026',
+            'bank_incidents': 'manual_notices_only', 'water': 'manual_notices_only',
+            'traffic': 'manual_notices_only', 'public_operations': 'manual_public_impacts_only',
+        },
         'transport': {'57': {
             'status': 'not_connected',
             'message': 'No hay conexión verificada con una fuente automática de estado de la línea 57.',
@@ -208,6 +217,14 @@ def collect(dest, manual):
             # 'documented_notices' does not imply live vehicle data.
     except (ValueError, OSError) as exc:
         output['transport']['57']['manual_error'] = str(exc)[:150]
+    try:
+        notices = import_public_notices(
+            public_manual or Path('manual/avisos_publicos.json'), timestamp)
+        output['alerts'].extend(notices)
+        output['public_notice_count'] = len(notices)
+    except (ValueError, OSError) as exc:
+        output['public_notice_error'] = str(exc)[:180]
+        output['public_notice_count'] = 0
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_text(json.dumps(output, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     print(f'Feed written to {dest}: {len(output["alerts"])} alerts')
@@ -221,5 +238,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--output', default='docs/feed.json')
     parser.add_argument('--manual', default='manual/linea57_alertas.json')
+    parser.add_argument('--public-manual', default='manual/avisos_publicos.json')
     args = parser.parse_args()
-    collect(Path(args.output), Path(args.manual))
+    collect(Path(args.output), Path(args.manual), Path(args.public_manual))
