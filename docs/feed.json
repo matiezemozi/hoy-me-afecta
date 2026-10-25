@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-25T15:42:31Z",
+  "generated_at": "2026-10-25T16:00:08Z",
   "alerts": [
     {
       "category": "electricidad",
@@ -12,7 +12,7 @@
       "expected_restoration": "2026-10-25 15:00",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
-      "observed_at": "2026-10-25T15:42:31Z",
+      "observed_at": "2026-10-25T16:00:08Z",
       "confirmation": "Publicado por ENRE",
       "id": "12d39370d35cc4eb"
     },
@@ -23,12 +23,12 @@
       "partido": "AVELLANEDA",
       "localidad": "VILLA DOMINICO",
       "users_affected": "375",
-      "expected_restoration": "2026-10-25 12:53",
+      "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T15:42:31Z",
+      "observed_at": "2026-10-25T16:00:08Z",
       "confirmation": "Publicado por ENRE",
-      "id": "d73a010c4d4140f2"
+      "id": "bf63a31c56c70044"
     },
     {
       "category": "electricidad",
@@ -40,7 +40,7 @@
       "expected_restoration": "2026-10-25 13:00",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T15:42:31Z",
+      "observed_at": "2026-10-25T16:00:08Z",
       "confirmation": "Publicado por ENRE",
       "id": "676b1b6fc18e162d"
     },
@@ -54,7 +54,7 @@
       "expected_restoration": "2026-10-25 15:33",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T15:42:31Z",
+      "observed_at": "2026-10-25T16:00:08Z",
       "confirmation": "Publicado por ENRE",
       "id": "ae859cb0740299f8"
     },
@@ -68,7 +68,7 @@
       "expected_restoration": "2026-10-25 17:00",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T15:42:31Z",
+      "observed_at": "2026-10-25T16:00:08Z",
       "confirmation": "Publicado por ENRE",
       "id": "b73de7422a73504b"
     },
@@ -79,10 +79,10 @@
       "partido": "LOMAS DE ZAMORA",
       "localidad": "ZONA RURAL",
       "users_affected": "748",
-      "expected_restoration": "Sin datos",
+      "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T15:42:31Z",
+      "observed_at": "2026-10-25T16:00:08Z",
       "confirmation": "Publicado por ENRE",
       "id": "044a556b9143152b"
     },
@@ -96,7 +96,7 @@
       "expected_restoration": "2026-10-25 15:36",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T15:42:31Z",
+      "observed_at": "2026-10-25T16:00:08Z",
       "confirmation": "Publicado por ENRE",
       "id": "5aaeb217ce5272ca"
     },
@@ -106,13 +106,13 @@
       "company": "Edesur",
       "partido": "ALMIRANTE BROWN",
       "localidad": "RAFAEL CALZADA",
-      "users_affected": "22",
+      "users_affected": "24",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T15:42:31Z",
+      "observed_at": "2026-10-25T16:00:08Z",
       "confirmation": "Publicado por ENRE",
-      "id": "07331b9412bcbe8b"
+      "id": "7ba9188980c651a3"
     },
     {
       "category": "electricidad",
@@ -124,7 +124,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T15:42:31Z",
+      "observed_at": "2026-10-25T16:00:08Z",
       "confirmation": "Publicado por ENRE",
       "id": "dfc6b20bedcfe35a"
     },
@@ -134,13 +134,13 @@
       "company": "Edesur",
       "partido": "CAPITAL",
       "localidad": "CABALLITO",
-      "users_affected": "19",
+      "users_affected": "20",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T15:42:31Z",
+      "observed_at": "2026-10-25T16:00:08Z",
       "confirmation": "Publicado por ENRE",
-      "id": "a5427b43098a0e33"
+      "id": "5f776f9b488f02d1"
     },
     {
       "category": "electricidad",
@@ -152,7 +152,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T15:42:31Z",
+      "observed_at": "2026-10-25T16:00:08Z",
       "confirmation": "Publicado por ENRE",
       "id": "f55dcdf617705652"
     },
@@ -166,7 +166,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T15:42:31Z",
+      "observed_at": "2026-10-25T16:00:08Z",
       "confirmation": "Publicado por ENRE",
       "id": "259e805d64d37e8f"
     },
@@ -180,7 +180,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T15:42:31Z",
+      "observed_at": "2026-10-25T16:00:08Z",
       "confirmation": "Publicado por ENRE",
       "id": "60a7785820523673"
     },
@@ -194,7 +194,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T15:42:31Z",
+      "observed_at": "2026-10-25T16:00:08Z",
       "confirmation": "Publicado por ENRE",
       "id": "078dd8221ab94735"
     }
@@ -203,13 +203,13 @@
     "edenor": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDN.js",
-      "checked_at": "2026-10-25T15:42:31Z",
+      "checked_at": "2026-10-25T16:00:08Z",
       "event_count": 1
     },
     "edesur": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDS.js",
-      "checked_at": "2026-10-25T15:42:31Z",
+      "checked_at": "2026-10-25T16:00:08Z",
       "event_count": 13
     }
   },
@@ -218,16 +218,16 @@
     "year": 2026,
     "country": "Argentina",
     "source_url": "https://www.bcra.gob.ar/consulta-feriados-bancarios-2026/",
-    "source_reviewed_at": "2026-10-24",
-    "message": "Calendario oficial consultado en la fecha indicada; no es un control en vivo de sucursales.",
+    "source_reviewed_at": "2026-10-25",
+    "message": "Calendario del BCRA consultado y verificado automáticamente; no indica el estado en vivo de sucursales.",
     "upcoming": [
       {
         "date": "2026-11-09",
-        "reason": "Feriado nacional por visita del Papa León XIV"
+        "reason": "Feriado nacional con motivo de la visita de Su Santidad el Papa León XIV"
       },
       {
         "date": "2026-11-10",
-        "reason": "Feriado bancario por visita del Papa León XIV"
+        "reason": "Feriado bancario con motivo de la visita de Su Santidad el Papa León XIV"
       },
       {
         "date": "2026-11-23",
@@ -239,9 +239,11 @@
       },
       {
         "date": "2026-12-08",
-        "reason": "Inmaculada Concepción de María"
+        "reason": "Día de la Inmaculada Concepción de María"
       }
-    ]
+    ],
+    "source_retrieval": "ok",
+    "checked_at": "2026-10-25T16:00:08Z"
   },
   "coverage": {
     "trains": "manual_notices_only",
@@ -256,13 +258,13 @@
       "status": "not_connected",
       "message": "No hay conexión verificada con una fuente automática de estado de la línea 57.",
       "reference_url": "https://www.argentina.gob.ar/sube/cuandosubo",
-      "checked_at": "2026-10-25T15:42:31Z"
+      "checked_at": "2026-10-25T16:00:08Z"
     }
   },
   "subte": {
     "status": "unverified",
     "message": "La página no publica una fecha de actualización verificable.",
-    "checked_at": "2026-10-25T15:42:31Z",
+    "checked_at": "2026-10-25T16:00:08Z",
     "url": "https://buenosaires.gob.ar/inicio/mis-documentos",
     "lines": []
   },
