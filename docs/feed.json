@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-25T06:53:17Z",
+  "generated_at": "2026-10-25T07:45:49Z",
   "alerts": [
     {
       "category": "electricidad",
@@ -12,37 +12,9 @@
       "expected_restoration": "Sin datos",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T06:53:17Z",
+      "observed_at": "2026-10-25T07:45:49Z",
       "confirmation": "Publicado por ENRE",
       "id": "044a556b9143152b"
-    },
-    {
-      "category": "electricidad",
-      "title": "Interrupción de media tensión",
-      "company": "Edesur",
-      "partido": "CAPITAL FEDERAL",
-      "localidad": "MONTE CASTRO",
-      "users_affected": "869",
-      "expected_restoration": "2026-10-25 06:12",
-      "zone_detail": null,
-      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T06:53:17Z",
-      "confirmation": "Publicado por ENRE",
-      "id": "4d4ddd84dbec8c26"
-    },
-    {
-      "category": "electricidad",
-      "title": "Interrupción de media tensión",
-      "company": "Edesur",
-      "partido": "CAPITAL FEDERAL",
-      "localidad": "VELEZ SARFIELD",
-      "users_affected": "572",
-      "expected_restoration": "2026-10-25 06:12",
-      "zone_detail": null,
-      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T06:53:17Z",
-      "confirmation": "Publicado por ENRE",
-      "id": "7020db17076598da"
     },
     {
       "category": "electricidad",
@@ -54,7 +26,7 @@
       "expected_restoration": "2026-10-25 06:48",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T06:53:17Z",
+      "observed_at": "2026-10-25T07:45:49Z",
       "confirmation": "Publicado por ENRE",
       "id": "ebe94ff2bd363905"
     },
@@ -64,13 +36,13 @@
       "company": "Edesur",
       "partido": "ALMIRANTE BROWN",
       "localidad": "MARMOL",
-      "users_affected": "4",
+      "users_affected": "6",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T06:53:17Z",
+      "observed_at": "2026-10-25T07:45:49Z",
       "confirmation": "Publicado por ENRE",
-      "id": "36f6747598bc047b"
+      "id": "9e1f20840db201d4"
     },
     {
       "category": "electricidad",
@@ -82,7 +54,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T06:53:17Z",
+      "observed_at": "2026-10-25T07:45:49Z",
       "confirmation": "Publicado por ENRE",
       "id": "dfc6b20bedcfe35a"
     },
@@ -96,7 +68,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T06:53:17Z",
+      "observed_at": "2026-10-25T07:45:49Z",
       "confirmation": "Publicado por ENRE",
       "id": "9e7b98e9050bf75d"
     },
@@ -105,28 +77,28 @@
       "title": "Interrupción de baja tensión",
       "company": "Edesur",
       "partido": "CAPITAL",
-      "localidad": "VILLA SOLDATI",
-      "users_affected": "7",
+      "localidad": "PARQUE PATRICIOS",
+      "users_affected": "2",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T06:53:17Z",
+      "observed_at": "2026-10-25T07:45:49Z",
       "confirmation": "Publicado por ENRE",
-      "id": "d048cf2755d5698b"
+      "id": "801c0adb0a461632"
     }
   ],
   "sources": {
     "edenor": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDN.js",
-      "checked_at": "2026-10-25T06:53:17Z",
+      "checked_at": "2026-10-25T07:45:49Z",
       "event_count": 0
     },
     "edesur": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDS.js",
-      "checked_at": "2026-10-25T06:53:17Z",
-      "event_count": 8
+      "checked_at": "2026-10-25T07:45:49Z",
+      "event_count": 6
     }
   },
   "banking": {
@@ -172,7 +144,7 @@
       "status": "not_connected",
       "message": "No hay conexión verificada con una fuente automática de estado de la línea 57.",
       "reference_url": "https://www.argentina.gob.ar/sube/cuandosubo",
-      "checked_at": "2026-10-25T06:53:17Z"
+      "checked_at": "2026-10-25T07:45:49Z"
     }
   },
   "public_notice_count": 0
