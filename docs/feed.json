@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-25T08:43:48Z",
+  "generated_at": "2026-10-25T09:42:55Z",
   "alerts": [
     {
       "category": "electricidad",
@@ -12,7 +12,7 @@
       "expected_restoration": "Sin datos",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T08:43:48Z",
+      "observed_at": "2026-10-25T09:42:55Z",
       "confirmation": "Publicado por ENRE",
       "id": "044a556b9143152b"
     },
@@ -26,7 +26,7 @@
       "expected_restoration": "2026-10-25 06:48",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T08:43:48Z",
+      "observed_at": "2026-10-25T09:42:55Z",
       "confirmation": "Publicado por ENRE",
       "id": "ebe94ff2bd363905"
     },
@@ -35,14 +35,14 @@
       "title": "Interrupción de baja tensión",
       "company": "Edesur",
       "partido": "ALMIRANTE BROWN",
-      "localidad": "MARMOL",
-      "users_affected": "7",
+      "localidad": "RAFAEL CALZADA",
+      "users_affected": "4",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T08:43:48Z",
+      "observed_at": "2026-10-25T09:42:55Z",
       "confirmation": "Publicado por ENRE",
-      "id": "6fa9d574f7d7465a"
+      "id": "f20e44d6c285822f"
     },
     {
       "category": "electricidad",
@@ -54,7 +54,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T08:43:48Z",
+      "observed_at": "2026-10-25T09:42:55Z",
       "confirmation": "Publicado por ENRE",
       "id": "dfc6b20bedcfe35a"
     },
@@ -68,37 +68,23 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T08:43:48Z",
+      "observed_at": "2026-10-25T09:42:55Z",
       "confirmation": "Publicado por ENRE",
       "id": "9e7b98e9050bf75d"
-    },
-    {
-      "category": "electricidad",
-      "title": "Interrupción de baja tensión",
-      "company": "Edesur",
-      "partido": "CAPITAL",
-      "localidad": "PARQUE PATRICIOS",
-      "users_affected": "4",
-      "expected_restoration": null,
-      "zone_detail": null,
-      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T08:43:48Z",
-      "confirmation": "Publicado por ENRE",
-      "id": "f8e7c31f3f353bc5"
     }
   ],
   "sources": {
     "edenor": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDN.js",
-      "checked_at": "2026-10-25T08:43:48Z",
+      "checked_at": "2026-10-25T09:42:55Z",
       "event_count": 0
     },
     "edesur": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDS.js",
-      "checked_at": "2026-10-25T08:43:48Z",
-      "event_count": 6
+      "checked_at": "2026-10-25T09:42:55Z",
+      "event_count": 5
     }
   },
   "banking": {
@@ -144,7 +130,7 @@
       "status": "not_connected",
       "message": "No hay conexión verificada con una fuente automática de estado de la línea 57.",
       "reference_url": "https://www.argentina.gob.ar/sube/cuandosubo",
-      "checked_at": "2026-10-25T08:43:48Z"
+      "checked_at": "2026-10-25T09:42:55Z"
     }
   },
   "public_notice_count": 0
