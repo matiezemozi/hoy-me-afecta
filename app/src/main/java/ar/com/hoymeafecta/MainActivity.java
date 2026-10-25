@@ -46,7 +46,7 @@ public class MainActivity extends Activity {
             "República Dominicana", "Uruguay", "Venezuela"
     };
     private LinearLayout root;
-    private EditText placeField, lineField, branchField;
+    private EditText placeField, lineField, branchField, trainField;
     private Spinner countrySpinner;
     private SharedPreferences prefs;
     private JSONObject feed;
@@ -146,7 +146,7 @@ public class MainActivity extends Activity {
 
         root.addView(text("HOY ME AFECTA", 26, INK, true));
         root.addView(text("Lo que te conviene saber antes de salir", 14, GREY, false));
-        root.addView(text("Piloto v3 · fuentes verificables, sin inventar estados de servicio", 12, GREY, false));
+        root.addView(text("Piloto v4 · avisos verificados, calendario bancario y cobertura parcial", 12, GREY, false));
         LinearLayout status = card();
         status.addView(text(connection, 14, BLUE, false));
         if (feed != null) {
@@ -178,6 +178,9 @@ public class MainActivity extends Activity {
         setup.addView(text("Ramal (opcional)", 13, GREY, true));
         branchField = edit("Ejemplo: Q", prefs.getString("branch", ""));
         setup.addView(branchField);
+        setup.addView(text("Tren habitual (opcional)", 13, GREY, true));
+        trainField = edit("Ejemplo: Sarmiento, Mitre, San Martín", prefs.getString("train", ""));
+        setup.addView(trainField);
         setup.addView(text("No se necesita GPS. La cobertura se ampliará progresivamente.",
                 12, GREY, false));
         setup.addView(button("Guardar y actualizar", () -> {
@@ -186,6 +189,7 @@ public class MainActivity extends Activity {
                     .putString("place", placeField.getText().toString().trim())
                     .putString("line", lineField.getText().toString().trim())
                     .putString("branch", branchField.getText().toString().trim())
+                    .putString("train", trainField.getText().toString().trim())
                     .apply();
             draw();
             refresh();
@@ -197,6 +201,20 @@ public class MainActivity extends Activity {
         electricity();
         title("Transporte · colectivos");
         buses();
+        title("Trenes");
+        publicCategory("tren", "Estado del servicio", "La aplicación oficial Trenes Argentinos informa cambios y horarios, pero no tenemos acceso automático verificado a su estado.",
+                "Consultar Trenes Argentinos", "https://www.argentina.gob.ar/transporte/trenes-argentinos/app");
+        title("Bancos · atención presencial");
+        banks();
+        title("Operativos públicos · impacto en la circulación");
+        publicCategory("operativo_publico", "Avisos de accesos y circulación", "Solo se muestran efectos anunciados oficialmente sobre la circulación o eventos públicos. No se muestran ubicaciones de controles ni despliegues policiales.",
+                "Consultar seguridad y tránsito CABA", "https://buenosaires.gob.ar/");
+        title("Agua");
+        publicCategory("agua", "Interrupciones del suministro", "Todavía no existe un conector automático verificado para el servicio de agua.",
+                "Consultar AySA", "https://www.aysa.com.ar/");
+        title("Tránsito y vías públicas");
+        publicCategory("transito", "Cortes, obras y desvíos", "Aún no hay un conector automático verificado para cortes de tránsito.",
+                "Consultar BA Cómo Llego", "https://mapa.buenosaires.gob.ar/");
         title("Información y fuentes");
         LinearLayout notes = card();
         notes.addView(text("Piloto: la fuente conectada actualmente es el ENRE para Edenor y Edesur. " +
@@ -206,6 +224,9 @@ public class MainActivity extends Activity {
         notes.addView(text("El informe y cada fuente eléctrica deben tener menos de " +
                 "3 horas para mostrar avisos como recientes. La aplicación no sustituye las alertas oficiales.",
                 13, GREY, false));
+        notes.addView(text("Bancos: calendario nacional del BCRA registrado el 24/10/2026; no se consulta en tiempo real y puede sufrir cambios. " +
+                "Trenes, agua, tránsito y operativos públicos: sin conexión automática, admiten avisos documentados con fecha y fuente.",
+                12, GREY, false));
         notes.addView(text("Las zonas se comparan por nombre exacto con partido o localidad. " +
                 "No se comprueba si un corte alcanza una dirección específica.", 12, GREY, false));
     }
@@ -296,20 +317,27 @@ public class MainActivity extends Activity {
             return;
         }
         JSONObject sources = feed.optJSONObject("sources");
-        if (sources == null || (!sourceFresh(sources.optJSONObject("edenor")) &&
-                !sourceFresh(sources.optJSONObject("edesur")))) {
-            box.addView(text("Ninguna fuente eléctrica dispone de una consulta reciente validada.",
-                    13, GREY, false));
-            return;
-        }
+        boolean electricityConnected = sources != null &&
+                (sourceFresh(sources.optJSONObject("edenor")) ||
+                 sourceFresh(sources.optJSONObject("edesur")));
+        if (!electricityConnected) box.addView(text("No hay fuentes eléctricas recientes verificadas.",
+                13, GREY, true));
         int count = matchingElectricityCount();
-        box.addView(text(count == 0 ? "Sin avisos eléctricos coincidentes en las fuentes disponibles" :
+        box.addView(text(!electricityConnected ? "Estado eléctrico no comprobado" :
+                        count == 0 ? "Sin avisos eléctricos coincidentes en las fuentes disponibles" :
                         count + (count == 1 ? " aviso eléctrico coincidente" : " avisos eléctricos coincidentes"),
                 15, count == 0 ? GREY : INK, true));
         box.addView(text("Zona(s): " + prefs.getString("place", "Sin configurar") +
                 " · Cobertura parcial: ENRE para Edenor/Edesur, no todas las distribuidoras.",
                 12, GREY, false));
         box.addView(text("Colectivo " + favoriteLine() + ": sin conexión automática verificada de demoras.",
+                12, GREY, false));
+        int other = countPublicMatches("tren") + countPublicMatches("agua") +
+                countPublicMatches("transito") + countPublicMatches("banco") +
+                countPublicMatches("operativo_publico");
+        box.addView(text(other == 0 ? "Sin otros avisos públicos vigentes verificados para tus zonas" :
+                other + " avisos públicos verificados para tus zonas", 12, GREY, false));
+        box.addView(text("Feriados bancarios: calendario oficial nacional disponible en su sección; no equivale a estado de sucursales.",
                 12, GREY, false));
         if (count == 0) box.addView(text("Ausencia de reportes no significa ausencia de problemas.",
                 12, GREY, false));
@@ -446,6 +474,116 @@ public class MainActivity extends Activity {
             c.addView(button("Ver recorridos oficiales de la línea 57", () ->
                     open("https://www.argentina.gob.ar/sites/default/files/recorridos_web_0/057.pdf")));
         }
+    }
+
+
+    private boolean validPublicAlert(JSONObject a, String category) {
+        if (a == null || !category.equals(usable(a, "category")) || !isFresh()) return false;
+        if (!"Argentina".equals(selectedCountry()) ||
+                !"Argentina".equals(usable(a, "country"))) return false;
+        if (!selectedAreaMatches(usable(a, "partido"), usable(a, "localidad"))) return false;
+        Date verified = parseUtc(usable(a, "observed_at"));
+        Date end = parseUtc(usable(a, "valid_until"));
+        if (verified == null || end == null) return false;
+        long now = System.currentTimeMillis();
+        if (verified.getTime() > now + 60000L || now - verified.getTime() >= 24L*3600000L ||
+                end.getTime() <= now) return false;
+        if ("tren".equals(category)) {
+            String chosen = norm(prefs.getString("train", ""));
+            if (!chosen.isEmpty() && !chosen.equals(norm(usable(a, "line")))) return false;
+        }
+        return usable(a, "source_url").startsWith("https://");
+    }
+
+    private int countPublicMatches(String category) {
+        if (feed == null) return 0;
+        JSONArray alerts = feed.optJSONArray("alerts");
+        if (alerts == null) return 0;
+        int count = 0;
+        for (int i = 0; i < alerts.length(); i++)
+            if (validPublicAlert(alerts.optJSONObject(i), category)) count++;
+        return count;
+    }
+
+    private void showPublicNotices(LinearLayout card, String category) {
+        if (feed == null || !isFresh()) {
+            card.addView(text("Sin informe reciente; no se muestran avisos como vigentes.", 13, GREY, false));
+            return;
+        }
+        if (prefs.getString("place", "").trim().isEmpty()) {
+            card.addView(text("Elegí tus zonas para consultar avisos locales.", 13, GREY, false));
+            return;
+        }
+        JSONArray alerts = feed.optJSONArray("alerts");
+        int found = 0;
+        if (alerts != null) for (int i=0; i<alerts.length() && found<12; i++) {
+            JSONObject a = alerts.optJSONObject(i);
+            if (!validPublicAlert(a, category)) continue;
+            card.addView(text("• " + usable(a, "title"), 15, INK, true));
+            card.addView(text(usable(a, "description"), 13, GREY, false));
+            String zone = usable(a, "partido") + " · " + usable(a, "localidad");
+            String train = usable(a, "line");
+            card.addView(text("Zona: " + zone + (train.isEmpty() ? "" : " · Línea: " + train), 12, GREY, false));
+            card.addView(text("Verificado: " + formatUtc(usable(a, "observed_at")) +
+                    " · Válido hasta: " + formatUtc(usable(a, "valid_until")), 12, GREY, false));
+            String url = usable(a, "source_url");
+            card.addView(button("Ver publicación oficial", () -> open(url)));
+            found++;
+        }
+        if (found == 0) card.addView(text("No hay avisos documentados vigentes para tus zonas en esta categoría. " +
+                "No significa que el servicio sea normal.", 13, GREY, false));
+    }
+
+    private void publicCategory(String category, String subtitle, String explanation,
+                                String buttonTitle, String sourceUrl) {
+        LinearLayout c = card();
+        if (!"Argentina".equals(selectedCountry())) {
+            c.addView(text("Cobertura en preparación para " + selectedCountry() +
+                    ". Todavía no tenemos fuentes conectadas en este país.", 13, GREY, false));
+            return;
+        }
+        c.addView(text(subtitle, 15, INK, true));
+        if ("tren".equals(category)) {
+            String train = prefs.getString("train", "").trim();
+            c.addView(text(train.isEmpty() ? "Tren habitual no seleccionado" : "Tren seleccionado: " + train,
+                    12, GREY, false));
+        }
+        c.addView(text(explanation, 13, GREY, false));
+        showPublicNotices(c, category);
+        c.addView(button(buttonTitle, () -> open(sourceUrl)));
+    }
+
+    private void banks() {
+        LinearLayout c = card();
+        if (!"Argentina".equals(selectedCountry())) {
+            c.addView(text("Calendario bancario aún no conectado para " + selectedCountry(), 13, GREY, false));
+            return;
+        }
+        c.addView(text("Calendario nacional de feriados BCRA (referencia publicada, no estado en vivo).", 13, GREY, false));
+        if (feed == null || !isFresh()) {
+            c.addView(text("Sin informe reciente. Consultá el BCRA para confirmar fechas.", 13, GREY, false));
+        } else {
+            JSONObject banking = feed.optJSONObject("banking");
+            if (banking != null && "published_reference_2026".equals(usable(banking, "status"))) {
+                c.addView(text("Calendario revisado: " + usable(banking, "source_reviewed_at") +
+                        ". Podría haber cambios posteriores.", 12, GREY, false));
+                JSONArray upcoming = banking.optJSONArray("upcoming");
+                if (upcoming != null && upcoming.length() > 0) {
+                    for (int i=0; i<Math.min(3, upcoming.length()); i++) {
+                        JSONObject event = upcoming.optJSONObject(i);
+                        if (event == null) continue;
+                        c.addView(text("• " + usable(event, "date") + " · " + usable(event, "reason"),
+                                13, INK, i==0));
+                    }
+                    c.addView(text("Es un calendario general, no una confirmación sobre sucursales, cajeros o plataformas bancarias.",
+                            12, GREY, false));
+                } else c.addView(text("No hay próximos feriados cargados para 2026.", 13, GREY, false));
+            } else c.addView(text("Calendario de este año todavía no disponible en el sistema.",
+                    13, GREY, false));
+        }
+        showPublicNotices(c, "banco");
+        c.addView(button("Consultar calendario oficial BCRA", () ->
+                open("https://www.bcra.gob.ar/consulta-feriados-bancarios-2026/")));
     }
 
     private void open(String url) {
