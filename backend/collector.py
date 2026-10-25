@@ -18,6 +18,7 @@ import json5
 
 from bank_calendar import banking_calendar
 from public_notices import import_public_notices
+from subte_status import collect_subte
 
 BASE = 'https://www.enre.gov.ar/paginacorte/js/'
 FEEDS = {'edenor': BASE + 'data_EDN.js', 'edesur': BASE + 'data_EDS.js'}
@@ -171,7 +172,7 @@ def load_bus_alerts(path, generated_at):
     return output
 
 
-def collect(dest, manual, public_manual=None):
+def collect(dest, manual, public_manual=None, *, fetch_subte=None):
     timestamp = now_utc()
     output = {
         'schema_version': 1, 'generated_at': timestamp, 'alerts': [],
@@ -189,6 +190,14 @@ def collect(dest, manual, public_manual=None):
             'checked_at': timestamp,
         }},
     }
+    # Existing tests do not perform network calls to the experimental subte source.
+    # The CLI explicitly passes a fetcher; failures never become 'normal'.
+    try:
+        output['subte'] = (fetch_subte(timestamp) if fetch_subte is not None else {
+            'status': 'not_checked', 'lines': [], 'checked_at': timestamp})
+    except Exception as exc:
+        output['subte'] = {'status': 'error', 'lines': [], 'checked_at': timestamp,
+                           'message': f'{type(exc).__name__}: {str(exc)[:170]}'}
     for company, url in FEEDS.items():
         try:
             doc = fetch_js(url)
@@ -230,6 +239,8 @@ def collect(dest, manual, public_manual=None):
     print(f'Feed written to {dest}: {len(output["alerts"])} alerts')
     for company, source in output['sources'].items():
         print(f'{company}: {source["status"]}, {source.get("event_count", source.get("message"))}')
+    status = output['subte']
+    print(f'subte CABA: {status["status"]}; {status.get("message", status.get("event_count", 0))}')
     # Workflow remains successful when a provider is down so that the last
     # attempt is visible. No failure is converted to "no incidents".
 
@@ -240,4 +251,5 @@ if __name__ == '__main__':
     parser.add_argument('--manual', default='manual/linea57_alertas.json')
     parser.add_argument('--public-manual', default='manual/avisos_publicos.json')
     args = parser.parse_args()
-    collect(Path(args.output), Path(args.manual), Path(args.public_manual))
+    collect(Path(args.output), Path(args.manual), Path(args.public_manual),
+            fetch_subte=collect_subte)
