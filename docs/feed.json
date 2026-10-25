@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-25T21:41:27Z",
+  "generated_at": "2026-10-25T22:39:08Z",
   "alerts": [
     {
       "category": "electricidad",
@@ -12,7 +12,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
-      "observed_at": "2026-10-25T21:41:27Z",
+      "observed_at": "2026-10-25T22:39:08Z",
       "confirmation": "Publicado por ENRE",
       "id": "7b757eaf7cafb291"
     },
@@ -26,7 +26,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T21:41:27Z",
+      "observed_at": "2026-10-25T22:39:08Z",
       "confirmation": "Publicado por ENRE",
       "id": "bf63a31c56c70044"
     },
@@ -40,7 +40,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T21:41:27Z",
+      "observed_at": "2026-10-25T22:39:08Z",
       "confirmation": "Publicado por ENRE",
       "id": "ba40cdcd098c4def"
     },
@@ -54,7 +54,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T21:41:27Z",
+      "observed_at": "2026-10-25T22:39:08Z",
       "confirmation": "Publicado por ENRE",
       "id": "dfc6b20bedcfe35a"
     },
@@ -68,7 +68,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T21:41:27Z",
+      "observed_at": "2026-10-25T22:39:08Z",
       "confirmation": "Publicado por ENRE",
       "id": "2024f91527b77dac"
     },
@@ -78,26 +78,26 @@
       "company": "Edesur",
       "partido": "CAPITAL",
       "localidad": "SAN NICOLAS",
-      "users_affected": "18",
+      "users_affected": "17",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T21:41:27Z",
+      "observed_at": "2026-10-25T22:39:08Z",
       "confirmation": "Publicado por ENRE",
-      "id": "538676a236045b48"
+      "id": "1ea035dc2c6923c4"
     }
   ],
   "sources": {
     "edenor": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDN.js",
-      "checked_at": "2026-10-25T21:41:27Z",
+      "checked_at": "2026-10-25T22:39:08Z",
       "event_count": 1
     },
     "edesur": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDS.js",
-      "checked_at": "2026-10-25T21:41:27Z",
+      "checked_at": "2026-10-25T22:39:08Z",
       "event_count": 5
     }
   },
@@ -131,7 +131,7 @@
       }
     ],
     "source_retrieval": "ok",
-    "checked_at": "2026-10-25T21:41:27Z"
+    "checked_at": "2026-10-25T22:39:08Z"
   },
   "coverage": {
     "trains": "manual_notices_only",
@@ -146,13 +146,13 @@
       "status": "not_connected",
       "message": "No hay conexión verificada con una fuente automática de estado de la línea 57.",
       "reference_url": "https://www.argentina.gob.ar/sube/cuandosubo",
-      "checked_at": "2026-10-25T21:41:27Z"
+      "checked_at": "2026-10-25T22:39:08Z"
     }
   },
   "subte": {
     "status": "unverified",
     "message": "La página no publica una fecha de actualización verificable.",
-    "checked_at": "2026-10-25T21:41:27Z",
+    "checked_at": "2026-10-25T22:39:08Z",
     "url": "https://buenosaires.gob.ar/inicio/mis-documentos",
     "lines": []
   },
@@ -160,10 +160,10 @@
   "change_tracking": {
     "status": "ok",
     "meaning": "Las novedades indican cambios respecto del informe anterior; no prueban cuándo comenzó un corte ni que uno ausente esté resuelto.",
-    "compared_to": "2026-10-25T20:40:02Z",
+    "compared_to": "2026-10-25T21:41:27Z",
     "new_in_publication_count": 0,
     "new_in_publication": [],
-    "no_longer_listed_count": 1,
+    "no_longer_listed_count": 0,
     "providers_compared": [
       "edenor",
       "edesur"
@@ -176,51 +176,6 @@
     "status": "ready",
     "retention_hours": 3,
     "meaning": "Apareció en una publicación nueva; no prueba inicio del corte.",
-    "events": [
-      {
-        "event_id": "02f35f6217d974a82f0be486",
-        "kind": "electricity_publication_added",
-        "country": "Argentina",
-        "company": "Edenor",
-        "title": "Interrupción de media tensión",
-        "partido": "SAN FERNANDO",
-        "localidad": "DELTA 2DA SECCION (SF)",
-        "first_seen_at": "2026-10-25T19:37:28Z",
-        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html"
-      },
-      {
-        "event_id": "1e23b742b770e75e3318c7fc",
-        "kind": "electricity_publication_added",
-        "country": "Argentina",
-        "company": "Edenor",
-        "title": "Interrupción de media tensión",
-        "partido": "MALVINAS ARGENTINAS",
-        "localidad": "LOS POLVORINES",
-        "first_seen_at": "2026-10-25T18:45:16Z",
-        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html"
-      },
-      {
-        "event_id": "ced1d8d2a822a46fb7c3cb4c",
-        "kind": "electricity_publication_added",
-        "country": "Argentina",
-        "company": "Edenor",
-        "title": "Interrupción de media tensión",
-        "partido": "SAN MIGUEL",
-        "localidad": "CAMPO DE MAYO",
-        "first_seen_at": "2026-10-25T18:45:16Z",
-        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html"
-      },
-      {
-        "event_id": "177957e37d1eafb008ad2d89",
-        "kind": "electricity_publication_added",
-        "country": "Argentina",
-        "company": "Edesur",
-        "title": "Interrupción de baja tensión",
-        "partido": "QUILMES",
-        "localidad": "BERNAL",
-        "first_seen_at": "2026-10-25T18:45:16Z",
-        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html"
-      }
-    ]
+    "events": []
   }
 }
