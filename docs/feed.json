@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-25T02:52:33Z",
+  "generated_at": "2026-10-25T03:44:47Z",
   "alerts": [
     {
       "category": "electricidad",
@@ -12,7 +12,7 @@
       "expected_restoration": "Sin datos",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T02:52:33Z",
+      "observed_at": "2026-10-25T03:44:47Z",
       "confirmation": "Publicado por ENRE",
       "id": "044a556b9143152b"
     },
@@ -23,12 +23,12 @@
       "partido": "ALMIRANTE BROWN",
       "localidad": "GLEW",
       "users_affected": "133",
-      "expected_restoration": "2026-10-25 00:37",
+      "expected_restoration": "Sin datos",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T02:52:33Z",
+      "observed_at": "2026-10-25T03:44:47Z",
       "confirmation": "Publicado por ENRE",
-      "id": "98566104fe447b51"
+      "id": "13cfac9f36e9bae9"
     },
     {
       "category": "electricidad",
@@ -36,27 +36,13 @@
       "company": "Edesur",
       "partido": "ALMIRANTE BROWN",
       "localidad": "MARMOL",
-      "users_affected": "16",
+      "users_affected": "18",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T02:52:33Z",
+      "observed_at": "2026-10-25T03:44:47Z",
       "confirmation": "Publicado por ENRE",
-      "id": "5a62cd4c4c9990da"
-    },
-    {
-      "category": "electricidad",
-      "title": "Interrupción de baja tensión",
-      "company": "Edesur",
-      "partido": "CAÑUELAS",
-      "localidad": "ZONA RURAL",
-      "users_affected": "16",
-      "expected_restoration": null,
-      "zone_detail": null,
-      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T02:52:33Z",
-      "confirmation": "Publicado por ENRE",
-      "id": "e009e51824077cad"
+      "id": "e47e0f361b22783c"
     },
     {
       "category": "electricidad",
@@ -68,7 +54,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T02:52:33Z",
+      "observed_at": "2026-10-25T03:44:47Z",
       "confirmation": "Publicado por ENRE",
       "id": "dfc6b20bedcfe35a"
     },
@@ -82,37 +68,23 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T02:52:33Z",
+      "observed_at": "2026-10-25T03:44:47Z",
       "confirmation": "Publicado por ENRE",
       "id": "58ee12436e4059fb"
-    },
-    {
-      "category": "electricidad",
-      "title": "Interrupción de baja tensión",
-      "company": "Edesur",
-      "partido": "LOMAS DE ZAMORA",
-      "localidad": "INGENIERO BUDGE",
-      "users_affected": "24",
-      "expected_restoration": null,
-      "zone_detail": null,
-      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T02:52:33Z",
-      "confirmation": "Publicado por ENRE",
-      "id": "7255f83d4be3c9d7"
     }
   ],
   "sources": {
     "edenor": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDN.js",
-      "checked_at": "2026-10-25T02:52:33Z",
+      "checked_at": "2026-10-25T03:44:47Z",
       "event_count": 0
     },
     "edesur": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDS.js",
-      "checked_at": "2026-10-25T02:52:33Z",
-      "event_count": 7
+      "checked_at": "2026-10-25T03:44:47Z",
+      "event_count": 5
     }
   },
   "banking": {
@@ -158,7 +130,7 @@
       "status": "not_connected",
       "message": "No hay conexión verificada con una fuente automática de estado de la línea 57.",
       "reference_url": "https://www.argentina.gob.ar/sube/cuandosubo",
-      "checked_at": "2026-10-25T02:52:33Z"
+      "checked_at": "2026-10-25T03:44:47Z"
     }
   },
   "public_notice_count": 0
