@@ -19,6 +19,7 @@ import json5
 from bank_calendar import banking_calendar, refresh_official_calendar
 from public_notices import import_public_notices
 from subte_status import collect_subte
+from change_tracking import compare_feeds
 
 BASE = 'https://www.enre.gov.ar/paginacorte/js/'
 FEEDS = {'edenor': BASE + 'data_EDN.js', 'edesur': BASE + 'data_EDS.js'}
@@ -177,6 +178,14 @@ def load_bus_alerts(path, generated_at):
 
 
 def collect(dest, manual, public_manual=None, *, fetch_subte=None, fetch_banking=None):
+    previous = None
+    if dest.exists():
+        try:
+            prior = json.loads(dest.read_text(encoding="utf-8"))
+            if isinstance(prior, dict):
+                previous = prior
+        except (OSError, ValueError, UnicodeError):
+            pass  # A damaged earlier report must not stop the new collection.
     timestamp = now_utc()
     output = {
         'schema_version': 1, 'generated_at': timestamp, 'alerts': [],
@@ -238,6 +247,7 @@ def collect(dest, manual, public_manual=None, *, fetch_subte=None, fetch_banking
     except (ValueError, OSError) as exc:
         output['public_notice_error'] = str(exc)[:180]
         output['public_notice_count'] = 0
+    output['change_tracking'] = compare_feeds(previous, output)
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_text(json.dumps(output, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     print(f'Feed written to {dest}: {len(output["alerts"])} alerts')
@@ -245,6 +255,7 @@ def collect(dest, manual, public_manual=None, *, fetch_subte=None, fetch_banking
         print(f'{company}: {source["status"]}, {source.get("event_count", source.get("message"))}')
     status = output['subte']
     print(f'subte CABA: {status["status"]}; {status.get("message", status.get("event_count", 0))}')
+    print(f'Cambios ENRE: {output["change_tracking"]["status"]}; nuevos en publicación: {output["change_tracking"]["new_in_publication_count"]}')
     # Workflow remains successful when a provider is down so that the last
     # attempt is visible. No failure is converted to "no incidents".
 
