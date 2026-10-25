@@ -146,7 +146,7 @@ public class MainActivity extends Activity {
 
         root.addView(text("HOY ME AFECTA", 26, INK, true));
         root.addView(text("Lo que te conviene saber antes de salir", 14, GREY, false));
-        root.addView(text("Piloto v4 · avisos verificados, calendario bancario y cobertura parcial", 12, GREY, false));
+        root.addView(text("Piloto v5 · electricidad y diagnóstico seguro de subtes", 12, GREY, false));
         LinearLayout status = card();
         status.addView(text(connection, 14, BLUE, false));
         if (feed != null) {
@@ -201,6 +201,8 @@ public class MainActivity extends Activity {
         electricity();
         title("Transporte · colectivos");
         buses();
+        title("Subtes · Ciudad de Buenos Aires");
+        subtes();
         title("Trenes");
         publicCategory("tren", "Estado del servicio", "La aplicación oficial Trenes Argentinos informa cambios y horarios, pero no tenemos acceso automático verificado a su estado.",
                 "Consultar Trenes Argentinos", "https://www.argentina.gob.ar/transporte/trenes-argentinos/app");
@@ -217,8 +219,9 @@ public class MainActivity extends Activity {
                 "Consultar BA Cómo Llego", "https://mapa.buenosaires.gob.ar/");
         title("Información y fuentes");
         LinearLayout notes = card();
-        notes.addView(text("Piloto: la fuente conectada actualmente es el ENRE para Edenor y Edesur. " +
-                "No cubre todas las localidades ni distribuidoras de Argentina.", 13, GREY, false));
+        notes.addView(text("Fuentes: ENRE para Edenor y Edesur. Estado de subtes en prueba mediante " +
+                "una página pública de CABA, solo cuando tiene fecha verificable y reciente. " +
+                "No hay aún conexión en vivo con trenes ni colectivos.", 13, GREY, false));
         notes.addView(text("Un aviso publicado se refiere a un área; no confirma el estado de " +
                 "cada domicilio. Ausencia de avisos no equivale a servicio normal.", 13, GREY, false));
         notes.addView(text("El informe y cada fuente eléctrica deben tener menos de " +
@@ -551,6 +554,54 @@ public class MainActivity extends Activity {
         c.addView(text(explanation, 13, GREY, false));
         showPublicNotices(c, category);
         c.addView(button(buttonTitle, () -> open(sourceUrl)));
+    }
+
+    private void subtes() {
+        LinearLayout c = card();
+        c.addView(text("Estado publicado para toda la red de CABA; no se filtra por barrio.",
+                13, GREY, false));
+        if (!"Argentina".equals(selectedCountry())) {
+            c.addView(text("Esta fuente solo cubre la Ciudad de Buenos Aires.", 13, GREY, false));
+        } else if (feed == null || !isFresh()) {
+            c.addView(text("Sin informe reciente. No se presenta el servicio como normal.", 13, GREY, false));
+        } else {
+            JSONObject source = feed.optJSONObject("subte");
+            String state = usable(source, "status");
+            Date published = parseUtc(usable(source, "source_updated_at"));
+            long age = published == null ? Long.MAX_VALUE : System.currentTimeMillis() - published.getTime();
+            boolean valid = "ok".equals(state) && age >= -180000L && age < 90L * 60L * 1000L;
+            if (!valid) {
+                c.addView(text("Estado de subtes no comprobable como actual. No se muestran " +
+                        "interrupciones antiguas ni se presupone normalidad.", 13, GREY, true));
+                if ("stale".equals(state)) c.addView(text("La página oficial contiene datos vencidos.", 12, GREY, false));
+                else if ("unverified".equals(state)) c.addView(text("No se pudo verificar la fecha o la estructura del aviso.", 12, GREY, false));
+                else if ("error".equals(state)) c.addView(text("Falló la consulta a la fuente.", 12, GREY, false));
+                else c.addView(text("Fuente todavía no comprobada.", 12, GREY, false));
+            } else {
+                c.addView(text("La fuente indica actualización: " +
+                        formatUtc(usable(source, "source_updated_at")), 12, GREY, false));
+                c.addView(text("Consultado: " + formatUtc(usable(source, "checked_at")) +
+                        ". Confirmá antes de viajar.", 12, GREY, false));
+                JSONArray lines = source.optJSONArray("lines");
+                if (lines == null || lines.length() < 5) {
+                    c.addView(text("No se pudo verificar la lista de líneas.", 13, GREY, false));
+                } else {
+                    int affected = 0;
+                    for (int i = 0; i < lines.length(); i++) {
+                        JSONObject entry = lines.optJSONObject(i);
+                        if (entry != null && "affected".equals(usable(entry, "state"))) {
+                            c.addView(text("Línea " + usable(entry, "line") + ": " +
+                                    usable(entry, "description"), 13, INK, true));
+                            affected++;
+                        }
+                    }
+                    if (affected == 0) c.addView(text("La fuente no registra alteraciones en las líneas " +
+                            "reconocidas; esto no garantiza cada estación.", 13, GREY, false));
+                }
+            }
+        }
+        c.addView(button("Consultar estado oficial del subte", () ->
+                open("https://buenosaires.gob.ar/gcaba_historico/subte")));
     }
 
     private void banks() {
