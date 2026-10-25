@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-25T20:40:02Z",
+  "generated_at": "2026-10-25T21:41:27Z",
   "alerts": [
     {
       "category": "electricidad",
@@ -12,7 +12,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
-      "observed_at": "2026-10-25T20:40:02Z",
+      "observed_at": "2026-10-25T21:41:27Z",
       "confirmation": "Publicado por ENRE",
       "id": "7b757eaf7cafb291"
     },
@@ -26,7 +26,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T20:40:02Z",
+      "observed_at": "2026-10-25T21:41:27Z",
       "confirmation": "Publicado por ENRE",
       "id": "bf63a31c56c70044"
     },
@@ -40,7 +40,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T20:40:02Z",
+      "observed_at": "2026-10-25T21:41:27Z",
       "confirmation": "Publicado por ENRE",
       "id": "ba40cdcd098c4def"
     },
@@ -54,7 +54,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T20:40:02Z",
+      "observed_at": "2026-10-25T21:41:27Z",
       "confirmation": "Publicado por ENRE",
       "id": "dfc6b20bedcfe35a"
     },
@@ -68,7 +68,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T20:40:02Z",
+      "observed_at": "2026-10-25T21:41:27Z",
       "confirmation": "Publicado por ENRE",
       "id": "2024f91527b77dac"
     },
@@ -82,37 +82,23 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T20:40:02Z",
+      "observed_at": "2026-10-25T21:41:27Z",
       "confirmation": "Publicado por ENRE",
       "id": "538676a236045b48"
-    },
-    {
-      "category": "electricidad",
-      "title": "Interrupción de baja tensión",
-      "company": "Edesur",
-      "partido": "CAPITAL",
-      "localidad": "VILLA LURO",
-      "users_affected": "7",
-      "expected_restoration": null,
-      "zone_detail": null,
-      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T20:40:02Z",
-      "confirmation": "Publicado por ENRE",
-      "id": "5cdc557f70714189"
     }
   ],
   "sources": {
     "edenor": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDN.js",
-      "checked_at": "2026-10-25T20:40:02Z",
+      "checked_at": "2026-10-25T21:41:27Z",
       "event_count": 1
     },
     "edesur": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDS.js",
-      "checked_at": "2026-10-25T20:40:02Z",
-      "event_count": 6
+      "checked_at": "2026-10-25T21:41:27Z",
+      "event_count": 5
     }
   },
   "banking": {
@@ -145,7 +131,7 @@
       }
     ],
     "source_retrieval": "ok",
-    "checked_at": "2026-10-25T20:40:02Z"
+    "checked_at": "2026-10-25T21:41:27Z"
   },
   "coverage": {
     "trains": "manual_notices_only",
@@ -160,13 +146,13 @@
       "status": "not_connected",
       "message": "No hay conexión verificada con una fuente automática de estado de la línea 57.",
       "reference_url": "https://www.argentina.gob.ar/sube/cuandosubo",
-      "checked_at": "2026-10-25T20:40:02Z"
+      "checked_at": "2026-10-25T21:41:27Z"
     }
   },
   "subte": {
     "status": "unverified",
     "message": "La página no publica una fecha de actualización verificable.",
-    "checked_at": "2026-10-25T20:40:02Z",
+    "checked_at": "2026-10-25T21:41:27Z",
     "url": "https://buenosaires.gob.ar/inicio/mis-documentos",
     "lines": []
   },
@@ -174,7 +160,7 @@
   "change_tracking": {
     "status": "ok",
     "meaning": "Las novedades indican cambios respecto del informe anterior; no prueban cuándo comenzó un corte ni que uno ausente esté resuelto.",
-    "compared_to": "2026-10-25T19:37:28Z",
+    "compared_to": "2026-10-25T20:40:02Z",
     "new_in_publication_count": 0,
     "new_in_publication": [],
     "no_longer_listed_count": 1,
