@@ -181,8 +181,43 @@ public final class AlertNotifier {
         manager.notify(553, builder.build());
     }
 
+    // A local, clearly marked test. It does not simulate a real power outage.
+    public static boolean sendTestNotification(Context context) {
+        if (!permitted(context)) return false;
+        try {
+            NotificationManager manager = (NotificationManager)
+                    context.getSystemService(Context.NOTIFICATION_SERVICE);
+            if (manager == null) return false;
+            if (Build.VERSION.SDK_INT >= 26) {
+                NotificationChannel channel = new NotificationChannel(CHANNEL,
+                        "Novedades de electricidad", NotificationManager.IMPORTANCE_DEFAULT);
+                channel.setDescription("Avisos nuevos en publicaciones oficiales para tus zonas favoritas");
+                manager.createNotificationChannel(channel);
+                NotificationChannel active = manager.getNotificationChannel(CHANNEL);
+                if (active == null || active.getImportance() == NotificationManager.IMPORTANCE_NONE)
+                    return false;
+            }
+            if (Build.VERSION.SDK_INT >= 24 && !manager.areNotificationsEnabled()) return false;
+            Intent intent = new Intent(context, MainActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            PendingIntent pending = PendingIntent.getActivity(context, 1, intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+            Notification.Builder builder = Build.VERSION.SDK_INT >= 26 ?
+                    new Notification.Builder(context, CHANNEL) : new Notification.Builder(context);
+            builder.setSmallIcon(android.R.drawable.ic_dialog_info)
+                    .setContentTitle("HOY ME AFECTA - PRUEBA")
+                    .setContentText("Esta es una prueba local; no informa ningun corte real.")
+                    .setContentIntent(pending).setAutoCancel(true)
+                    .setWhen(System.currentTimeMillis());
+            if (Build.VERSION.SDK_INT < 26) builder.setPriority(Notification.PRIORITY_DEFAULT);
+            manager.notify(554, builder.build());
+            return true;
+        } catch (RuntimeException ignored) { return false; }
+    }
+
     // Background job fetches the same published feed as the main screen.
-    public static void fetchAndProcess(Context context) {
+    // Returns diagnostic text only; it never invents incidents or notifications.
+    public static String fetchAndProcess(Context context) {
         HttpURLConnection conn = null;
         try {
             conn = (HttpURLConnection) new URL(FEED_URL + "?bg=" + System.currentTimeMillis())
@@ -190,20 +225,33 @@ public final class AlertNotifier {
             conn.setConnectTimeout(12_000);
             conn.setReadTimeout(12_000);
             conn.setRequestProperty("Accept", "application/json");
-            if (conn.getResponseCode() != 200) return;
+            int http = conn.getResponseCode();
+            if (http != 200) return "HTTP " + http;
             ByteArrayOutputStream bytes = new ByteArrayOutputStream();
             try (InputStream input = conn.getInputStream()) {
                 byte[] data = new byte[4096];
                 int n;
                 while ((n = input.read(data)) != -1) {
-                    if (bytes.size() + n > MAX_BYTES) return;
+                    if (bytes.size() + n > MAX_BYTES) return "Archivo demasiado grande";
                     bytes.write(data, 0, n);
                 }
             }
             JSONObject result = new JSONObject(bytes.toString("UTF-8"));
+            if (result.optInt("schema_version") != 1) return "Formato no reconocido";
+            if (!recent(epoch(result.optString("generated_at", ""))))
+                return "Informe descargado, pero no es reciente";
+            JSONObject journal = result.optJSONObject("notification_events");
+            if (journal == null || !"ready".equals(journal.optString("status", "")) ||
+                    journal.optJSONArray("events") == null)
+                return "Informe descargado, pero sin historial de avisos listo";
+            if (!permitted(context)) return "Permiso de notificaciones no concedido";
+            if (!context.getSharedPreferences("hoy_me_afecta", Context.MODE_PRIVATE)
+                    .getBoolean("notifications_enabled", false))
+                return "Avisos desactivados";
             processFeed(context, result);
-        } catch (Exception ignored) {
-            // No notification when feed is missing, invalid, stale or unreachable.
+            return "Conexion correcta; historial de novedades disponible";
+        } catch (Exception ex) {
+            return "Fallo de red o datos: " + ex.getClass().getSimpleName();
         } finally {
             if (conn != null) conn.disconnect();
         }
