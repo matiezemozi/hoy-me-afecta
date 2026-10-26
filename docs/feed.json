@@ -1,20 +1,20 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-26T08:55:30Z",
+  "generated_at": "2026-10-26T09:55:20Z",
   "alerts": [
     {
       "category": "electricidad",
-      "title": "Interrupción de media tensión",
-      "company": "Edenor",
-      "partido": "CAPITAL FEDERAL",
-      "localidad": "NU?EZ",
-      "users_affected": "124",
-      "expected_restoration": "2026-10-26 08:00",
+      "title": "Interrupción de baja tensión",
+      "company": "Edesur",
+      "partido": "BERAZATEGUI",
+      "localidad": "SOURIGUES",
+      "users_affected": "59",
+      "expected_restoration": null,
       "zone_detail": null,
-      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
-      "observed_at": "2026-10-26T08:55:30Z",
+      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
+      "observed_at": "2026-10-26T09:55:20Z",
       "confirmation": "Publicado por ENRE",
-      "id": "4d7ef925dd3cac97"
+      "id": "5b2d12fe13b53fd5"
     },
     {
       "category": "electricidad",
@@ -26,7 +26,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-26T08:55:30Z",
+      "observed_at": "2026-10-26T09:55:20Z",
       "confirmation": "Publicado por ENRE",
       "id": "dfc6b20bedcfe35a"
     },
@@ -40,7 +40,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-26T08:55:30Z",
+      "observed_at": "2026-10-26T09:55:20Z",
       "confirmation": "Publicado por ENRE",
       "id": "f06939e194434821"
     },
@@ -50,13 +50,13 @@
       "company": "Edesur",
       "partido": "CAPITAL",
       "localidad": "PARQUE PATRICIOS",
-      "users_affected": "37",
+      "users_affected": "39",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-26T08:55:30Z",
+      "observed_at": "2026-10-26T09:55:20Z",
       "confirmation": "Publicado por ENRE",
-      "id": "86b0446b59924753"
+      "id": "bc3151d1b817a4f0"
     },
     {
       "category": "electricidad",
@@ -68,7 +68,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-26T08:55:30Z",
+      "observed_at": "2026-10-26T09:55:20Z",
       "confirmation": "Publicado por ENRE",
       "id": "2ebb97a96dc5a304"
     }
@@ -77,14 +77,14 @@
     "edenor": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDN.js",
-      "checked_at": "2026-10-26T08:55:30Z",
-      "event_count": 1
+      "checked_at": "2026-10-26T09:55:20Z",
+      "event_count": 0
     },
     "edesur": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDS.js",
-      "checked_at": "2026-10-26T08:55:30Z",
-      "event_count": 4
+      "checked_at": "2026-10-26T09:55:20Z",
+      "event_count": 5
     }
   },
   "banking": {
@@ -117,7 +117,7 @@
       }
     ],
     "source_retrieval": "ok",
-    "checked_at": "2026-10-26T08:55:30Z"
+    "checked_at": "2026-10-26T09:55:20Z"
   },
   "coverage": {
     "trains": "manual_notices_only",
@@ -132,13 +132,13 @@
       "status": "not_connected",
       "message": "No hay conexión verificada con una fuente automática de estado de la línea 57.",
       "reference_url": "https://www.argentina.gob.ar/sube/cuandosubo",
-      "checked_at": "2026-10-26T08:55:30Z"
+      "checked_at": "2026-10-26T09:55:20Z"
     }
   },
   "subte": {
     "status": "unverified",
     "message": "La página no publica una fecha de actualización verificable.",
-    "checked_at": "2026-10-26T08:55:30Z",
+    "checked_at": "2026-10-26T09:55:20Z",
     "url": "https://buenosaires.gob.ar/inicio/mis-documentos",
     "lines": []
   },
@@ -146,9 +146,20 @@
   "change_tracking": {
     "status": "ok",
     "meaning": "Las novedades indican cambios respecto del informe anterior; no prueban cuándo comenzó un corte ni que uno ausente esté resuelto.",
-    "compared_to": "2026-10-26T08:00:09Z",
-    "new_in_publication_count": 0,
-    "new_in_publication": [],
+    "compared_to": "2026-10-26T08:55:30Z",
+    "new_in_publication_count": 1,
+    "new_in_publication": [
+      {
+        "id": "5b2d12fe13b53fd5",
+        "company": "Edesur",
+        "title": "Interrupción de baja tensión",
+        "partido": "BERAZATEGUI",
+        "localidad": "SOURIGUES",
+        "observed_at": "2026-10-26T09:55:20Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
+        "meaning": "No figuraba en el informe anterior; inicio real desconocido."
+      }
+    ],
     "no_longer_listed_count": 1,
     "providers_compared": [
       "edenor",
@@ -163,6 +174,17 @@
     "retention_hours": 3,
     "meaning": "Apareció en una publicación nueva; no prueba inicio del corte.",
     "events": [
+      {
+        "event_id": "8bd38a43052b487a83f31743",
+        "kind": "electricity_publication_added",
+        "country": "Argentina",
+        "company": "Edesur",
+        "title": "Interrupción de baja tensión",
+        "partido": "BERAZATEGUI",
+        "localidad": "SOURIGUES",
+        "first_seen_at": "2026-10-26T09:55:20Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html"
+      },
       {
         "event_id": "0597fba5aa173504fce5d67c",
         "kind": "electricity_publication_added",
