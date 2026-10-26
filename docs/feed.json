@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-26T01:54:24Z",
+  "generated_at": "2026-10-26T02:46:57Z",
   "alerts": [
     {
       "category": "electricidad",
@@ -8,13 +8,13 @@
       "company": "Edesur",
       "partido": "ALMIRANTE BROWN",
       "localidad": "CLAYPOLE",
-      "users_affected": "15",
+      "users_affected": "17",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-26T01:54:24Z",
+      "observed_at": "2026-10-26T02:46:57Z",
       "confirmation": "Publicado por ENRE",
-      "id": "f3fe367807f4d19e"
+      "id": "6e4d4e142b2841ba"
     },
     {
       "category": "electricidad",
@@ -26,7 +26,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-26T01:54:24Z",
+      "observed_at": "2026-10-26T02:46:57Z",
       "confirmation": "Publicado por ENRE",
       "id": "dfc6b20bedcfe35a"
     },
@@ -40,9 +40,23 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-26T01:54:24Z",
+      "observed_at": "2026-10-26T02:46:57Z",
       "confirmation": "Publicado por ENRE",
       "id": "f06939e194434821"
+    },
+    {
+      "category": "electricidad",
+      "title": "Interrupción de baja tensión",
+      "company": "Edesur",
+      "partido": "CAPITAL",
+      "localidad": "PARQUE PATRICIOS",
+      "users_affected": "34",
+      "expected_restoration": null,
+      "zone_detail": null,
+      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
+      "observed_at": "2026-10-26T02:46:57Z",
+      "confirmation": "Publicado por ENRE",
+      "id": "5cd02982ae3e6cfb"
     },
     {
       "category": "electricidad",
@@ -54,7 +68,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-26T01:54:24Z",
+      "observed_at": "2026-10-26T02:46:57Z",
       "confirmation": "Publicado por ENRE",
       "id": "5c533cfbf8463942"
     },
@@ -68,23 +82,37 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-26T01:54:24Z",
+      "observed_at": "2026-10-26T02:46:57Z",
       "confirmation": "Publicado por ENRE",
       "id": "2ebb97a96dc5a304"
+    },
+    {
+      "category": "electricidad",
+      "title": "Interrupción de baja tensión",
+      "company": "Edesur",
+      "partido": "LOMAS DE ZAMORA",
+      "localidad": "TEMPERLEY",
+      "users_affected": "84",
+      "expected_restoration": null,
+      "zone_detail": null,
+      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
+      "observed_at": "2026-10-26T02:46:57Z",
+      "confirmation": "Publicado por ENRE",
+      "id": "b09d7c1dc6c0db9e"
     }
   ],
   "sources": {
     "edenor": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDN.js",
-      "checked_at": "2026-10-26T01:54:24Z",
+      "checked_at": "2026-10-26T02:46:57Z",
       "event_count": 0
     },
     "edesur": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDS.js",
-      "checked_at": "2026-10-26T01:54:24Z",
-      "event_count": 5
+      "checked_at": "2026-10-26T02:46:57Z",
+      "event_count": 7
     }
   },
   "banking": {
@@ -117,7 +145,7 @@
       }
     ],
     "source_retrieval": "ok",
-    "checked_at": "2026-10-26T01:54:24Z"
+    "checked_at": "2026-10-26T02:46:57Z"
   },
   "coverage": {
     "trains": "manual_notices_only",
@@ -132,13 +160,13 @@
       "status": "not_connected",
       "message": "No hay conexión verificada con una fuente automática de estado de la línea 57.",
       "reference_url": "https://www.argentina.gob.ar/sube/cuandosubo",
-      "checked_at": "2026-10-26T01:54:24Z"
+      "checked_at": "2026-10-26T02:46:57Z"
     }
   },
   "subte": {
     "status": "unverified",
     "message": "La página no publica una fecha de actualización verificable.",
-    "checked_at": "2026-10-26T01:54:24Z",
+    "checked_at": "2026-10-26T02:46:57Z",
     "url": "https://buenosaires.gob.ar/inicio/mis-documentos",
     "lines": []
   },
@@ -146,21 +174,31 @@
   "change_tracking": {
     "status": "ok",
     "meaning": "Las novedades indican cambios respecto del informe anterior; no prueban cuándo comenzó un corte ni que uno ausente esté resuelto.",
-    "compared_to": "2026-10-26T01:06:52Z",
-    "new_in_publication_count": 1,
+    "compared_to": "2026-10-26T01:54:24Z",
+    "new_in_publication_count": 2,
     "new_in_publication": [
       {
-        "id": "2ebb97a96dc5a304",
+        "id": "5cd02982ae3e6cfb",
         "company": "Edesur",
         "title": "Interrupción de baja tensión",
         "partido": "CAPITAL",
-        "localidad": "VILLA LUGANO",
-        "observed_at": "2026-10-26T01:54:24Z",
+        "localidad": "PARQUE PATRICIOS",
+        "observed_at": "2026-10-26T02:46:57Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
+        "meaning": "No figuraba en el informe anterior; inicio real desconocido."
+      },
+      {
+        "id": "b09d7c1dc6c0db9e",
+        "company": "Edesur",
+        "title": "Interrupción de baja tensión",
+        "partido": "LOMAS DE ZAMORA",
+        "localidad": "TEMPERLEY",
+        "observed_at": "2026-10-26T02:46:57Z",
         "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
         "meaning": "No figuraba en el informe anterior; inicio real desconocido."
       }
     ],
-    "no_longer_listed_count": 2,
+    "no_longer_listed_count": 0,
     "providers_compared": [
       "edenor",
       "edesur"
@@ -174,6 +212,28 @@
     "retention_hours": 3,
     "meaning": "Apareció en una publicación nueva; no prueba inicio del corte.",
     "events": [
+      {
+        "event_id": "4ad3c3c8eb9b6d5705c7afb7",
+        "kind": "electricity_publication_added",
+        "country": "Argentina",
+        "company": "Edesur",
+        "title": "Interrupción de baja tensión",
+        "partido": "CAPITAL",
+        "localidad": "PARQUE PATRICIOS",
+        "first_seen_at": "2026-10-26T02:46:57Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html"
+      },
+      {
+        "event_id": "cfa79a1e5b769d9ef505a4a8",
+        "kind": "electricity_publication_added",
+        "country": "Argentina",
+        "company": "Edesur",
+        "title": "Interrupción de baja tensión",
+        "partido": "LOMAS DE ZAMORA",
+        "localidad": "TEMPERLEY",
+        "first_seen_at": "2026-10-26T02:46:57Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html"
+      },
       {
         "event_id": "e958a1051472ca2a7709dd33",
         "kind": "electricity_publication_added",
@@ -205,17 +265,6 @@
         "partido": "CAPITAL",
         "localidad": "VELEZ SARFIELD",
         "first_seen_at": "2026-10-26T01:06:52Z",
-        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html"
-      },
-      {
-        "event_id": "d62accc7529aab4bc9600f81",
-        "kind": "electricity_publication_added",
-        "country": "Argentina",
-        "company": "Edesur",
-        "title": "Interrupción de baja tensión",
-        "partido": "LOMAS DE ZAMORA",
-        "localidad": "LOMAS DE ZAMORA",
-        "first_seen_at": "2026-10-25T23:37:18Z",
         "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html"
       }
     ]
