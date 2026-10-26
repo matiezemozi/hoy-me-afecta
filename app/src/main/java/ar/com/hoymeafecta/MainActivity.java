@@ -151,7 +151,7 @@ public class MainActivity extends Activity {
 
         root.addView(text("HOY ME AFECTA", 26, INK, true));
         root.addView(text("Lo que te conviene saber antes de salir", 14, GREY, false));
-        root.addView(text("Piloto v5.3 · avisos opcionales y fuentes verificadas", 12, GREY, false));
+        root.addView(text("Piloto v5.4 · avisos opcionales y fuentes verificadas", 12, GREY, false));
         LinearLayout status = card();
         status.addView(text(connection, 14, BLUE, false));
         if (feed != null) {
@@ -246,9 +246,10 @@ public class MainActivity extends Activity {
         notes.addView(text("El informe y cada fuente eléctrica deben tener menos de " +
                 "3 horas para mostrar avisos como recientes. La aplicación no sustituye las alertas oficiales.",
                 13, GREY, false));
-        notes.addView(text("Bancos: calendario nacional del BCRA registrado el 24/10/2026; no se consulta en tiempo real y puede sufrir cambios. " +
-                "Trenes, agua, tránsito y operativos públicos: sin conexión automática, admiten avisos documentados con fecha y fuente.",
-                12, GREY, false));
+        notes.addView(text("Bancos: calendario nacional del BCRA consultado automáticamente; " +
+                "no indica si las sucursales están abiertas. " +
+                "Trenes, agua, tránsito y operativos públicos: sin conexión automática, " +
+                "admiten avisos documentados con fecha y fuente.", 12, GREY, false));
         notes.addView(text("Las zonas se comparan por nombre exacto con partido o localidad. " +
                 "No se comprueba si un corte alcanza una dirección específica.", 12, GREY, false));
     }
@@ -265,6 +266,39 @@ public class MainActivity extends Activity {
         c.addView(text("Por ahora solo electricidad (Edenor y Edesur). No se envían avisos de " +
                 "normalización sin confirmación. No sustituye los canales oficiales.",
                 12, GREY, false));
+        if (enabled) {
+            c.addView(text("Trabajo en segundo plano: " +
+                    (AlertCheckJobService.isScheduled(this) ? "programado" : "NO programado"),
+                    12, GREY, false));
+            c.addView(text(AlertCheckJobService.lastBackgroundCheck(this),
+                    12, GREY, false));
+            c.addView(button("Enviar notificación de prueba", () -> {
+                boolean sent = AlertNotifier.sendTestNotification(this);
+                android.widget.Toast.makeText(this,
+                        sent ? "Prueba enviada a Android. Revisala en tus notificaciones." :
+                                "Android bloqueo la prueba. Revisa los permisos y el canal de avisos.",
+                        android.widget.Toast.LENGTH_LONG).show();
+            }));
+            c.addView(text("La prueba anterior es local: no representa un corte real y " +
+                    "no comprueba todavia la ejecucion automatica.", 12, GREY, false));
+            TextView diagnostic = text("", 12, GREY, false);
+            c.addView(button("Comprobar conexión de avisos ahora", () -> {
+                diagnostic.setText("Consultando el informe desde el telefono...");
+                new Thread(() -> {
+                    String result = AlertNotifier.fetchAndProcess(getApplicationContext());
+                    runOnUiThread(() -> diagnostic.setText(result));
+                }, "HMA-manual-check").start();
+            }));
+            c.addView(diagnostic);
+            c.addView(button("Actualizar estado de segundo plano", () -> {
+                android.widget.Toast.makeText(this,
+                        (AlertCheckJobService.isScheduled(this) ?
+                                "Comprobacion periodica programada. " :
+                                "Sin comprobacion periodica programada. ") +
+                                AlertCheckJobService.lastBackgroundCheck(this),
+                        android.widget.Toast.LENGTH_LONG).show();
+            }));
+        }
         c.addView(button(enabled ? "Desactivar notificaciones" : "Activar notificaciones", () -> {
             if (enabled) {
                 prefs.edit().putBoolean("notifications_enabled", false).apply();
