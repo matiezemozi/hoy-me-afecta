@@ -1,7 +1,21 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-26T07:00:12Z",
+  "generated_at": "2026-10-26T08:00:09Z",
   "alerts": [
+    {
+      "category": "electricidad",
+      "title": "Interrupción de media tensión",
+      "company": "Edenor",
+      "partido": "CAPITAL FEDERAL",
+      "localidad": "NU?EZ",
+      "users_affected": "490",
+      "expected_restoration": "2026-10-26 08:00",
+      "zone_detail": null,
+      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
+      "observed_at": "2026-10-26T08:00:09Z",
+      "confirmation": "Publicado por ENRE",
+      "id": "9acde6c22763ddb5"
+    },
     {
       "category": "electricidad",
       "title": "Interrupción de baja tensión",
@@ -12,7 +26,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-26T07:00:12Z",
+      "observed_at": "2026-10-26T08:00:09Z",
       "confirmation": "Publicado por ENRE",
       "id": "dfc6b20bedcfe35a"
     },
@@ -26,7 +40,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-26T07:00:12Z",
+      "observed_at": "2026-10-26T08:00:09Z",
       "confirmation": "Publicado por ENRE",
       "id": "f06939e194434821"
     },
@@ -40,7 +54,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-26T07:00:12Z",
+      "observed_at": "2026-10-26T08:00:09Z",
       "confirmation": "Publicado por ENRE",
       "id": "86b0446b59924753"
     },
@@ -54,7 +68,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-26T07:00:12Z",
+      "observed_at": "2026-10-26T08:00:09Z",
       "confirmation": "Publicado por ENRE",
       "id": "4bbc0ccec4d98767"
     },
@@ -68,7 +82,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-26T07:00:12Z",
+      "observed_at": "2026-10-26T08:00:09Z",
       "confirmation": "Publicado por ENRE",
       "id": "2ebb97a96dc5a304"
     }
@@ -77,13 +91,13 @@
     "edenor": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDN.js",
-      "checked_at": "2026-10-26T07:00:12Z",
-      "event_count": 0
+      "checked_at": "2026-10-26T08:00:09Z",
+      "event_count": 1
     },
     "edesur": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDS.js",
-      "checked_at": "2026-10-26T07:00:12Z",
+      "checked_at": "2026-10-26T08:00:09Z",
       "event_count": 5
     }
   },
@@ -117,7 +131,7 @@
       }
     ],
     "source_retrieval": "ok",
-    "checked_at": "2026-10-26T07:00:12Z"
+    "checked_at": "2026-10-26T08:00:09Z"
   },
   "coverage": {
     "trains": "manual_notices_only",
@@ -132,13 +146,13 @@
       "status": "not_connected",
       "message": "No hay conexión verificada con una fuente automática de estado de la línea 57.",
       "reference_url": "https://www.argentina.gob.ar/sube/cuandosubo",
-      "checked_at": "2026-10-26T07:00:12Z"
+      "checked_at": "2026-10-26T08:00:09Z"
     }
   },
   "subte": {
     "status": "unverified",
     "message": "La página no publica una fecha de actualización verificable.",
-    "checked_at": "2026-10-26T07:00:12Z",
+    "checked_at": "2026-10-26T08:00:09Z",
     "url": "https://buenosaires.gob.ar/inicio/mis-documentos",
     "lines": []
   },
@@ -146,17 +160,17 @@
   "change_tracking": {
     "status": "ok",
     "meaning": "Las novedades indican cambios respecto del informe anterior; no prueban cuándo comenzó un corte ni que uno ausente esté resuelto.",
-    "compared_to": "2026-10-26T05:46:52Z",
+    "compared_to": "2026-10-26T07:00:12Z",
     "new_in_publication_count": 1,
     "new_in_publication": [
       {
-        "id": "4bbc0ccec4d98767",
-        "company": "Edesur",
-        "title": "Interrupción de baja tensión",
-        "partido": "CAPITAL",
-        "localidad": "VERSALLES",
-        "observed_at": "2026-10-26T07:00:12Z",
-        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
+        "id": "9acde6c22763ddb5",
+        "company": "Edenor",
+        "title": "Interrupción de media tensión",
+        "partido": "CAPITAL FEDERAL",
+        "localidad": "NU?EZ",
+        "observed_at": "2026-10-26T08:00:09Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
         "meaning": "No figuraba en el informe anterior; inicio real desconocido."
       }
     ],
@@ -175,6 +189,17 @@
     "meaning": "Apareció en una publicación nueva; no prueba inicio del corte.",
     "events": [
       {
+        "event_id": "0597fba5aa173504fce5d67c",
+        "kind": "electricity_publication_added",
+        "country": "Argentina",
+        "company": "Edenor",
+        "title": "Interrupción de media tensión",
+        "partido": "CAPITAL FEDERAL",
+        "localidad": "NU?EZ",
+        "first_seen_at": "2026-10-26T08:00:09Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html"
+      },
+      {
         "event_id": "34bdea77a630b624d8e9eeb1",
         "kind": "electricity_publication_added",
         "country": "Argentina",
@@ -184,28 +209,6 @@
         "localidad": "VERSALLES",
         "first_seen_at": "2026-10-26T07:00:12Z",
         "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html"
-      },
-      {
-        "event_id": "80ea2b8459407f402041d965",
-        "kind": "electricity_publication_added",
-        "country": "Argentina",
-        "company": "Edenor",
-        "title": "Corte programado",
-        "partido": "GRAL LAS HERAS",
-        "localidad": "GRAL LAS HERAS",
-        "first_seen_at": "2026-10-26T04:46:45Z",
-        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html"
-      },
-      {
-        "event_id": "797933f6cf1b889370aa5b75",
-        "kind": "electricity_publication_added",
-        "country": "Argentina",
-        "company": "Edenor",
-        "title": "Corte programado",
-        "partido": "MARCOS PAZ",
-        "localidad": "MARCOS PAZ",
-        "first_seen_at": "2026-10-26T04:46:45Z",
-        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html"
       }
     ]
   }
