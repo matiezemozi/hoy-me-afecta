@@ -1,21 +1,7 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-25T23:37:18Z",
+  "generated_at": "2026-10-26T01:06:52Z",
   "alerts": [
-    {
-      "category": "electricidad",
-      "title": "Interrupción de media tensión",
-      "company": "Edenor",
-      "partido": "SAN MIGUEL",
-      "localidad": "CAMPO DE MAYO",
-      "users_affected": "65",
-      "expected_restoration": null,
-      "zone_detail": null,
-      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
-      "observed_at": "2026-10-25T23:37:18Z",
-      "confirmation": "Publicado por ENRE",
-      "id": "7b757eaf7cafb291"
-    },
     {
       "category": "electricidad",
       "title": "Corte programado",
@@ -26,7 +12,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T23:37:18Z",
+      "observed_at": "2026-10-26T01:06:52Z",
       "confirmation": "Publicado por ENRE",
       "id": "bf63a31c56c70044"
     },
@@ -40,9 +26,23 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T23:37:18Z",
+      "observed_at": "2026-10-26T01:06:52Z",
       "confirmation": "Publicado por ENRE",
       "id": "ba40cdcd098c4def"
+    },
+    {
+      "category": "electricidad",
+      "title": "Interrupción de baja tensión",
+      "company": "Edesur",
+      "partido": "ALMIRANTE BROWN",
+      "localidad": "CLAYPOLE",
+      "users_affected": "13",
+      "expected_restoration": null,
+      "zone_detail": null,
+      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
+      "observed_at": "2026-10-26T01:06:52Z",
+      "confirmation": "Publicado por ENRE",
+      "id": "0f00a2494b77e751"
     },
     {
       "category": "electricidad",
@@ -54,7 +54,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T23:37:18Z",
+      "observed_at": "2026-10-26T01:06:52Z",
       "confirmation": "Publicado por ENRE",
       "id": "dfc6b20bedcfe35a"
     },
@@ -68,7 +68,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T23:37:18Z",
+      "observed_at": "2026-10-26T01:06:52Z",
       "confirmation": "Publicado por ENRE",
       "id": "f06939e194434821"
     },
@@ -76,29 +76,29 @@
       "category": "electricidad",
       "title": "Interrupción de baja tensión",
       "company": "Edesur",
-      "partido": "LOMAS DE ZAMORA",
-      "localidad": "LOMAS DE ZAMORA",
+      "partido": "CAPITAL",
+      "localidad": "VELEZ SARFIELD",
       "users_affected": "1",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-25T23:37:18Z",
+      "observed_at": "2026-10-26T01:06:52Z",
       "confirmation": "Publicado por ENRE",
-      "id": "56dacb5e72877d46"
+      "id": "5c533cfbf8463942"
     }
   ],
   "sources": {
     "edenor": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDN.js",
-      "checked_at": "2026-10-25T23:37:18Z",
-      "event_count": 1
+      "checked_at": "2026-10-26T01:06:52Z",
+      "event_count": 0
     },
     "edesur": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDS.js",
-      "checked_at": "2026-10-25T23:37:18Z",
-      "event_count": 5
+      "checked_at": "2026-10-26T01:06:52Z",
+      "event_count": 6
     }
   },
   "banking": {
@@ -131,7 +131,7 @@
       }
     ],
     "source_retrieval": "ok",
-    "checked_at": "2026-10-25T23:37:18Z"
+    "checked_at": "2026-10-26T01:06:52Z"
   },
   "coverage": {
     "trains": "manual_notices_only",
@@ -146,13 +146,13 @@
       "status": "not_connected",
       "message": "No hay conexión verificada con una fuente automática de estado de la línea 57.",
       "reference_url": "https://www.argentina.gob.ar/sube/cuandosubo",
-      "checked_at": "2026-10-25T23:37:18Z"
+      "checked_at": "2026-10-26T01:06:52Z"
     }
   },
   "subte": {
     "status": "unverified",
     "message": "La página no publica una fecha de actualización verificable.",
-    "checked_at": "2026-10-25T23:37:18Z",
+    "checked_at": "2026-10-26T01:06:52Z",
     "url": "https://buenosaires.gob.ar/inicio/mis-documentos",
     "lines": []
   },
@@ -160,21 +160,31 @@
   "change_tracking": {
     "status": "ok",
     "meaning": "Las novedades indican cambios respecto del informe anterior; no prueban cuándo comenzó un corte ni que uno ausente esté resuelto.",
-    "compared_to": "2026-10-25T22:39:08Z",
-    "new_in_publication_count": 1,
+    "compared_to": "2026-10-25T23:37:18Z",
+    "new_in_publication_count": 2,
     "new_in_publication": [
       {
-        "id": "56dacb5e72877d46",
+        "id": "0f00a2494b77e751",
         "company": "Edesur",
         "title": "Interrupción de baja tensión",
-        "partido": "LOMAS DE ZAMORA",
-        "localidad": "LOMAS DE ZAMORA",
-        "observed_at": "2026-10-25T23:37:18Z",
+        "partido": "ALMIRANTE BROWN",
+        "localidad": "CLAYPOLE",
+        "observed_at": "2026-10-26T01:06:52Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
+        "meaning": "No figuraba en el informe anterior; inicio real desconocido."
+      },
+      {
+        "id": "5c533cfbf8463942",
+        "company": "Edesur",
+        "title": "Interrupción de baja tensión",
+        "partido": "CAPITAL",
+        "localidad": "VELEZ SARFIELD",
+        "observed_at": "2026-10-26T01:06:52Z",
         "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
         "meaning": "No figuraba en el informe anterior; inicio real desconocido."
       }
     ],
-    "no_longer_listed_count": 1,
+    "no_longer_listed_count": 2,
     "providers_compared": [
       "edenor",
       "edesur"
@@ -188,6 +198,28 @@
     "retention_hours": 3,
     "meaning": "Apareció en una publicación nueva; no prueba inicio del corte.",
     "events": [
+      {
+        "event_id": "f4154c0f60f622ce192a6930",
+        "kind": "electricity_publication_added",
+        "country": "Argentina",
+        "company": "Edesur",
+        "title": "Interrupción de baja tensión",
+        "partido": "ALMIRANTE BROWN",
+        "localidad": "CLAYPOLE",
+        "first_seen_at": "2026-10-26T01:06:52Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html"
+      },
+      {
+        "event_id": "91c9253aefa11caabb90f590",
+        "kind": "electricity_publication_added",
+        "country": "Argentina",
+        "company": "Edesur",
+        "title": "Interrupción de baja tensión",
+        "partido": "CAPITAL",
+        "localidad": "VELEZ SARFIELD",
+        "first_seen_at": "2026-10-26T01:06:52Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html"
+      },
       {
         "event_id": "d62accc7529aab4bc9600f81",
         "kind": "electricity_publication_added",
