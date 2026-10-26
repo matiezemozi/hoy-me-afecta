@@ -1,20 +1,34 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-26T10:51:23Z",
+  "generated_at": "2026-10-26T12:38:59Z",
   "alerts": [
     {
       "category": "electricidad",
       "title": "Corte programado",
       "company": "Edenor",
       "partido": "MALVINAS ARGENTINAS",
-      "localidad": "PABLO NOGUES",
-      "users_affected": "496",
-      "expected_restoration": "2026-10-26 11:00",
+      "localidad": "LOS POLVORINES",
+      "users_affected": "262",
+      "expected_restoration": "2026-10-26 12:00",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
-      "observed_at": "2026-10-26T10:51:23Z",
+      "observed_at": "2026-10-26T12:38:59Z",
       "confirmation": "Publicado por ENRE",
-      "id": "46dd00f40b06e366"
+      "id": "0f1eb331114e0f4f"
+    },
+    {
+      "category": "electricidad",
+      "title": "Interrupción de media tensión",
+      "company": "Edenor",
+      "partido": "MARCOS PAZ",
+      "localidad": "MARCOS PAZ",
+      "users_affected": "180",
+      "expected_restoration": "2026-10-26 10:00",
+      "zone_detail": null,
+      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
+      "observed_at": "2026-10-26T12:38:59Z",
+      "confirmation": "Publicado por ENRE",
+      "id": "ffb021e58d4adca9"
     },
     {
       "category": "electricidad",
@@ -22,13 +36,13 @@
       "company": "Edesur",
       "partido": "BERAZATEGUI",
       "localidad": "SOURIGUES",
-      "users_affected": "59",
+      "users_affected": "50",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-26T10:51:23Z",
+      "observed_at": "2026-10-26T12:38:59Z",
       "confirmation": "Publicado por ENRE",
-      "id": "5b2d12fe13b53fd5"
+      "id": "90a289005de87fdd"
     },
     {
       "category": "electricidad",
@@ -36,13 +50,13 @@
       "company": "Edesur",
       "partido": "CAPITAL",
       "localidad": "PARQUE PATRICIOS",
-      "users_affected": "40",
+      "users_affected": "44",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-26T10:51:23Z",
+      "observed_at": "2026-10-26T12:38:59Z",
       "confirmation": "Publicado por ENRE",
-      "id": "7a59d2605dcd9136"
+      "id": "0703065709f4d590"
     },
     {
       "category": "electricidad",
@@ -54,23 +68,37 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-26T10:51:23Z",
+      "observed_at": "2026-10-26T12:38:59Z",
       "confirmation": "Publicado por ENRE",
       "id": "2ebb97a96dc5a304"
+    },
+    {
+      "category": "electricidad",
+      "title": "Interrupción de baja tensión",
+      "company": "Edesur",
+      "partido": "QUILMES",
+      "localidad": "SAN FRANCISCO SOLANO (Q)",
+      "users_affected": "13",
+      "expected_restoration": null,
+      "zone_detail": null,
+      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
+      "observed_at": "2026-10-26T12:38:59Z",
+      "confirmation": "Publicado por ENRE",
+      "id": "41c1069b23dbc110"
     }
   ],
   "sources": {
     "edenor": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDN.js",
-      "checked_at": "2026-10-26T10:51:23Z",
-      "event_count": 1
+      "checked_at": "2026-10-26T12:38:59Z",
+      "event_count": 2
     },
     "edesur": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDS.js",
-      "checked_at": "2026-10-26T10:51:23Z",
-      "event_count": 3
+      "checked_at": "2026-10-26T12:38:59Z",
+      "event_count": 4
     }
   },
   "banking": {
@@ -103,7 +131,7 @@
       }
     ],
     "source_retrieval": "ok",
-    "checked_at": "2026-10-26T10:51:23Z"
+    "checked_at": "2026-10-26T12:38:59Z"
   },
   "coverage": {
     "trains": "manual_notices_only",
@@ -118,13 +146,13 @@
       "status": "not_connected",
       "message": "No hay conexión verificada con una fuente automática de estado de la línea 57.",
       "reference_url": "https://www.argentina.gob.ar/sube/cuandosubo",
-      "checked_at": "2026-10-26T10:51:23Z"
+      "checked_at": "2026-10-26T12:38:59Z"
     }
   },
   "subte": {
     "status": "unverified",
     "message": "La página no publica una fecha de actualización verificable.",
-    "checked_at": "2026-10-26T10:51:23Z",
+    "checked_at": "2026-10-26T12:38:59Z",
     "url": "https://buenosaires.gob.ar/inicio/mis-documentos",
     "lines": []
   },
@@ -132,21 +160,41 @@
   "change_tracking": {
     "status": "ok",
     "meaning": "Las novedades indican cambios respecto del informe anterior; no prueban cuándo comenzó un corte ni que uno ausente esté resuelto.",
-    "compared_to": "2026-10-26T09:55:20Z",
-    "new_in_publication_count": 1,
+    "compared_to": "2026-10-26T10:51:23Z",
+    "new_in_publication_count": 3,
     "new_in_publication": [
       {
-        "id": "46dd00f40b06e366",
+        "id": "0f1eb331114e0f4f",
         "company": "Edenor",
         "title": "Corte programado",
         "partido": "MALVINAS ARGENTINAS",
-        "localidad": "PABLO NOGUES",
-        "observed_at": "2026-10-26T10:51:23Z",
+        "localidad": "LOS POLVORINES",
+        "observed_at": "2026-10-26T12:38:59Z",
         "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
+        "meaning": "No figuraba en el informe anterior; inicio real desconocido."
+      },
+      {
+        "id": "ffb021e58d4adca9",
+        "company": "Edenor",
+        "title": "Interrupción de media tensión",
+        "partido": "MARCOS PAZ",
+        "localidad": "MARCOS PAZ",
+        "observed_at": "2026-10-26T12:38:59Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
+        "meaning": "No figuraba en el informe anterior; inicio real desconocido."
+      },
+      {
+        "id": "41c1069b23dbc110",
+        "company": "Edesur",
+        "title": "Interrupción de baja tensión",
+        "partido": "QUILMES",
+        "localidad": "SAN FRANCISCO SOLANO (Q)",
+        "observed_at": "2026-10-26T12:38:59Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
         "meaning": "No figuraba en el informe anterior; inicio real desconocido."
       }
     ],
-    "no_longer_listed_count": 2,
+    "no_longer_listed_count": 1,
     "providers_compared": [
       "edenor",
       "edesur"
@@ -160,6 +208,39 @@
     "retention_hours": 3,
     "meaning": "Apareció en una publicación nueva; no prueba inicio del corte.",
     "events": [
+      {
+        "event_id": "0ad18689590883280fc89dc4",
+        "kind": "electricity_publication_added",
+        "country": "Argentina",
+        "company": "Edenor",
+        "title": "Corte programado",
+        "partido": "MALVINAS ARGENTINAS",
+        "localidad": "LOS POLVORINES",
+        "first_seen_at": "2026-10-26T12:38:59Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html"
+      },
+      {
+        "event_id": "ce91bb23af075096be68b923",
+        "kind": "electricity_publication_added",
+        "country": "Argentina",
+        "company": "Edenor",
+        "title": "Interrupción de media tensión",
+        "partido": "MARCOS PAZ",
+        "localidad": "MARCOS PAZ",
+        "first_seen_at": "2026-10-26T12:38:59Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html"
+      },
+      {
+        "event_id": "10eec8279dd867a5c68e9e3e",
+        "kind": "electricity_publication_added",
+        "country": "Argentina",
+        "company": "Edesur",
+        "title": "Interrupción de baja tensión",
+        "partido": "QUILMES",
+        "localidad": "SAN FRANCISCO SOLANO (Q)",
+        "first_seen_at": "2026-10-26T12:38:59Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html"
+      },
       {
         "event_id": "694d17bfea0be0eb1401d4d1",
         "kind": "electricity_publication_added",
@@ -181,17 +262,6 @@
         "localidad": "SOURIGUES",
         "first_seen_at": "2026-10-26T09:55:20Z",
         "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html"
-      },
-      {
-        "event_id": "0597fba5aa173504fce5d67c",
-        "kind": "electricity_publication_added",
-        "country": "Argentina",
-        "company": "Edenor",
-        "title": "Interrupción de media tensión",
-        "partido": "CAPITAL FEDERAL",
-        "localidad": "NU?EZ",
-        "first_seen_at": "2026-10-26T08:00:09Z",
-        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html"
       }
     ]
   }
