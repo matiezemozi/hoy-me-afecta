@@ -65,7 +65,13 @@ public class AlertCheckJobService extends JobService {
             try {
                 if (!stopped) {
                     String result = AlertNotifier.fetchAndProcess(getApplicationContext());
+                    // A queued TEST is considered only after a real scheduled HTTPS check.
+                    // Never write simulated notices to docs/feed.json.
+                    String simulated = stopped ? "" :
+                            AlertNotifier.completeQueuedBackgroundSimulation(
+                                    getApplicationContext(), result);
                     if (!stopped) {
+                        if (!simulated.isEmpty()) result += " | " + simulated;
                         getSharedPreferences("hoy_me_afecta", Context.MODE_PRIVATE).edit()
                                 .putLong("last_background_check_ms", System.currentTimeMillis())
                                 .putString("last_background_result", result).apply();
