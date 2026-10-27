@@ -1,13 +1,36 @@
 plugins { id 'com.android.application' }
 
+def hmaSigningFile = System.getenv('HMA_SIGNING_KEYSTORE_PATH')
+def hmaSigningPassword = System.getenv('HMA_SIGNING_PASSWORD')
+
 android {
     namespace 'ar.com.hoymeafecta'
     compileSdk 35
+
     defaultConfig {
         applicationId 'ar.com.hoymeafecta'
         minSdk 23
         targetSdk 33
-        versionCode 6
-        versionName '0.5.4-piloto'
+        versionCode 7
+        versionName '0.5.5-piloto'
+    }
+
+    signingConfigs {
+        hmaPilot {
+            if (hmaSigningFile && hmaSigningPassword) {
+                storeFile file(hmaSigningFile)
+                storeType 'PKCS12'
+                storePassword hmaSigningPassword
+                keyAlias 'hma-piloto'
+                keyPassword hmaSigningPassword
+            }
+        }
+    }
+    buildTypes {
+        debug {
+            if (hmaSigningFile && hmaSigningPassword) {
+                signingConfig signingConfigs.hmaPilot
+            }
+        }
     }
 }
