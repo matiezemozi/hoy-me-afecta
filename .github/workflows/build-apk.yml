@@ -17,6 +17,8 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      HMA_SIGNING_PASSWORD: ${{ secrets.HMA_PILOT_KEYSTORE_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
 
@@ -34,8 +36,28 @@ jobs:
         with:
           gradle-version: '8.7'
 
-      - name: Compilar APK
+      - name: Preparar firma estable del piloto
+        env:
+          KEYSTORE_BASE64: ${{ secrets.HMA_PILOT_KEYSTORE_BASE64 }}
+        run: |
+          set -euo pipefail
+          if [ -z "$KEYSTORE_BASE64" ] || [ -z "$HMA_SIGNING_PASSWORD" ]; then
+            echo '::error::Primero configura HMA_PILOT_KEYSTORE_BASE64 y HMA_PILOT_KEYSTORE_PASSWORD en Settings > Secrets and variables > Actions.'
+            exit 1
+          fi
+          umask 077
+          mkdir -p "$RUNNER_TEMP/hma-signing"
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/hma-signing/piloto.p12"
+          keytool -list -storetype PKCS12 -keystore "$RUNNER_TEMP/hma-signing/piloto.p12" -alias hma-piloto -storepass "$HMA_SIGNING_PASSWORD" > /dev/null
+          echo "HMA_SIGNING_KEYSTORE_PATH=$RUNNER_TEMP/hma-signing/piloto.p12" >> "$GITHUB_ENV"
+
+      - name: Compilar APK con firma estable
         run: gradle --no-daemon :app:assembleDebug
+
+      - name: Comprobar certificado de firma
+        run: |
+          set -euo pipefail
+          keytool -printcert -jarfile app/build/outputs/apk/debug/app-debug.apk | grep -F 'SHA256: FB:A5:99:C7:ED:41:1A:40:19:C2:BA:C6:B4:EE:00:14:5C:6B:9A:8C:0B:A4:C4:6F:B2:E4:AE:6D:59:D4:E1:25'
 
       - name: Guardar APK
         uses: actions/upload-artifact@v4
