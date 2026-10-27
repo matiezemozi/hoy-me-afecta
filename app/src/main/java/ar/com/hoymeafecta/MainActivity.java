@@ -290,6 +290,16 @@ public class MainActivity extends Activity {
                 }, "HMA-manual-check").start();
             }));
             c.addView(diagnostic);
+            c.addView(text(AlertNotifier.backgroundSimulationStatus(this), 12, GREY, false));
+            c.addView(button("Programar simulacion en segundo plano", () -> {
+                String outcome = AlertNotifier.queueBackgroundSimulation(this);
+                android.widget.Toast.makeText(this, outcome,
+                        android.widget.Toast.LENGTH_LONG).show();
+                draw();
+            }));
+            c.addView(text("La simulacion usa una localidad elegida y espera una consulta " +
+                    "automatica real. Siempre indicara PRUEBA y NO se publica en GitHub. " +
+                    "Puede tardar por las restricciones de Android.", 12, GREY, false));
             c.addView(button("Actualizar estado de segundo plano", () -> {
                 android.widget.Toast.makeText(this,
                         (AlertCheckJobService.isScheduled(this) ?
@@ -297,11 +307,13 @@ public class MainActivity extends Activity {
                                 "Sin comprobacion periodica programada. ") +
                                 AlertCheckJobService.lastBackgroundCheck(this),
                         android.widget.Toast.LENGTH_LONG).show();
+                draw();
             }));
         }
         c.addView(button(enabled ? "Desactivar notificaciones" : "Activar notificaciones", () -> {
             if (enabled) {
-                prefs.edit().putBoolean("notifications_enabled", false).apply();
+                prefs.edit().putBoolean("notifications_enabled", false)
+                        .remove("background_simulation_pending_ms").apply();
                 AlertCheckJobService.cancel(this);
                 draw();
             } else if (prefs.getString("place", "").trim().isEmpty() ||
@@ -320,6 +332,7 @@ public class MainActivity extends Activity {
 
     private void enableNotices() {
         prefs.edit().putBoolean("notifications_enabled", true)
+                .remove("background_simulation_pending_ms")
                 .putBoolean("notification_primed", false)
                 .remove("notification_seen_ids").apply();
         // Seed a quiet baseline from a fresh cached feed, if available.
