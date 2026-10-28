@@ -53,11 +53,11 @@ public class MainActivity extends Activity {
     // A hidden section affects presentation only, never notification subscriptions.
     // Every section is visible by default when upgrading from v5.5.
     private static final String[] SECTION_KEYS = {
-            "informe", "electricidad", "colectivos", "subtes", "trenes",
+            "historial", "informe", "electricidad", "colectivos", "subtes", "trenes",
             "bancos", "operativos", "agua", "transito", "fuentes"
     };
     private static final String[] SECTION_LABELS = {
-            "Tu informe personal", "Electricidad", "Colectivos", "Subtes",
+            "Mis avisos", "Tu informe personal", "Electricidad", "Colectivos", "Subtes",
             "Trenes", "Bancos", "Operativos públicos", "Agua",
             "Tránsito y vías públicas", "Información y fuentes"
     };
@@ -68,6 +68,9 @@ public class MainActivity extends Activity {
     private JSONObject feed;
     private String connection = "Sin datos descargados todavía";
     private boolean refreshing = false;
+    private boolean historyScreen = false;
+    private int historyDisplayed = 25;
+    private int historyScrollPosition = 0;
 
     @Override public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -193,6 +196,10 @@ public class MainActivity extends Activity {
     }
 
     private void draw() {
+        if (historyScreen) {
+            drawHistory();
+            return;
+        }
         ScrollView scroll = new ScrollView(this);
         scroll.setFillViewport(true);
         scroll.setBackgroundColor(LIGHT);
@@ -204,7 +211,7 @@ public class MainActivity extends Activity {
 
         root.addView(text("HOY ME AFECTA", 26, INK, true));
         root.addView(text("Lo que te conviene saber antes de salir", 14, GREY, false));
-        root.addView(text("Piloto v5.6 · pantalla personalizable y avisos opcionales", 12, GREY, false));
+        root.addView(text("Piloto v5.7 · historial local y avisos opcionales", 12, GREY, false));
         LinearLayout status = card();
         status.addView(text(connection, 14, BLUE, false));
         if (feed != null) {
@@ -277,6 +284,10 @@ public class MainActivity extends Activity {
 
         title("Notificaciones (prueba)");
         notificationSettings();
+        if (sectionVisible("historial")) {
+            title("Mis avisos");
+            historySummary();
+        }
         if (sectionVisible("informe")) {
             title("Tu informe personal");
             personalReport();
@@ -334,6 +345,138 @@ public class MainActivity extends Activity {
                     "admiten avisos documentados con fecha y fuente.", 12, GREY, false));
             notes.addView(text("Las zonas se comparan por nombre exacto con partido o localidad. " +
                     "No se comprueba si un corte alcanza una dirección específica.", 12, GREY, false));
+        }
+    }
+
+    private void historySummary() {
+        LinearLayout c = card();
+        try (NotificationHistory history = new NotificationHistory(this)) {
+            long total = history.count();
+            c.addView(text(total == 0 ? "Todavía no hay avisos guardados." :
+                    "Avisos guardados en este teléfono: " + total, 14, INK, true));
+        } catch (RuntimeException ex) {
+            c.addView(text("No se pudo abrir el historial local.", 13, GREY, false));
+        }
+        c.addView(text("Se guardan las notificaciones que se emitan desde esta versión. " +
+                "Los avisos anteriores a v5.7 no se pueden recuperar automáticamente.",
+                12, GREY, false));
+        c.addView(button("Abrir Mis avisos", () -> {
+            historyScreen = true;
+            historyDisplayed = 25;
+            historyScrollPosition = 0;
+            draw();
+        }));
+    }
+
+    private void drawHistory() {
+        ScrollView scroll = new ScrollView(this);
+        scroll.setFillViewport(true);
+        scroll.setBackgroundColor(LIGHT);
+        root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(dp(20), dp(20), dp(20), dp(28));
+        scroll.addView(root);
+        setContentView(scroll);
+        root.addView(text("Mis avisos", 26, INK, true));
+        root.addView(text("Historial privado de notificaciones recibidas en este teléfono.",
+                13, GREY, false));
+        root.addView(button("Volver a HOY ME AFECTA", () -> {
+            historyScreen = false;
+            draw();
+        }));
+
+        long total;
+        try (NotificationHistory history = new NotificationHistory(this)) {
+            total = history.count();
+            LinearLayout controls = card();
+            controls.addView(text("Total guardado: " + total +
+                    ". No hay borrado automático por tiempo ni cantidad.",
+                    13, INK, true));
+            controls.addView(text("Los registros del ENRE describen publicaciones, no " +
+                    "confirman la duración del corte. Las pruebas están identificadas.",
+                    12, GREY, false));
+            if (total > 0) {
+                controls.addView(button("Vaciar historial", () ->
+                        new AlertDialog.Builder(this)
+                                .setTitle("¿Vaciar historial?")
+                                .setMessage("Se borrarán todos los avisos guardados en este " +
+                                        "teléfono. No se pueden recuperar. " +
+                                        "Tus zonas, notificaciones activadas y control de " +
+                                        "duplicados no se modificarán.")
+                                .setNegativeButton("Cancelar", (dialog, which) -> { })
+                                .setPositiveButton("Vaciar historial", (dialog, which) -> {
+                                    try (NotificationHistory storage = new NotificationHistory(this)) {
+                                        storage.clearAll();
+                                        historyDisplayed = 25;
+                                        historyScrollPosition = 0;
+                                        drawHistory();
+                                    } catch (RuntimeException ex) {
+                                        android.widget.Toast.makeText(this,
+                                                "No se pudo borrar el historial.",
+                                                android.widget.Toast.LENGTH_LONG).show();
+                                    }
+                                }).show()));
+            }
+            if (total == 0) {
+                LinearLayout empty = card();
+                empty.addView(text("Todavía no recibiste avisos desde la versión 5.7.",
+                        14, GREY, false));
+            } else {
+                int shown = 0;
+                int offset = 0;
+                while (shown < historyDisplayed) {
+                    int next = Math.min(25, historyDisplayed - shown);
+                    java.util.List<NotificationHistory.Record> page = history.newest(offset, next);
+                    if (page.isEmpty()) break;
+                    for (NotificationHistory.Record item : page) {
+                        LinearLayout entry = card();
+                        entry.addView(text(item.type, 12,
+                                "AVISO DEL ENRE".equals(item.type) ? BLUE : GREY, true));
+                        entry.addView(text(item.title, 15, INK, true));
+                        entry.addView(text("Recibido: " + new SimpleDateFormat(
+                                "dd/MM/yyyy HH:mm", Locale.getDefault())
+                                .format(new Date(item.receivedAt)), 12, GREY, false));
+                        if (!item.company.isEmpty())
+                            entry.addView(text("Origen: " + item.company, 12, GREY, false));
+                        String area = item.locality;
+                        if (!item.partido.isEmpty() && !item.partido.equalsIgnoreCase(area))
+                            area += (area.isEmpty() ? "" : " · ") + item.partido;
+                        if (!area.isEmpty()) entry.addView(text("Zona: " + area, 12, GREY, false));
+                        if (!item.firstSeenAt.isEmpty())
+                            entry.addView(text("Primera aparición registrada: " +
+                                    formatUtc(item.firstSeenAt), 12, GREY, false));
+                        if (!item.description.isEmpty())
+                            entry.addView(text(item.description, 12, GREY, false));
+                        if (item.sourceUrl.startsWith("https://www.enre.gov.ar/") ||
+                                item.sourceUrl.startsWith("https://enre.gov.ar/")) {
+                            entry.addView(button("Consultar publicación del ENRE",
+                                    () -> open(item.sourceUrl)));
+                        }
+                    }
+                    shown += page.size();
+                    offset += page.size();
+                    if (page.size() < next) break;
+                }
+                if (total > shown) {
+                    LinearLayout more = card();
+                    more.addView(text("Mostrando " + shown + " de " + total +
+                            ". Los anteriores siguen guardados.", 12, GREY, false));
+                    more.addView(button("Mostrar avisos anteriores", () -> {
+                        historyScrollPosition = scroll.getScrollY();
+                        historyDisplayed += 25;
+                        drawHistory();
+                    }));
+                }
+            }
+        } catch (RuntimeException ex) {
+            LinearLayout error = card();
+            error.addView(text("No se pudo consultar el historial local.",
+                    13, GREY, false));
+        }
+        if (historyScrollPosition > 0) {
+            int restore = historyScrollPosition;
+            scroll.post(() -> scroll.scrollTo(0, restore));
+            historyScrollPosition = 0;
         }
     }
 
