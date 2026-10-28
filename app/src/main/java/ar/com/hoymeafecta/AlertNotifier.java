@@ -177,6 +177,11 @@ public final class AlertNotifier {
                 .setAutoCancel(true).setWhen(System.currentTimeMillis());
         if (Build.VERSION.SDK_INT < 26) builder.setPriority(Notification.PRIORITY_DEFAULT);
         manager.notify(553, builder.build());
+        // Save only after Android accepted the notification request.
+        // Archive failures must never interrupt or duplicate published notices.
+        try (NotificationHistory history = new NotificationHistory(context)) {
+            history.recordPublications(entries);
+        } catch (RuntimeException ignored) { /* Keep the notification service running. */ }
     }
 
     // The simulated publication never reaches GitHub and never touches the real
@@ -278,7 +283,7 @@ public final class AlertNotifier {
         String zone = selected.split("[;,]", -1)[0].trim();
         boolean shown = sendMarkedTestNotification(context,
                 "HOY ME AFECTA - SIMULACION",
-                "PRUEBA en " + zone + ". No hay corte real confirmado.", 555);
+                "PRUEBA en " + zone + ". No hay corte real confirmado.", 555, zone);
         if (!shown) return "";
         p.edit().remove(TEST_PENDING)
                 .putLong("background_simulation_last_sent_ms", System.currentTimeMillis())
@@ -291,11 +296,11 @@ public final class AlertNotifier {
     // A local, clearly marked test. It does not simulate a real power outage.
     public static boolean sendTestNotification(Context context) {
         return sendMarkedTestNotification(context, "HOY ME AFECTA - PRUEBA",
-                "Esta es una prueba local; no informa ningun corte real.", 554);
+                "Esta es una prueba local; no informa ningun corte real.", 554, "");
     }
 
     private static boolean sendMarkedTestNotification(Context context,
-            String title, String message, int notificationId) {
+            String title, String message, int notificationId, String locality) {
         if (!permitted(context)) return false;
         try {
             NotificationManager manager = (NotificationManager)
@@ -324,6 +329,10 @@ public final class AlertNotifier {
                     .setWhen(System.currentTimeMillis());
             if (Build.VERSION.SDK_INT < 26) builder.setPriority(Notification.PRIORITY_DEFAULT);
             manager.notify(notificationId, builder.build());
+            try (NotificationHistory history = new NotificationHistory(context)) {
+                history.recordTest(notificationId == 555 ? "SIMULACION" : "PRUEBA LOCAL",
+                        title, message, locality);
+            } catch (RuntimeException ignored) { /* Posting succeeded; archive may be unavailable. */ }
             return true;
         } catch (RuntimeException ignored) { return false; }
     }
