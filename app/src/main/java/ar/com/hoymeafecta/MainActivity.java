@@ -1,6 +1,7 @@
 package ar.com.hoymeafecta;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.os.Bundle;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -48,6 +49,17 @@ public class MainActivity extends Activity {
             "Ecuador", "El Salvador", "Guatemala", "Honduras", "México",
             "Nicaragua", "Panamá", "Paraguay", "Perú", "Puerto Rico",
             "República Dominicana", "Uruguay", "Venezuela"
+    };
+    // A hidden section affects presentation only, never notification subscriptions.
+    // Every section is visible by default when upgrading from v5.5.
+    private static final String[] SECTION_KEYS = {
+            "informe", "electricidad", "colectivos", "subtes", "trenes",
+            "bancos", "operativos", "agua", "transito", "fuentes"
+    };
+    private static final String[] SECTION_LABELS = {
+            "Tu informe personal", "Electricidad", "Colectivos", "Subtes",
+            "Trenes", "Bancos", "Operativos públicos", "Agua",
+            "Tránsito y vías públicas", "Información y fuentes"
     };
     private LinearLayout root;
     private EditText placeField, lineField, branchField, trainField;
@@ -139,6 +151,47 @@ public class MainActivity extends Activity {
         return prefs.getString("country", "Argentina");
     }
 
+    private boolean sectionVisible(String key) {
+        return prefs.getBoolean("section_visible_" + key, true);
+    }
+
+    private void chooseVisibleSections() {
+        final boolean[] choices = new boolean[SECTION_KEYS.length];
+        for (int i = 0; i < SECTION_KEYS.length; i++) {
+            choices[i] = sectionVisible(SECTION_KEYS[i]);
+        }
+        new AlertDialog.Builder(this)
+                .setTitle("Personalizar secciones")
+                .setMultiChoiceItems(SECTION_LABELS, choices,
+                        (dialog, index, checked) -> choices[index] = checked)
+                .setPositiveButton("Guardar", (dialog, which) -> {
+                    SharedPreferences.Editor edit = prefs.edit();
+                    for (int i = 0; i < SECTION_KEYS.length; i++) {
+                        edit.putBoolean("section_visible_" + SECTION_KEYS[i], choices[i]);
+                    }
+                    edit.apply();
+                    draw();
+                })
+                .setNeutralButton("Mostrar todas", (dialog, which) -> {
+                    SharedPreferences.Editor edit = prefs.edit();
+                    for (String key : SECTION_KEYS) {
+                        edit.putBoolean("section_visible_" + key, true);
+                    }
+                    edit.apply();
+                    draw();
+                })
+                .setNegativeButton("Cancelar", (dialog, which) -> { })
+                .show();
+    }
+
+    private int visibleSectionCount() {
+        int visible = 0;
+        for (String key : SECTION_KEYS) {
+            if (sectionVisible(key)) visible++;
+        }
+        return visible;
+    }
+
     private void draw() {
         ScrollView scroll = new ScrollView(this);
         scroll.setFillViewport(true);
@@ -151,7 +204,7 @@ public class MainActivity extends Activity {
 
         root.addView(text("HOY ME AFECTA", 26, INK, true));
         root.addView(text("Lo que te conviene saber antes de salir", 14, GREY, false));
-        root.addView(text("Piloto v5.4 · avisos opcionales y fuentes verificadas", 12, GREY, false));
+        root.addView(text("Piloto v5.6 · pantalla personalizable y avisos opcionales", 12, GREY, false));
         LinearLayout status = card();
         status.addView(text(connection, 14, BLUE, false));
         if (feed != null) {
@@ -160,6 +213,16 @@ public class MainActivity extends Activity {
         }
         if (refreshing) status.addView(text("Descargando el informe...", 13, GREY, false));
         status.addView(button("Actualizar ahora", this::refresh));
+
+        title("Personalizar pantalla");
+        LinearLayout displaySettings = card();
+        displaySettings.addView(text("Secciones visibles: " + visibleSectionCount() +
+                " de " + SECTION_KEYS.length + ". Elegí qué servicios querés ver.",
+                13, GREY, false));
+        displaySettings.addView(button("Configurar secciones", this::chooseVisibleSections));
+        displaySettings.addView(text("Ocultar una sección no desactiva las notificaciones ni " +
+                "modifica las fuentes. Los controles de avisos permanecen accesibles.",
+                12, GREY, false));
 
         title("Tus preferencias");
         LinearLayout setup = card();
@@ -214,44 +277,64 @@ public class MainActivity extends Activity {
 
         title("Notificaciones (prueba)");
         notificationSettings();
-        title("Tu informe personal");
-        personalReport();
-        title("Electricidad · fuentes oficiales");
-        electricity();
-        title("Transporte · colectivos");
-        buses();
-        title("Subtes · Ciudad de Buenos Aires");
-        subtes();
-        title("Trenes");
-        publicCategory("tren", "Estado del servicio", "La aplicación oficial Trenes Argentinos informa cambios y horarios, pero no tenemos acceso automático verificado a su estado.",
-                "Consultar Trenes Argentinos", "https://www.argentina.gob.ar/transporte/trenes-argentinos/app");
-        title("Bancos · atención presencial");
-        banks();
-        title("Operativos públicos · impacto en la circulación");
-        publicCategory("operativo_publico", "Avisos de accesos y circulación", "Solo se muestran efectos anunciados oficialmente sobre la circulación o eventos públicos. No se muestran ubicaciones de controles ni despliegues policiales.",
-                "Consultar seguridad y tránsito CABA", "https://buenosaires.gob.ar/");
-        title("Agua");
-        publicCategory("agua", "Interrupciones del suministro", "Todavía no existe un conector automático verificado para el servicio de agua.",
-                "Consultar AySA", "https://www.aysa.com.ar/");
-        title("Tránsito y vías públicas");
-        publicCategory("transito", "Cortes, obras y desvíos", "Aún no hay un conector automático verificado para cortes de tránsito.",
-                "Consultar BA Cómo Llego", "https://mapa.buenosaires.gob.ar/");
-        title("Información y fuentes");
-        LinearLayout notes = card();
-        notes.addView(text("Fuentes: ENRE para Edenor y Edesur. Estado de subtes en prueba mediante " +
-                "una página pública de CABA, solo cuando tiene fecha verificable y reciente. " +
-                "No hay aún conexión en vivo con trenes ni colectivos.", 13, GREY, false));
-        notes.addView(text("Un aviso publicado se refiere a un área; no confirma el estado de " +
-                "cada domicilio. Ausencia de avisos no equivale a servicio normal.", 13, GREY, false));
-        notes.addView(text("El informe y cada fuente eléctrica deben tener menos de " +
-                "3 horas para mostrar avisos como recientes. La aplicación no sustituye las alertas oficiales.",
-                13, GREY, false));
-        notes.addView(text("Bancos: calendario nacional del BCRA consultado automáticamente; " +
-                "no indica si las sucursales están abiertas. " +
-                "Trenes, agua, tránsito y operativos públicos: sin conexión automática, " +
-                "admiten avisos documentados con fecha y fuente.", 12, GREY, false));
-        notes.addView(text("Las zonas se comparan por nombre exacto con partido o localidad. " +
-                "No se comprueba si un corte alcanza una dirección específica.", 12, GREY, false));
+        if (sectionVisible("informe")) {
+            title("Tu informe personal");
+            personalReport();
+        }
+        if (sectionVisible("electricidad")) {
+            title("Electricidad · fuentes oficiales");
+            electricity();
+        }
+        if (sectionVisible("colectivos")) {
+            title("Transporte · colectivos");
+            buses();
+        }
+        if (sectionVisible("subtes")) {
+            title("Subtes · Ciudad de Buenos Aires");
+            subtes();
+        }
+        if (sectionVisible("trenes")) {
+            title("Trenes");
+            publicCategory("tren", "Estado del servicio", "La aplicación oficial Trenes Argentinos informa cambios y horarios, pero no tenemos acceso automático verificado a su estado.",
+                    "Consultar Trenes Argentinos", "https://www.argentina.gob.ar/transporte/trenes-argentinos/app");
+        }
+        if (sectionVisible("bancos")) {
+            title("Bancos · atención presencial");
+            banks();
+        }
+        if (sectionVisible("operativos")) {
+            title("Operativos públicos · impacto en la circulación");
+            publicCategory("operativo_publico", "Avisos de accesos y circulación", "Solo se muestran efectos anunciados oficialmente sobre la circulación o eventos públicos. No se muestran ubicaciones de controles ni despliegues policiales.",
+                    "Consultar seguridad y tránsito CABA", "https://buenosaires.gob.ar/");
+        }
+        if (sectionVisible("agua")) {
+            title("Agua");
+            publicCategory("agua", "Interrupciones del suministro", "Todavía no existe un conector automático verificado para el servicio de agua.",
+                    "Consultar AySA", "https://www.aysa.com.ar/");
+        }
+        if (sectionVisible("transito")) {
+            title("Tránsito y vías públicas");
+            publicCategory("transito", "Cortes, obras y desvíos", "Aún no hay un conector automático verificado para cortes de tránsito.",
+                    "Consultar BA Cómo Llego", "https://mapa.buenosaires.gob.ar/");
+        }
+        if (sectionVisible("fuentes")) {
+            title("Información y fuentes");
+            LinearLayout notes = card();
+            notes.addView(text("Fuentes: ENRE para Edenor y Edesur. Estado de subtes en prueba mediante " +
+                    "una página pública de CABA, solo cuando tiene fecha verificable y reciente. " +
+                    "No hay aún conexión en vivo con trenes ni colectivos.", 13, GREY, false));
+            notes.addView(text("Un aviso publicado se refiere a un área; no confirma el estado de " +
+                    "cada domicilio. Ausencia de avisos no equivale a servicio normal.", 13, GREY, false));
+            notes.addView(text("El informe y cada fuente eléctrica deben tener menos de " +
+                    "3 horas para mostrar avisos como recientes. La aplicación no sustituye las alertas oficiales.",
+                    13, GREY, false));
+            notes.addView(text("Bancos: calendario nacional del BCRA consultado automáticamente; " +
+                    "no indica si las sucursales están abiertas. " +
+                    "Trenes, agua, tránsito y operativos públicos: sin conexión automática, " +
+                    "admiten avisos documentados con fecha y fuente.", 12, GREY, false));
+            notes.addView(text("Las zonas se comparan por nombre exacto con partido o localidad. " +
+                    "No se comprueba si un corte alcanza una dirección específica.", 12, GREY, false));
+        }
     }
 
     private void notificationSettings() {
@@ -438,30 +521,57 @@ public class MainActivity extends Activity {
             box.addView(text("Elegí una o varias zonas para comenzar.", 13, GREY, false));
             return;
         }
-        JSONObject sources = feed.optJSONObject("sources");
-        boolean electricityConnected = sources != null &&
-                (sourceFresh(sources.optJSONObject("edenor")) ||
-                 sourceFresh(sources.optJSONObject("edesur")));
-        if (!electricityConnected) box.addView(text("No hay fuentes eléctricas recientes verificadas.",
-                13, GREY, true));
-        int count = matchingElectricityCount();
-        box.addView(text(!electricityConnected ? "Estado eléctrico no comprobado" :
-                        count == 0 ? "Sin avisos eléctricos coincidentes en las fuentes disponibles" :
-                        count + (count == 1 ? " aviso eléctrico coincidente" : " avisos eléctricos coincidentes"),
-                15, count == 0 ? GREY : INK, true));
-        box.addView(text("Zona(s): " + prefs.getString("place", "Sin configurar") +
-                " · Cobertura parcial: ENRE para Edenor/Edesur, no todas las distribuidoras.",
+        box.addView(text("Zona(s): " + prefs.getString("place", "Sin configurar"),
                 12, GREY, false));
-        box.addView(text("Colectivo " + favoriteLine() + ": sin conexión automática verificada de demoras.",
-                12, GREY, false));
-        int other = countPublicMatches("tren") + countPublicMatches("agua") +
-                countPublicMatches("transito") + countPublicMatches("banco") +
-                countPublicMatches("operativo_publico");
-        box.addView(text(other == 0 ? "Sin otros avisos públicos vigentes verificados para tus zonas" :
-                other + " avisos públicos verificados para tus zonas", 12, GREY, false));
-        box.addView(text("Feriados bancarios: calendario oficial nacional disponible en su sección; no equivale a estado de sucursales.",
-                12, GREY, false));
-        if (count == 0) box.addView(text("Ausencia de reportes no significa ausencia de problemas.",
+        boolean showElectricity = sectionVisible("electricidad");
+        if (showElectricity) {
+            JSONObject sources = feed.optJSONObject("sources");
+            boolean electricityConnected = sources != null &&
+                    (sourceFresh(sources.optJSONObject("edenor")) ||
+                     sourceFresh(sources.optJSONObject("edesur")));
+            if (!electricityConnected) {
+                box.addView(text("No hay fuentes eléctricas recientes verificadas.",
+                        13, GREY, true));
+            }
+            int count = matchingElectricityCount();
+            box.addView(text(!electricityConnected ? "Estado eléctrico no comprobado" :
+                            count == 0 ? "Sin avisos eléctricos coincidentes en las fuentes disponibles" :
+                            count + (count == 1 ? " aviso eléctrico coincidente" :
+                                    " avisos eléctricos coincidentes"),
+                    15, count == 0 ? GREY : INK, true));
+            box.addView(text("Cobertura parcial: ENRE para Edenor/Edesur, no todas " +
+                    "las distribuidoras.", 12, GREY, false));
+        }
+        if (sectionVisible("colectivos")) {
+            box.addView(text("Colectivo " + favoriteLine() +
+                    ": sin conexión automática verificada de demoras.", 12, GREY, false));
+        }
+        int other = 0;
+        if (sectionVisible("trenes")) other += countPublicMatches("tren");
+        if (sectionVisible("agua")) other += countPublicMatches("agua");
+        if (sectionVisible("transito")) other += countPublicMatches("transito");
+        if (sectionVisible("bancos")) other += countPublicMatches("banco");
+        if (sectionVisible("operativos")) other += countPublicMatches("operativo_publico");
+        if (sectionVisible("trenes") || sectionVisible("agua") ||
+                sectionVisible("transito") || sectionVisible("bancos") ||
+                sectionVisible("operativos")) {
+            box.addView(text(other == 0 ?
+                    "Sin otros avisos públicos vigentes verificados para tus zonas" :
+                    other + " avisos públicos verificados para tus zonas",
+                    12, GREY, false));
+        }
+        if (sectionVisible("bancos")) {
+            box.addView(text("Feriados bancarios: calendario oficial nacional disponible " +
+                    "en su sección; no equivale a estado de sucursales.", 12, GREY, false));
+        }
+        if (!showElectricity && !sectionVisible("colectivos") &&
+                !sectionVisible("subtes") && !sectionVisible("trenes") &&
+                !sectionVisible("bancos") && !sectionVisible("operativos") &&
+                !sectionVisible("agua") && !sectionVisible("transito")) {
+            box.addView(text("No hay categorías de servicios visibles. " +
+                    "Podés activarlas en Personalizar pantalla.", 13, GREY, false));
+        }
+        box.addView(text("Ausencia de reportes no significa ausencia de problemas.",
                 12, GREY, false));
     }
 
