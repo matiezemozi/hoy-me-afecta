@@ -144,6 +144,18 @@ public final class NotificationHistory extends SQLiteOpenHelper {
         return result;
     }
 
+    /** Retrieve a single saved notice by its local ID; existing database is unchanged. */
+    public Record byId(long id) {
+        if (id <= 0) return null;
+        String sql = "SELECT _id, received_at, type, company, title, partido, " +
+                "locality, description, first_seen_at, source_url FROM " + TABLE +
+                " WHERE _id = ? LIMIT 1";
+        try (Cursor cursor = getReadableDatabase().rawQuery(sql,
+                new String[]{String.valueOf(id)})) {
+            return cursor.moveToFirst() ? new Record(cursor) : null;
+        }
+    }
+
     /** Only manual user action or explicitly selected scheduled cleanup. */
     public void clearAll() {
         SQLiteDatabase db = getWritableDatabase();
