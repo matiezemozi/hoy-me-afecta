@@ -13,13 +13,15 @@ import java.util.List;
 
 /**
  * Private, device-only archive of notifications issued by this installation.
- * No age-based or count-based deletion: only clearAll(), initiated by the user.
+ * The archive can be cleared manually or by an expressly selected schedule.
+ * The default is never to clear automatically.
  * Display pagination does NOT remove or limit retained records.
  */
 public final class NotificationHistory extends SQLiteOpenHelper {
     private static final String DB_NAME = "hoy_me_afecta_avisos.db";
     private static final int DB_VERSION = 1;
     private static final String TABLE = "avisos";
+    private final Context appContext;
 
     public static final class Record {
         public final long id;
@@ -41,6 +43,7 @@ public final class NotificationHistory extends SQLiteOpenHelper {
 
     public NotificationHistory(Context context) {
         super(context.getApplicationContext(), DB_NAME, null, DB_VERSION);
+        appContext = context.getApplicationContext();
     }
 
     @Override public void onCreate(SQLiteDatabase db) {
@@ -68,6 +71,9 @@ public final class NotificationHistory extends SQLiteOpenHelper {
 
     /** Save each real publication delivered in a notification; unique event IDs prevent duplicates. */
     public void recordPublications(List<JSONObject> events) {
+        // Apply an overdue user-selected cleanup BEFORE saving this new notice.
+        try { HistoryCleanup.runIfDue(appContext); }
+        catch (RuntimeException ignored) { /* A failed cleanup must not block alerts. */ }
         SQLiteDatabase db = getWritableDatabase();
         db.beginTransaction();
         try {
@@ -97,6 +103,8 @@ public final class NotificationHistory extends SQLiteOpenHelper {
 
     /** Tests deliberately have no event ID, so each requested test remains distinguishable. */
     public void recordTest(String type, String title, String message, String locality) {
+        try { HistoryCleanup.runIfDue(appContext); }
+        catch (RuntimeException ignored) { /* A failed cleanup must not block tests. */ }
         if (!"PRUEBA LOCAL".equals(type) && !"SIMULACION".equals(type))
             throw new IllegalArgumentException("Tipo de prueba no reconocido");
         ContentValues values = new ContentValues();
@@ -136,7 +144,7 @@ public final class NotificationHistory extends SQLiteOpenHelper {
         return result;
     }
 
-    /** Explicit user action only. Does not modify the deduplication state or service preferences. */
+    /** Only manual user action or explicitly selected scheduled cleanup. */
     public void clearAll() {
         SQLiteDatabase db = getWritableDatabase();
         db.delete(TABLE, null, null);
