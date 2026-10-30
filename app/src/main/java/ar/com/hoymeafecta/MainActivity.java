@@ -75,6 +75,10 @@ public class MainActivity extends Activity {
     @Override public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         prefs = getSharedPreferences("hoy_me_afecta", MODE_PRIVATE);
+        // Honor an overdue archive-clear preference even if Android deferred jobs.
+        try { HistoryCleanup.runIfDue(this); }
+        catch (RuntimeException ignored) { /* Preserve app startup if storage is unavailable. */ }
+        HistoryCleanup.scheduleIfNeeded(this);
         AlertCheckJobService.scheduleIfNeeded(this);
         // Show the last downloaded report immediately, even without a network.
         // Its age and each source's age are still checked before showing incidents.
@@ -211,7 +215,7 @@ public class MainActivity extends Activity {
 
         root.addView(text("HOY ME AFECTA", 26, INK, true));
         root.addView(text("Lo que te conviene saber antes de salir", 14, GREY, false));
-        root.addView(text("Piloto v5.7 · historial local y avisos opcionales", 12, GREY, false));
+        root.addView(text("Piloto v5.8 · limpieza opcional del historial", 12, GREY, false));
         LinearLayout status = card();
         status.addView(text(connection, 14, BLUE, false));
         if (feed != null) {
@@ -354,11 +358,13 @@ public class MainActivity extends Activity {
             long total = history.count();
             c.addView(text(total == 0 ? "Todavía no hay avisos guardados." :
                     "Avisos guardados en este teléfono: " + total, 14, INK, true));
+            c.addView(text("Vaciado automático: " +
+                    HistoryCleanup.label(HistoryCleanup.frequency(this)), 12, GREY, false));
         } catch (RuntimeException ex) {
             c.addView(text("No se pudo abrir el historial local.", 13, GREY, false));
         }
-        c.addView(text("Se guardan las notificaciones que se emitan desde esta versión. " +
-                "Los avisos anteriores a v5.7 no se pueden recuperar automáticamente.",
+        c.addView(text("Se conservan las notificaciones guardadas desde la versión 5.7. " +
+                "Los avisos anteriores no se pueden recuperar automáticamente.",
                 12, GREY, false));
         c.addView(button("Abrir Mis avisos", () -> {
             historyScreen = true;
@@ -366,6 +372,27 @@ public class MainActivity extends Activity {
             historyScrollPosition = 0;
             draw();
         }));
+    }
+
+    private void chooseHistoryCleanup() {
+        final int[] chosen = {HistoryCleanup.selectionIndex(HistoryCleanup.frequency(this))};
+        new AlertDialog.Builder(this)
+                .setTitle("Vaciado automático del historial")
+                .setSingleChoiceItems(HistoryCleanup.LABELS, chosen[0],
+                        (dialog, index) -> chosen[0] = index)
+                .setNegativeButton("Cancelar", (dialog, which) -> { })
+                .setPositiveButton("Guardar", (dialog, which) -> {
+                    try {
+                        HistoryCleanup.setFrequency(this,
+                                HistoryCleanup.frequencyForIndex(chosen[0]));
+                        drawHistory();
+                    } catch (RuntimeException error) {
+                        android.widget.Toast.makeText(this,
+                                "No se pudo guardar la frecuencia.",
+                                android.widget.Toast.LENGTH_LONG).show();
+                    }
+                })
+                .show();
     }
 
     private void drawHistory() {
@@ -389,9 +416,17 @@ public class MainActivity extends Activity {
         try (NotificationHistory history = new NotificationHistory(this)) {
             total = history.count();
             LinearLayout controls = card();
-            controls.addView(text("Total guardado: " + total +
-                    ". No hay borrado automático por tiempo ni cantidad.",
-                    13, INK, true));
+            controls.addView(text("Total guardado: " + total, 13, INK, true));
+            String frequency = HistoryCleanup.frequency(this);
+            controls.addView(text("Vaciado automático: " + HistoryCleanup.label(frequency),
+                    14, INK, true));
+            controls.addView(text(HistoryCleanup.description(this), 12, GREY, false));
+            String lastClear = HistoryCleanup.lastAutomaticClear(this);
+            if (!lastClear.isEmpty()) controls.addView(text(lastClear, 12, GREY, false));
+            controls.addView(button("Configurar vaciado automático", this::chooseHistoryCleanup));
+            controls.addView(text("Podés elegir Nunca, Semanalmente (cada 7 días) o " +
+                    "Mensualmente (un mes calendario). El vaciado borra TODO el historial; " +
+                    "la opción Nunca es la predeterminada.", 12, GREY, false));
             controls.addView(text("Los registros del ENRE describen publicaciones, no " +
                     "confirman la duración del corte. Las pruebas están identificadas.",
                     12, GREY, false));
@@ -407,6 +442,7 @@ public class MainActivity extends Activity {
                                 .setPositiveButton("Vaciar historial", (dialog, which) -> {
                                     try (NotificationHistory storage = new NotificationHistory(this)) {
                                         storage.clearAll();
+                                        HistoryCleanup.afterManualClear(this);
                                         historyDisplayed = 25;
                                         historyScrollPosition = 0;
                                         drawHistory();
@@ -419,7 +455,7 @@ public class MainActivity extends Activity {
             }
             if (total == 0) {
                 LinearLayout empty = card();
-                empty.addView(text("Todavía no recibiste avisos desde la versión 5.7.",
+                empty.addView(text("Todavía no hay avisos guardados.",
                         14, GREY, false));
             } else {
                 int shown = 0;
