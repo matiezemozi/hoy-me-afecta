@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-30T07:08:47Z",
+  "generated_at": "2026-10-30T08:11:15Z",
   "alerts": [
     {
       "category": "electricidad",
@@ -12,7 +12,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
-      "observed_at": "2026-10-30T07:08:47Z",
+      "observed_at": "2026-10-30T08:11:15Z",
       "confirmation": "Publicado por ENRE",
       "id": "a24edd48e64a7e62"
     },
@@ -26,23 +26,9 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-30T07:08:47Z",
+      "observed_at": "2026-10-30T08:11:15Z",
       "confirmation": "Publicado por ENRE",
       "id": "8ba94ca654f82c37"
-    },
-    {
-      "category": "electricidad",
-      "title": "Interrupción de baja tensión",
-      "company": "Edesur",
-      "partido": "CAPITAL",
-      "localidad": "CONSTITUCION",
-      "users_affected": "3",
-      "expected_restoration": null,
-      "zone_detail": null,
-      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-30T07:08:47Z",
-      "confirmation": "Publicado por ENRE",
-      "id": "e41cac0349716e6c"
     },
     {
       "category": "electricidad",
@@ -54,7 +40,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-30T07:08:47Z",
+      "observed_at": "2026-10-30T08:11:15Z",
       "confirmation": "Publicado por ENRE",
       "id": "baaceed421538730"
     },
@@ -68,7 +54,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-30T07:08:47Z",
+      "observed_at": "2026-10-30T08:11:15Z",
       "confirmation": "Publicado por ENRE",
       "id": "a0b2080cff9daf4e"
     },
@@ -82,7 +68,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-30T07:08:47Z",
+      "observed_at": "2026-10-30T08:11:15Z",
       "confirmation": "Publicado por ENRE",
       "id": "b45663662a973057"
     },
@@ -96,7 +82,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-30T07:08:47Z",
+      "observed_at": "2026-10-30T08:11:15Z",
       "confirmation": "Publicado por ENRE",
       "id": "23860ad20a05f5fe"
     }
@@ -105,14 +91,14 @@
     "edenor": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDN.js",
-      "checked_at": "2026-10-30T07:08:47Z",
+      "checked_at": "2026-10-30T08:11:15Z",
       "event_count": 1
     },
     "edesur": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDS.js",
-      "checked_at": "2026-10-30T07:08:47Z",
-      "event_count": 6
+      "checked_at": "2026-10-30T08:11:15Z",
+      "event_count": 5
     }
   },
   "banking": {
@@ -145,7 +131,7 @@
       }
     ],
     "source_retrieval": "ok",
-    "checked_at": "2026-10-30T07:08:47Z"
+    "checked_at": "2026-10-30T08:11:15Z"
   },
   "coverage": {
     "trains": "manual_notices_only",
@@ -160,13 +146,13 @@
       "status": "not_connected",
       "message": "No hay conexión verificada con una fuente automática de estado de la línea 57.",
       "reference_url": "https://www.argentina.gob.ar/sube/cuandosubo",
-      "checked_at": "2026-10-30T07:08:47Z"
+      "checked_at": "2026-10-30T08:11:15Z"
     }
   },
   "subte": {
     "status": "unverified",
     "message": "La página no publica una fecha de actualización verificable.",
-    "checked_at": "2026-10-30T07:08:47Z",
+    "checked_at": "2026-10-30T08:11:15Z",
     "url": "https://buenosaires.gob.ar/inicio/mis-documentos",
     "lines": []
   },
@@ -174,10 +160,10 @@
   "change_tracking": {
     "status": "ok",
     "meaning": "Las novedades indican cambios respecto del informe anterior; no prueban cuándo comenzó un corte ni que uno ausente esté resuelto.",
-    "compared_to": "2026-10-30T05:54:47Z",
+    "compared_to": "2026-10-30T07:08:47Z",
     "new_in_publication_count": 0,
     "new_in_publication": [],
-    "no_longer_listed_count": 2,
+    "no_longer_listed_count": 1,
     "providers_compared": [
       "edenor",
       "edesur"
