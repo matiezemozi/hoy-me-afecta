@@ -69,6 +69,11 @@ public class MainActivity extends Activity {
     private String connection = "Sin datos descargados todavía";
     private boolean refreshing = false;
     private boolean historyScreen = false;
+    private long historyDetailId = -1L;
+    private boolean detailChecking = false;
+    private String detailNetworkMessage = "";
+    private JSONObject detailNetworkFeed = null;
+    private long detailNetworkFeedRecordId = -1L;
     private int historyDisplayed = 25;
     private int historyScrollPosition = 0;
 
@@ -201,7 +206,8 @@ public class MainActivity extends Activity {
 
     private void draw() {
         if (historyScreen) {
-            drawHistory();
+            if (historyDetailId > 0) drawHistoryDetail();
+            else drawHistory();
             return;
         }
         ScrollView scroll = new ScrollView(this);
@@ -215,7 +221,7 @@ public class MainActivity extends Activity {
 
         root.addView(text("HOY ME AFECTA", 26, INK, true));
         root.addView(text("Lo que te conviene saber antes de salir", 14, GREY, false));
-        root.addView(text("Piloto v5.8 · limpieza opcional del historial", 12, GREY, false));
+        root.addView(text("Piloto v5.9 · detalle de avisos y prioridades", 12, GREY, false));
         LinearLayout status = card();
         status.addView(text(connection, 14, BLUE, false));
         if (feed != null) {
@@ -224,6 +230,12 @@ public class MainActivity extends Activity {
         }
         if (refreshing) status.addView(text("Descargando el informe...", 13, GREY, false));
         status.addView(button("Actualizar ahora", this::refresh));
+
+        // Put relevant information before configuration and unconnected categories.
+        if (sectionVisible("informe")) {
+            title("Tu informe personal");
+            personalReport();
+        }
 
         title("Personalizar pantalla");
         LinearLayout displaySettings = card();
@@ -291,10 +303,6 @@ public class MainActivity extends Activity {
         if (sectionVisible("historial")) {
             title("Mis avisos");
             historySummary();
-        }
-        if (sectionVisible("informe")) {
-            title("Tu informe personal");
-            personalReport();
         }
         if (sectionVisible("electricidad")) {
             title("Electricidad · fuentes oficiales");
@@ -367,6 +375,7 @@ public class MainActivity extends Activity {
                 "Los avisos anteriores no se pueden recuperar automáticamente.",
                 12, GREY, false));
         c.addView(button("Abrir Mis avisos", () -> {
+            historyDetailId = -1L;
             historyScreen = true;
             historyDisplayed = 25;
             historyScrollPosition = 0;
@@ -409,6 +418,7 @@ public class MainActivity extends Activity {
                 13, GREY, false));
         root.addView(button("Volver a HOY ME AFECTA", () -> {
             historyScreen = false;
+            historyDetailId = -1L;
             draw();
         }));
 
@@ -483,6 +493,14 @@ public class MainActivity extends Activity {
                                     formatUtc(item.firstSeenAt), 12, GREY, false));
                         if (!item.description.isEmpty())
                             entry.addView(text(item.description, 12, GREY, false));
+                        entry.addView(button("Ver detalles del aviso", () -> {
+                            historyDetailId = item.id;
+                            detailChecking = false;
+                            detailNetworkFeed = null;
+                            detailNetworkFeedRecordId = -1L;
+                            detailNetworkMessage = "";
+                            draw();
+                        }));
                         if (item.sourceUrl.startsWith("https://www.enre.gov.ar/") ||
                                 item.sourceUrl.startsWith("https://enre.gov.ar/")) {
                             entry.addView(button("Consultar publicación del ENRE",
@@ -514,6 +532,160 @@ public class MainActivity extends Activity {
             scroll.post(() -> scroll.scrollTo(0, restore));
             historyScrollPosition = 0;
         }
+    }
+
+    @Override public void onBackPressed() {
+        if (historyScreen && historyDetailId > 0) {
+            historyDetailId = -1L;
+            draw();
+        } else if (historyScreen) {
+            historyScreen = false;
+            draw();
+        } else {
+            super.onBackPressed();
+        }
+    }
+
+    /** Read-only detail; no automatic deletions, changes to settings, or assumed restorations. */
+    private void drawHistoryDetail() {
+        ScrollView scroll = new ScrollView(this);
+        scroll.setFillViewport(true);
+        scroll.setBackgroundColor(LIGHT);
+        root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(dp(20), dp(20), dp(20), dp(28));
+        scroll.addView(root);
+        setContentView(scroll);
+        root.addView(text("Detalle del aviso", 26, INK, true));
+        root.addView(button("Volver a Mis avisos", () -> {
+            historyDetailId = -1L;
+            draw();
+        }));
+        try (NotificationHistory history = new NotificationHistory(this)) {
+            NotificationHistory.Record record = history.byId(historyDetailId);
+            if (record == null) {
+                LinearLayout missing = card();
+                missing.addView(text("El aviso ya no está disponible en este teléfono.",
+                        14, GREY, false));
+                return;
+            }
+            LinearLayout detail = card();
+            detail.addView(text(record.type, 13, BLUE, true));
+            detail.addView(text(record.title, 19, INK, true));
+            detail.addView(text("Recibido: " + new SimpleDateFormat(
+                    "dd/MM/yyyy HH:mm", Locale.getDefault())
+                    .format(new Date(record.receivedAt)), 13, GREY, false));
+            if (!record.company.isEmpty())
+                detail.addView(text("Organismo / empresa: " + record.company, 13, GREY, false));
+            if (!record.partido.isEmpty())
+                detail.addView(text("Partido: " + record.partido, 13, GREY, false));
+            if (!record.locality.isEmpty())
+                detail.addView(text("Localidad: " + record.locality, 13, GREY, false));
+            if (!record.firstSeenAt.isEmpty())
+                detail.addView(text("Primera aparición en el informe: " +
+                        formatUtc(record.firstSeenAt), 13, GREY, false));
+            if (!record.description.isEmpty())
+                detail.addView(text(record.description, 13, GREY, false));
+
+            if (!"AVISO DEL ENRE".equals(record.type)) {
+                LinearLayout test = card();
+                test.addView(text("Prueba o simulación local: no representa un incidente real. " +
+                        "No corresponde verificar su vigencia en el ENRE.", 13, GREY, true));
+                return;
+            }
+            LinearLayout check = card();
+            check.addView(text("¿Todavía figura en la publicación?", 16, INK, true));
+            check.addView(text("Se consulta el informe publicado por el proyecto, que recopila " +
+                    "datos del ENRE. Se busca un aviso equivalente por empresa, tipo y zona. " +
+                    "No se puede identificar con certeza el mismo incidente " +
+                    "ni confirmar el suministro de un domicilio.", 12, GREY, false));
+            JSONObject candidate = detailNetworkFeedRecordId == record.id &&
+                    detailNetworkFeed != null ? detailNetworkFeed : feed;
+            PublicationStatus.Result status = PublicationStatus.assess(candidate,
+                    record.company, record.partido, record.locality, record.title,
+                    System.currentTimeMillis());
+            check.addView(text(status.explanation, 14,
+                    PublicationStatus.MATCH_FOUND.equals(status.status) ? BLUE : GREY, true));
+            if (!status.generatedAt.isEmpty())
+                check.addView(text("Informe: " + formatUtc(status.generatedAt), 12, GREY, false));
+            if (!status.sourceCheckedAt.isEmpty())
+                check.addView(text("Fuente consultada: " + formatUtc(status.sourceCheckedAt),
+                        12, GREY, false));
+            if (!detailNetworkMessage.isEmpty())
+                check.addView(text(detailNetworkMessage, 12, GREY, false));
+            if (detailNetworkFeedRecordId != record.id || detailNetworkFeed == null)
+                check.addView(text("Evaluación inicial del informe almacenado. Para consultar " +
+                        "la publicación más reciente, presioná el botón siguiente.",
+                        12, GREY, false));
+            if (detailChecking) {
+                check.addView(text("Consultando la publicación...", 13, GREY, false));
+            } else {
+                check.addView(button("Comprobar publicación ahora", () ->
+                        checkHistoryPublication(record.id)));
+            }
+            if (record.sourceUrl.startsWith("https://www.enre.gov.ar/") ||
+                    record.sourceUrl.startsWith("https://enre.gov.ar/")) {
+                check.addView(button("Abrir la fuente oficial", () -> open(record.sourceUrl)));
+            }
+        } catch (RuntimeException ex) {
+            LinearLayout problem = card();
+            problem.addView(text("No se pudo consultar este aviso guardado.",
+                    13, GREY, false));
+        }
+    }
+
+    /** Refresh detail from GitHub in a worker thread; never infer resolution on failure. */
+    private void checkHistoryPublication(final long id) {
+        if (detailChecking) return;
+        detailChecking = true;
+        detailNetworkMessage = "";
+        draw();
+        new Thread(() -> {
+            HttpURLConnection handle = null;
+            try {
+                handle = (HttpURLConnection) new URL(FEED_URL + "?detail=" +
+                        System.currentTimeMillis()).openConnection();
+                handle.setConnectTimeout(12000);
+                handle.setReadTimeout(12000);
+                handle.setRequestProperty("Accept", "application/json");
+                if (handle.getResponseCode() != 200)
+                    throw new Exception("Respuesta HTTP " + handle.getResponseCode());
+                ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+                try (InputStream stream = handle.getInputStream()) {
+                    byte[] buffer = new byte[4096];
+                    int count;
+                    while ((count = stream.read(buffer)) != -1) {
+                        if (bytes.size() + count > 2_000_000)
+                            throw new Exception("Informe demasiado grande");
+                        bytes.write(buffer, 0, count);
+                    }
+                }
+                JSONObject latest = new JSONObject(bytes.toString("UTF-8"));
+                if (latest.optInt("schema_version") != 1)
+                    throw new Exception("Formato de informe desconocido");
+                runOnUiThread(() -> {
+                    if (!historyScreen || historyDetailId != id) return;
+                    detailChecking = false;
+                    detailNetworkFeed = latest;
+                    detailNetworkFeedRecordId = id;
+                    detailNetworkMessage = "Consulta al informe de GitHub completada. " +
+                            "Revisá su fecha y la de la fuente: los datos podrían no ser recientes.";
+                    draw();
+                });
+            } catch (Exception ex) {
+                runOnUiThread(() -> {
+                    if (!historyScreen || historyDetailId != id) return;
+                    detailChecking = false;
+                    detailNetworkFeed = null;
+                    detailNetworkFeedRecordId = -1L;
+                    detailNetworkMessage = "No se pudo consultar el servidor. " +
+                            "El estado actual no está verificado.";
+                    draw();
+                });
+            } finally {
+                if (handle != null) handle.disconnect();
+            }
+        }).start();
     }
 
     private void notificationSettings() {
@@ -704,6 +876,7 @@ public class MainActivity extends Activity {
                 12, GREY, false));
         boolean showElectricity = sectionVisible("electricidad");
         if (showElectricity) {
+            showRecentPublicationHighlights(box);
             JSONObject sources = feed.optJSONObject("sources");
             boolean electricityConnected = sources != null &&
                     (sourceFresh(sources.optJSONObject("edenor")) ||
@@ -752,6 +925,48 @@ public class MainActivity extends Activity {
         }
         box.addView(text("Ausencia de reportes no significa ausencia de problemas.",
                 12, GREY, false));
+    }
+
+    /** Recent journal entries are publication changes, never proof of a live outage. */
+    private void showRecentPublicationHighlights(LinearLayout box) {
+        if (feed == null || !isFresh()) return;
+        JSONObject journal = feed.optJSONObject("notification_events");
+        JSONObject sources = feed.optJSONObject("sources");
+        if (journal == null || sources == null ||
+                !"ready".equals(usable(journal, "status"))) return;
+        JSONArray events = journal.optJSONArray("events");
+        if (events == null) return;
+        int found = 0;
+        for (int i = events.length() - 1; i >= 0; i--) {
+            JSONObject event = events.optJSONObject(i);
+            if (event == null || !"electricity_publication_added".equals(
+                    usable(event, "kind"))) continue;
+            if (!selectedAreaMatches(usable(event, "partido"),
+                    usable(event, "localidad"))) continue;
+            String company = usable(event, "company").toLowerCase(Locale.ROOT);
+            if (!sourceFresh(sources.optJSONObject(company))) continue;
+            Date first = parseUtc(usable(event, "first_seen_at"));
+            if (first == null) continue;
+            long age = System.currentTimeMillis() - first.getTime();
+            if (age < -60_000L || age >= MAX_FEED_AGE_MS) continue;
+            if (found == 0) box.addView(text("Novedades recientes en publicaciones:",
+                    14, INK, true));
+            if (found < 3) {
+                box.addView(text("• " + usable(event, "company") + " · " +
+                        usable(event, "title") + " · " +
+                        usable(event, "localidad") + " (" +
+                        formatUtc(usable(event, "first_seen_at")) + ")",
+                        13, GREY, false));
+            }
+            found++;
+        }
+        if (found > 0) {
+            if (found > 3) box.addView(text("Y " + (found - 3) +
+                    " novedades adicionales.", 12, GREY, false));
+            box.addView(text("Son cambios detectados en las publicaciones del ENRE; " +
+                    "no prueban que los cortes continúen ni cuándo comenzaron.",
+                    12, GREY, false));
+        }
     }
 
     private static String usable(JSONObject obj, String key) {
