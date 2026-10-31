@@ -1,7 +1,63 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-31T11:45:53Z",
+  "generated_at": "2026-10-31T12:58:01Z",
   "alerts": [
+    {
+      "category": "electricidad",
+      "title": "Corte programado",
+      "company": "Edenor",
+      "partido": "GRAL RODRIGUEZ",
+      "localidad": "GRAL RODRIGUEZ",
+      "users_affected": "569",
+      "expected_restoration": null,
+      "zone_detail": null,
+      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
+      "observed_at": "2026-10-31T12:58:01Z",
+      "confirmation": "Publicado por ENRE",
+      "id": "27783a40547bcbaa"
+    },
+    {
+      "category": "electricidad",
+      "title": "Corte programado",
+      "company": "Edesur",
+      "partido": "ALMIRANTE BROWN",
+      "localidad": "ADROGUE",
+      "users_affected": "512",
+      "expected_restoration": "2026-10-31 17:00",
+      "zone_detail": null,
+      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
+      "observed_at": "2026-10-31T12:58:01Z",
+      "confirmation": "Publicado por ENRE",
+      "id": "ac98a32acf5617d3"
+    },
+    {
+      "category": "electricidad",
+      "title": "Corte programado",
+      "company": "Edesur",
+      "partido": "ALMIRANTE BROWN",
+      "localidad": "BURZACO",
+      "users_affected": "227",
+      "expected_restoration": "2026-10-31 17:00",
+      "zone_detail": null,
+      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
+      "observed_at": "2026-10-31T12:58:01Z",
+      "confirmation": "Publicado por ENRE",
+      "id": "dbd88804980b4721"
+    },
+    {
+      "category": "electricidad",
+      "title": "Corte programado",
+      "company": "Edesur",
+      "partido": "ALMIRANTE BROWN",
+      "localidad": "RAFAEL CALZADA",
+      "users_affected": "314",
+      "expected_restoration": "2026-10-31 17:00",
+      "zone_detail": null,
+      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
+      "observed_at": "2026-10-31T12:58:01Z",
+      "confirmation": "Publicado por ENRE",
+      "id": "ea87b27772744081"
+    },
     {
       "category": "electricidad",
       "title": "Corte programado",
@@ -12,7 +68,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-31T11:45:53Z",
+      "observed_at": "2026-10-31T12:58:01Z",
       "confirmation": "Publicado por ENRE",
       "id": "5a265d187b1a5844"
     },
@@ -26,9 +82,51 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-31T11:45:53Z",
+      "observed_at": "2026-10-31T12:58:01Z",
       "confirmation": "Publicado por ENRE",
       "id": "5a514df6629a8320"
+    },
+    {
+      "category": "electricidad",
+      "title": "Corte programado",
+      "company": "Edesur",
+      "partido": "ESTEBAN ECHEVERRIA",
+      "localidad": "MONTE GRANDE",
+      "users_affected": "128",
+      "expected_restoration": "2026-10-31 17:00",
+      "zone_detail": null,
+      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
+      "observed_at": "2026-10-31T12:58:01Z",
+      "confirmation": "Publicado por ENRE",
+      "id": "64b51772a15aed0b"
+    },
+    {
+      "category": "electricidad",
+      "title": "Corte programado",
+      "company": "Edesur",
+      "partido": "QUILMES",
+      "localidad": "QUILMES OESTE",
+      "users_affected": "666",
+      "expected_restoration": "2026-10-31 12:25",
+      "zone_detail": null,
+      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
+      "observed_at": "2026-10-31T12:58:01Z",
+      "confirmation": "Publicado por ENRE",
+      "id": "eb69d25b66035870"
+    },
+    {
+      "category": "electricidad",
+      "title": "Interrupción de media tensión",
+      "company": "Edesur",
+      "partido": "ALMIRANTE BROWN",
+      "localidad": "SAN JOSE",
+      "users_affected": "534",
+      "expected_restoration": "2026-10-31 12:50",
+      "zone_detail": null,
+      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
+      "observed_at": "2026-10-31T12:58:01Z",
+      "confirmation": "Publicado por ENRE",
+      "id": "169c5264dbb593e1"
     },
     {
       "category": "electricidad",
@@ -36,13 +134,13 @@
       "company": "Edesur",
       "partido": "ALMIRANTE BROWN",
       "localidad": "LONGCHAMPS",
-      "users_affected": "8",
+      "users_affected": "9",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-31T11:45:53Z",
+      "observed_at": "2026-10-31T12:58:01Z",
       "confirmation": "Publicado por ENRE",
-      "id": "d228b9b11e080f4a"
+      "id": "da2e11175cf43031"
     },
     {
       "category": "electricidad",
@@ -50,13 +148,13 @@
       "company": "Edesur",
       "partido": "AVELLANEDA",
       "localidad": "AVELLANEDA",
-      "users_affected": "10",
+      "users_affected": "11",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-31T11:45:53Z",
+      "observed_at": "2026-10-31T12:58:01Z",
       "confirmation": "Publicado por ENRE",
-      "id": "36c5bb70ae577a5c"
+      "id": "74236c408f96e26f"
     },
     {
       "category": "electricidad",
@@ -64,13 +162,13 @@
       "company": "Edesur",
       "partido": "BERAZATEGUI",
       "localidad": "BERAZATEGUI",
-      "users_affected": "24",
+      "users_affected": "25",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-31T11:45:53Z",
+      "observed_at": "2026-10-31T12:58:01Z",
       "confirmation": "Publicado por ENRE",
-      "id": "70a811baade67140"
+      "id": "cec6c680014f91d2"
     },
     {
       "category": "electricidad",
@@ -78,13 +176,13 @@
       "company": "Edesur",
       "partido": "CAÑUELAS",
       "localidad": "ZONA RURAL",
-      "users_affected": "41",
+      "users_affected": "42",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-31T11:45:53Z",
+      "observed_at": "2026-10-31T12:58:01Z",
       "confirmation": "Publicado por ENRE",
-      "id": "046cf9feb315ba6f"
+      "id": "04f89505d2cada57"
     },
     {
       "category": "electricidad",
@@ -92,13 +190,13 @@
       "company": "Edesur",
       "partido": "CAPITAL",
       "localidad": "ALMAGRO",
-      "users_affected": "42",
+      "users_affected": "41",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-31T11:45:53Z",
+      "observed_at": "2026-10-31T12:58:01Z",
       "confirmation": "Publicado por ENRE",
-      "id": "a7f1a33335d7c6b7"
+      "id": "e3b3b5bd31a3ebff"
     },
     {
       "category": "electricidad",
@@ -106,13 +204,13 @@
       "company": "Edesur",
       "partido": "CAPITAL",
       "localidad": "CABALLITO",
-      "users_affected": "1",
+      "users_affected": "2",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-31T11:45:53Z",
+      "observed_at": "2026-10-31T12:58:01Z",
       "confirmation": "Publicado por ENRE",
-      "id": "fb2308944def44d7"
+      "id": "ae0b2576dff3f477"
     },
     {
       "category": "electricidad",
@@ -120,27 +218,13 @@
       "company": "Edesur",
       "partido": "CAPITAL",
       "localidad": "NUEVA POMPEYA",
-      "users_affected": "1",
+      "users_affected": "5",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-31T11:45:53Z",
+      "observed_at": "2026-10-31T12:58:01Z",
       "confirmation": "Publicado por ENRE",
-      "id": "267d4463953e5916"
-    },
-    {
-      "category": "electricidad",
-      "title": "Interrupción de baja tensión",
-      "company": "Edesur",
-      "partido": "ESTEBAN ECHEVERRIA",
-      "localidad": "MONTE GRANDE",
-      "users_affected": "3",
-      "expected_restoration": null,
-      "zone_detail": null,
-      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-31T11:45:53Z",
-      "confirmation": "Publicado por ENRE",
-      "id": "a0b2080cff9daf4e"
+      "id": "f55dcdf617705652"
     },
     {
       "category": "electricidad",
@@ -152,7 +236,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-10-31T11:45:53Z",
+      "observed_at": "2026-10-31T12:58:01Z",
       "confirmation": "Publicado por ENRE",
       "id": "47a811b4036f8fc4"
     }
@@ -161,14 +245,14 @@
     "edenor": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDN.js",
-      "checked_at": "2026-10-31T11:45:53Z",
-      "event_count": 0
+      "checked_at": "2026-10-31T12:58:01Z",
+      "event_count": 1
     },
     "edesur": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDS.js",
-      "checked_at": "2026-10-31T11:45:53Z",
-      "event_count": 11
+      "checked_at": "2026-10-31T12:58:01Z",
+      "event_count": 16
     }
   },
   "banking": {
@@ -201,7 +285,7 @@
       }
     ],
     "source_retrieval": "ok",
-    "checked_at": "2026-10-31T11:45:53Z"
+    "checked_at": "2026-10-31T12:58:01Z"
   },
   "coverage": {
     "trains": "manual_notices_only",
@@ -216,13 +300,13 @@
       "status": "not_connected",
       "message": "No hay conexión verificada con una fuente automática de estado de la línea 57.",
       "reference_url": "https://www.argentina.gob.ar/sube/cuandosubo",
-      "checked_at": "2026-10-31T11:45:53Z"
+      "checked_at": "2026-10-31T12:58:01Z"
     }
   },
   "subte": {
     "status": "unverified",
     "message": "La página no publica una fecha de actualización verificable.",
-    "checked_at": "2026-10-31T11:45:53Z",
+    "checked_at": "2026-10-31T12:58:01Z",
     "url": "https://buenosaires.gob.ar/inicio/mis-documentos",
     "lines": []
   },
@@ -230,10 +314,81 @@
   "change_tracking": {
     "status": "ok",
     "meaning": "Las novedades indican cambios respecto del informe anterior; no prueban cuándo comenzó un corte ni que uno ausente esté resuelto.",
-    "compared_to": "2026-10-31T10:45:50Z",
-    "new_in_publication_count": 0,
-    "new_in_publication": [],
-    "no_longer_listed_count": 0,
+    "compared_to": "2026-10-31T11:45:53Z",
+    "new_in_publication_count": 7,
+    "new_in_publication": [
+      {
+        "id": "27783a40547bcbaa",
+        "company": "Edenor",
+        "title": "Corte programado",
+        "partido": "GRAL RODRIGUEZ",
+        "localidad": "GRAL RODRIGUEZ",
+        "observed_at": "2026-10-31T12:58:01Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
+        "meaning": "No figuraba en el informe anterior; inicio real desconocido."
+      },
+      {
+        "id": "ac98a32acf5617d3",
+        "company": "Edesur",
+        "title": "Corte programado",
+        "partido": "ALMIRANTE BROWN",
+        "localidad": "ADROGUE",
+        "observed_at": "2026-10-31T12:58:01Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
+        "meaning": "No figuraba en el informe anterior; inicio real desconocido."
+      },
+      {
+        "id": "dbd88804980b4721",
+        "company": "Edesur",
+        "title": "Corte programado",
+        "partido": "ALMIRANTE BROWN",
+        "localidad": "BURZACO",
+        "observed_at": "2026-10-31T12:58:01Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
+        "meaning": "No figuraba en el informe anterior; inicio real desconocido."
+      },
+      {
+        "id": "ea87b27772744081",
+        "company": "Edesur",
+        "title": "Corte programado",
+        "partido": "ALMIRANTE BROWN",
+        "localidad": "RAFAEL CALZADA",
+        "observed_at": "2026-10-31T12:58:01Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
+        "meaning": "No figuraba en el informe anterior; inicio real desconocido."
+      },
+      {
+        "id": "64b51772a15aed0b",
+        "company": "Edesur",
+        "title": "Corte programado",
+        "partido": "ESTEBAN ECHEVERRIA",
+        "localidad": "MONTE GRANDE",
+        "observed_at": "2026-10-31T12:58:01Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
+        "meaning": "No figuraba en el informe anterior; inicio real desconocido."
+      },
+      {
+        "id": "eb69d25b66035870",
+        "company": "Edesur",
+        "title": "Corte programado",
+        "partido": "QUILMES",
+        "localidad": "QUILMES OESTE",
+        "observed_at": "2026-10-31T12:58:01Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
+        "meaning": "No figuraba en el informe anterior; inicio real desconocido."
+      },
+      {
+        "id": "169c5264dbb593e1",
+        "company": "Edesur",
+        "title": "Interrupción de media tensión",
+        "partido": "ALMIRANTE BROWN",
+        "localidad": "SAN JOSE",
+        "observed_at": "2026-10-31T12:58:01Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
+        "meaning": "No figuraba en el informe anterior; inicio real desconocido."
+      }
+    ],
+    "no_longer_listed_count": 1,
     "providers_compared": [
       "edenor",
       "edesur"
@@ -248,14 +403,80 @@
     "meaning": "Apareció en una publicación nueva; no prueba inicio del corte.",
     "events": [
       {
-        "event_id": "f4154c0f60f622ce192a6930",
+        "event_id": "a02618de91492a8ac363efce",
+        "kind": "electricity_publication_added",
+        "country": "Argentina",
+        "company": "Edenor",
+        "title": "Corte programado",
+        "partido": "GRAL RODRIGUEZ",
+        "localidad": "GRAL RODRIGUEZ",
+        "first_seen_at": "2026-10-31T12:58:01Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html"
+      },
+      {
+        "event_id": "e99ed896f5328758e1d556ef",
         "kind": "electricity_publication_added",
         "country": "Argentina",
         "company": "Edesur",
-        "title": "Interrupción de baja tensión",
+        "title": "Corte programado",
         "partido": "ALMIRANTE BROWN",
-        "localidad": "CLAYPOLE",
-        "first_seen_at": "2026-10-31T09:49:44Z",
+        "localidad": "ADROGUE",
+        "first_seen_at": "2026-10-31T12:58:01Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html"
+      },
+      {
+        "event_id": "807af0a5c3eabb5af3e9ec56",
+        "kind": "electricity_publication_added",
+        "country": "Argentina",
+        "company": "Edesur",
+        "title": "Corte programado",
+        "partido": "ALMIRANTE BROWN",
+        "localidad": "BURZACO",
+        "first_seen_at": "2026-10-31T12:58:01Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html"
+      },
+      {
+        "event_id": "7ec353636720f454d7758109",
+        "kind": "electricity_publication_added",
+        "country": "Argentina",
+        "company": "Edesur",
+        "title": "Corte programado",
+        "partido": "ALMIRANTE BROWN",
+        "localidad": "RAFAEL CALZADA",
+        "first_seen_at": "2026-10-31T12:58:01Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html"
+      },
+      {
+        "event_id": "ef71c6a21064a65222b4eb83",
+        "kind": "electricity_publication_added",
+        "country": "Argentina",
+        "company": "Edesur",
+        "title": "Corte programado",
+        "partido": "ESTEBAN ECHEVERRIA",
+        "localidad": "MONTE GRANDE",
+        "first_seen_at": "2026-10-31T12:58:01Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html"
+      },
+      {
+        "event_id": "897c9b5f67dd1b9bcff49cec",
+        "kind": "electricity_publication_added",
+        "country": "Argentina",
+        "company": "Edesur",
+        "title": "Corte programado",
+        "partido": "QUILMES",
+        "localidad": "QUILMES OESTE",
+        "first_seen_at": "2026-10-31T12:58:01Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html"
+      },
+      {
+        "event_id": "c6960d6e84d091ecad84d30d",
+        "kind": "electricity_publication_added",
+        "country": "Argentina",
+        "company": "Edesur",
+        "title": "Interrupción de media tensión",
+        "partido": "ALMIRANTE BROWN",
+        "localidad": "SAN JOSE",
+        "first_seen_at": "2026-10-31T12:58:01Z",
         "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html"
       }
     ]
