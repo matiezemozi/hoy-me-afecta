@@ -22,6 +22,7 @@ from subte_status import collect_subte
 from change_tracking import compare_feeds
 from notification_events import journal
 from rail_notices import collect_rail_notices
+from salta_outages import collect_edesa_salta
 
 BASE = 'https://www.enre.gov.ar/paginacorte/js/'
 FEEDS = {'edenor': BASE + 'data_EDN.js', 'edesur': BASE + 'data_EDS.js'}
@@ -179,7 +180,7 @@ def load_bus_alerts(path, generated_at):
     return output
 
 
-def collect(dest, manual, public_manual=None, *, fetch_subte=None, fetch_banking=None, fetch_rail=None):
+def collect(dest, manual, public_manual=None, *, fetch_subte=None, fetch_banking=None, fetch_rail=None, fetch_salta=None):
     previous = None
     if dest.exists():
         try:
@@ -205,6 +206,29 @@ def collect(dest, manual, public_manual=None, *, fetch_subte=None, fetch_banking
             'reference_url': 'https://www.argentina.gob.ar/sube/cuandosubo',
             'checked_at': timestamp,
         }},
+    }
+    # Salta: EDESA publishes scheduled maintenance, NOT live/unscheduled outages.
+    # Kept separate from ENRE alerts so notifications cannot present plans as cuts.
+    if fetch_salta is not None:
+        try:
+            output['edesa_salta'] = fetch_salta(timestamp)
+        except Exception as exc:
+            output['edesa_salta'] = {
+                'status': 'unverified', 'province': 'Salta', 'notices': [],
+                'checked_at': timestamp,
+                'message': 'No se verificó EDESA: ' + type(exc).__name__}
+    else:
+        output['edesa_salta'] = {
+            'status': 'not_checked', 'province': 'Salta', 'notices': [],
+            'checked_at': timestamp}
+    output['coverage_argentina'] = {
+        'country': 'Argentina', 'national_electricity_coverage': False,
+        'electricity': [
+            {'provider': 'Edenor', 'area': 'Concesión Edenor, AMBA', 'kind': 'published_outages'},
+            {'provider': 'Edesur', 'area': 'Concesión Edesur, AMBA', 'kind': 'published_outages'},
+            {'provider': 'EDESA', 'area': 'Provincia de Salta', 'kind': 'scheduled_only'},
+        ],
+        'message': 'Fuera de las zonas y tipos indicados no hay cobertura eléctrica verificada.',
     }
     # Dated official railway publications are NOT live service statuses.
     # CLI explicitly opts into a network fetch; direct tests stay offline.
@@ -269,6 +293,8 @@ def collect(dest, manual, public_manual=None, *, fetch_subte=None, fetch_banking
     print(f'Feed written to {dest}: {len(output["alerts"])} alerts')
     for company, source in output['sources'].items():
         print(f'{company}: {source["status"]}, {source.get("event_count", source.get("message"))}')
+    edesa = output['edesa_salta']
+    print(f'EDESA Salta (solo programados): {edesa["status"]}; futuros: {len(edesa.get("notices", []))}; examinados: {edesa.get("records_checked", "no verificado")}')
     status = output['subte']
     print(f'subte CABA: {status["status"]}; {status.get("message", status.get("event_count", 0))}')
     print(f'Cambios ENRE: {output["change_tracking"]["status"]}; nuevos en publicación: {output["change_tracking"]["new_in_publication_count"]}')
@@ -284,4 +310,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
     collect(Path(args.output), Path(args.manual), Path(args.public_manual),
             fetch_subte=collect_subte, fetch_banking=refresh_official_calendar,
-            fetch_rail=collect_rail_notices)
+            fetch_rail=collect_rail_notices, fetch_salta=collect_edesa_salta)
