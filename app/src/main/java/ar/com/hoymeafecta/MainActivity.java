@@ -221,7 +221,7 @@ public class MainActivity extends Activity {
 
         root.addView(text("HOY ME AFECTA", 26, INK, true));
         root.addView(text("Lo que te conviene saber antes de salir", 14, GREY, false));
-        root.addView(text("Piloto v5.9 · detalle de avisos y prioridades", 12, GREY, false));
+        root.addView(text("Piloto v5.10 · comunicados ferroviarios fechados", 12, GREY, false));
         LinearLayout status = card();
         status.addView(text(connection, 14, BLUE, false));
         if (feed != null) {
@@ -318,8 +318,7 @@ public class MainActivity extends Activity {
         }
         if (sectionVisible("trenes")) {
             title("Trenes");
-            publicCategory("tren", "Estado del servicio", "La aplicación oficial Trenes Argentinos informa cambios y horarios, pero no tenemos acceso automático verificado a su estado.",
-                    "Consultar Trenes Argentinos", "https://www.argentina.gob.ar/transporte/trenes-argentinos/app");
+            trainNotices();
         }
         if (sectionVisible("bancos")) {
             title("Bancos · atención presencial");
@@ -345,7 +344,8 @@ public class MainActivity extends Activity {
             LinearLayout notes = card();
             notes.addView(text("Fuentes: ENRE para Edenor y Edesur. Estado de subtes en prueba mediante " +
                     "una página pública de CABA, solo cuando tiene fecha verificable y reciente. " +
-                    "No hay aún conexión en vivo con trenes ni colectivos.", 13, GREY, false));
+                    "Los comunicados ferroviarios fechados no equivalen a estado en vivo. " +
+                    "No hay conexión automática verificada para la línea 57.", 13, GREY, false));
             notes.addView(text("Un aviso publicado se refiere a un área; no confirma el estado de " +
                     "cada domicilio. Ausencia de avisos no equivale a servicio normal.", 13, GREY, false));
             notes.addView(text("El informe y cada fuente eléctrica deben tener menos de " +
@@ -353,8 +353,9 @@ public class MainActivity extends Activity {
                     13, GREY, false));
             notes.addView(text("Bancos: calendario nacional del BCRA consultado automáticamente; " +
                     "no indica si las sucursales están abiertas. " +
-                    "Trenes, agua, tránsito y operativos públicos: sin conexión automática, " +
-                    "admiten avisos documentados con fecha y fuente.", 12, GREY, false));
+                    "Trenes: novedades oficiales fechadas sin estado en vivo. " +
+                    "Agua, tránsito y operativos: sin conexión automática verificada.",
+                    12, GREY, false));
             notes.addView(text("Las zonas se comparan por nombre exacto con partido o localidad. " +
                     "No se comprueba si un corte alcanza una dirección específica.", 12, GREY, false));
         }
@@ -898,6 +899,14 @@ public class MainActivity extends Activity {
             box.addView(text("Colectivo " + favoriteLine() +
                     ": sin conexión automática verificada de demoras.", 12, GREY, false));
         }
+        if (sectionVisible("trenes") && "Argentina".equals(selectedCountry())) {
+            int count = countDatedRailPublications();
+            box.addView(text(count == 0 ?
+                    "Trenes: sin comunicados recientes verificados para tu selección; " +
+                    "no confirma circulación normal." :
+                    "Trenes: " + count + " comunicado(s) oficial(es) reciente(s). " +
+                    "No indican el estado en vivo.", 12, GREY, false));
+        }
         int other = 0;
         if (sectionVisible("trenes")) other += countPublicMatches("tren");
         if (sectionVisible("agua")) other += countPublicMatches("agua");
@@ -1102,6 +1111,83 @@ public class MainActivity extends Activity {
         }
     }
 
+
+    // A dated official publication is not proof of a disruption active now.
+    private boolean matchesChosenTrain(String newsLine) {
+        String chosen = norm(prefs.getString("train", ""));
+        if (chosen.isEmpty()) return true;
+        return chosen.equals(norm(newsLine));
+    }
+
+    private int countDatedRailPublications() {
+        if (feed == null || !isFresh() || !"Argentina".equals(selectedCountry())) return 0;
+        JSONObject rail = feed.optJSONObject("rail_official");
+        if (rail == null || !"ok".equals(usable(rail, "status"))) return 0;
+        JSONArray items = rail.optJSONArray("notices");
+        if (items == null) return 0;
+        int count = 0;
+        for (int i = 0; i < items.length(); i++) {
+            JSONObject notice = items.optJSONObject(i);
+            if (notice != null && matchesChosenTrain(usable(notice, "line"))) count++;
+        }
+        return count;
+    }
+
+    private void trainNotices() {
+        LinearLayout c = card();
+        if (!"Argentina".equals(selectedCountry())) {
+            c.addView(text("Esta primera fuente cubre solo Trenes Argentinos en Argentina.",
+                    13, GREY, false));
+            return;
+        }
+        String chosen = prefs.getString("train", "").trim();
+        c.addView(text(chosen.isEmpty() ? "Todos los trenes (sin línea seleccionada)" :
+                "Tren habitual: " + chosen, 13, INK, true));
+        c.addView(text("Comunicados oficiales recientes: NO son el estado en vivo de los trenes. " +
+                "Una noticia publicada días atrás no confirma una demora actual.", 13, GREY, false));
+        if (feed == null || !isFresh()) {
+            c.addView(text("Sin informe reciente. No se puede verificar la consulta de los comunicados.",
+                    13, GREY, false));
+        } else {
+            JSONObject rail = feed.optJSONObject("rail_official");
+            String status = usable(rail, "status");
+            if ("ok".equals(status)) {
+                JSONArray news = rail.optJSONArray("notices");
+                int shown = 0;
+                if (news != null) for (int i = 0; i < news.length() && shown < 6; i++) {
+                    JSONObject item = news.optJSONObject(i);
+                    if (item == null || !matchesChosenTrain(usable(item, "line"))) continue;
+                    String url = usable(item, "source_url");
+                    if (!url.startsWith("https://www.argentina.gob.ar/")) continue;
+                    c.addView(text("• " + usable(item, "title"), 14, INK, true));
+                    c.addView(text("Línea: " + usable(item, "line") +
+                            " · Publicado: " + usable(item, "published_on"),
+                            12, GREY, false));
+                    c.addView(button("Leer comunicado oficial", () -> open(url)));
+                    shown++;
+                }
+                if (shown == 0) {
+                    c.addView(text("No se encontraron comunicados recientes para esta línea. " +
+                            "Esto NO significa que el servicio funcione normalmente.",
+                            13, GREY, false));
+                }
+                c.addView(text("Última consulta: " + formatUtc(usable(rail, "checked_at")),
+                        12, GREY, false));
+            } else {
+                c.addView(text("Comunicados oficiales no verificables en esta consulta (" +
+                        (status.isEmpty() ? "sin datos" : status) + "). " +
+                        "No se supone normalidad del servicio.", 13, GREY, true));
+            }
+        }
+        c.addView(button("Consultar modificaciones del servicio", () ->
+                open("https://www.argentina.gob.ar/transporte/trenes-argentinos/modificaciones-en-el-servicio-y-novedades")));
+        c.addView(button("Abrir app oficial de Trenes Argentinos", () ->
+                open("https://www.argentina.gob.ar/transporte/trenes-argentinos/app")));
+
+        LinearLayout manual = card();
+        manual.addView(text("Avisos documentados con vigencia y zona", 14, INK, true));
+        showPublicNotices(manual, "tren");
+    }
 
     private boolean validPublicAlert(JSONObject a, String category) {
         if (a == null || !category.equals(usable(a, "category")) || !isFresh()) return false;
