@@ -221,7 +221,7 @@ public class MainActivity extends Activity {
 
         root.addView(text("HOY ME AFECTA", 26, INK, true));
         root.addView(text("Lo que te conviene saber antes de salir", 14, GREY, false));
-        root.addView(text("Piloto v5.10 · comunicados ferroviarios fechados", 12, GREY, false));
+        root.addView(text("Piloto v5.11 · Argentina: nuevas fuentes provinciales", 12, GREY, false));
         LinearLayout status = card();
         status.addView(text(connection, 14, BLUE, false));
         if (feed != null) {
@@ -990,8 +990,9 @@ public class MainActivity extends Activity {
                     selectedCountry() + ". La cobertura está en preparación.", 14, GREY, false));
             return;
         }
-        c.addView(text("Cobertura piloto: Edenor y Edesur (AMBA). " +
-                "Otras distribuidoras todavía no están conectadas.", 12, GREY, false));
+        c.addView(text("Cobertura parcial: ENRE (Edenor/Edesur, AMBA) y trabajos " +
+                "PROGRAMADOS de EDESA (Salta). No hay cobertura nacional de cortes.",
+                12, GREY, false));
         if (feed == null) {
             c.addView(text("Sin información descargada. No se puede determinar el estado del servicio.",
                     14, GREY, false));
@@ -1054,10 +1055,69 @@ public class MainActivity extends Activity {
             if (shown >= 15) break;
         }
         if (shown == 0) {
-            c.addView(text("No hay avisos coincidentes para «" + area + "» " +
-                    "en las fuentes conectadas. Esto NO garantiza suministro normal " +
-                    "ni cobertura de esa zona.", 13, GREY, false));
+            c.addView(text("No hay avisos del ENRE coincidentes para «" + area + "». " +
+                    "Esto NO garantiza suministro normal ni cobertura de esa zona.",
+                    13, GREY, false));
         }
+        showSaltaScheduledWorks(c);
+    }
+
+    /** EDESA is a list of PLANNED works, NOT live outages or push alerts. */
+    private void showSaltaScheduledWorks(LinearLayout c) {
+        if (feed == null || !isFresh()) return;
+        JSONObject edesa = feed.optJSONObject("edesa_salta");
+        if (edesa == null) return; // Old feeds still work.
+        c.addView(text("EDESA · Provincia de Salta · trabajos programados",
+                15, INK, true));
+        if (!sourceFresh(edesa)) {
+            c.addView(text("Fuente de Salta sin verificación reciente. " +
+                    "No se puede confirmar que no haya trabajos.", 12, GREY, false));
+            return;
+        }
+        JSONArray notices = edesa.optJSONArray("notices");
+        if (notices == null || notices.length() == 0) {
+            c.addView(text("No se reconocieron trabajos futuros en la página oficial. " +
+                    "Esto NO equivale a suministro normal.", 12, GREY, false));
+            return;
+        }
+        int matches = 0;
+        for (int i = 0; i < notices.length() && matches < 6; i++) {
+            JSONObject n = notices.optJSONObject(i);
+            if (n == null || !saltaAreaMentioned(usable(n, "zone_detail"),
+                    usable(n, "locality_hint"))) continue;
+            String start = usable(n, "scheduled_start");
+            start = start.replace('T', ' ');
+            if (start.length() > 16) start = start.substring(0, 16);
+            c.addView(text("• Trabajo futuro publicado: " + start +
+                    " (hora argentina)", 14, INK, true));
+            c.addView(text("Zona informada: " + usable(n, "zone_detail"),
+                    12, GREY, false));
+            matches++;
+        }
+        if (matches == 0) {
+            c.addView(text("EDESA informa " + notices.length() +
+                    " trabajo(s) futuro(s) en Salta, pero ninguna descripción menciona " +
+                    "tus zonas guardadas. El cotejo por nombres es aproximado y " +
+                    "no determina cobertura de domicilio.", 12, GREY, false));
+        } else {
+            c.addView(text("Coincidencias de nombres en las descripciones, " +
+                    "NO confirmación de afectación de tu domicilio ni de corte en curso.",
+                    12, GREY, false));
+        }
+        c.addView(button("Ver trabajos EDESA en su página oficial", () ->
+                open("https://www.edesa.com.ar/widgets/cortes.php")));
+    }
+
+    private boolean saltaAreaMentioned(String zone, String hint) {
+        String checked = " " + norm(zone).replaceAll("[^a-z0-9]+", " ").trim() + " ";
+        String explicit = norm(hint);
+        String raw = prefs.getString("place", "");
+        for (String segment : raw.split("[;,]")) {
+            String wanted = norm(segment).replaceAll("[^a-z0-9]+", " ").trim();
+            if (wanted.length() < 4) continue;
+            if (wanted.equals(explicit) || checked.contains(" " + wanted + " ")) return true;
+        }
+        return false;
     }
 
     private void buses() {
