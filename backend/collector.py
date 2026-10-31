@@ -21,6 +21,7 @@ from public_notices import import_public_notices
 from subte_status import collect_subte
 from change_tracking import compare_feeds
 from notification_events import journal
+from rail_notices import collect_rail_notices
 
 BASE = 'https://www.enre.gov.ar/paginacorte/js/'
 FEEDS = {'edenor': BASE + 'data_EDN.js', 'edesur': BASE + 'data_EDS.js'}
@@ -178,7 +179,7 @@ def load_bus_alerts(path, generated_at):
     return output
 
 
-def collect(dest, manual, public_manual=None, *, fetch_subte=None, fetch_banking=None):
+def collect(dest, manual, public_manual=None, *, fetch_subte=None, fetch_banking=None, fetch_rail=None):
     previous = None
     if dest.exists():
         try:
@@ -193,7 +194,8 @@ def collect(dest, manual, public_manual=None, *, fetch_subte=None, fetch_banking
         'sources': {},
         'banking': fetch_banking(timestamp) if fetch_banking is not None else banking_calendar(),
         'coverage': {
-            'trains': 'manual_notices_only', 'bank_holidays': 'published_reference_2026',
+            'trains': 'manual_notices_only',
+            'train_publications': 'dated_official_news_only', 'bank_holidays': 'published_reference_2026',
             'bank_incidents': 'manual_notices_only', 'water': 'manual_notices_only',
             'traffic': 'manual_notices_only', 'public_operations': 'manual_public_impacts_only',
         },
@@ -204,6 +206,18 @@ def collect(dest, manual, public_manual=None, *, fetch_subte=None, fetch_banking
             'checked_at': timestamp,
         }},
     }
+    # Dated official railway publications are NOT live service statuses.
+    # CLI explicitly opts into a network fetch; direct tests stay offline.
+    if fetch_rail is not None:
+        try:
+            output['rail_official'] = fetch_rail(timestamp)
+        except Exception as exc:
+            output['rail_official'] = {
+                'status': 'error', 'notices': [], 'checked_at': timestamp,
+                'message': 'Error al consultar comunicados: ' + type(exc).__name__}
+    else:
+        output['rail_official'] = {'status': 'not_checked', 'notices': [],
+                                   'checked_at': timestamp}
     # Existing tests do not perform network calls to the experimental subte source.
     # The CLI explicitly passes a fetcher; failures never become 'normal'.
     try:
@@ -269,4 +283,5 @@ if __name__ == '__main__':
     parser.add_argument('--public-manual', default='manual/avisos_publicos.json')
     args = parser.parse_args()
     collect(Path(args.output), Path(args.manual), Path(args.public_manual),
-            fetch_subte=collect_subte, fetch_banking=refresh_official_calendar)
+            fetch_subte=collect_subte, fetch_banking=refresh_official_calendar,
+            fetch_rail=collect_rail_notices)
