@@ -14,6 +14,7 @@ from urllib.parse import urljoin, urlparse
 from urllib.request import urlopen, Request
 
 SOURCE_URL = "https://www.argentina.gob.ar/transporte/trenes-argentinos"
+NEWS_INDEX_URL = SOURCE_URL + "/noticias"
 MAX_BYTES = 700_000
 MAX_AGE_DAYS = 21
 MONTHS = {
@@ -47,6 +48,12 @@ def _safe_article_href(href):
 
 
 class _Tokens(HTMLParser):
+    """Read dated news links even when a *whole card* is a single <a>.
+
+    On the official Drupal website the card link may contain date, heading
+    and teaser together, not just the title. The older parser rejected these
+    links because the combined text exceeded 200 characters.
+    """
     def __init__(self):
         super().__init__(convert_charrefs=True)
         self.skip = 0
@@ -54,6 +61,9 @@ class _Tokens(HTMLParser):
         self.tokens = []
         self.article_links = []
         self._link_parts = []
+        self._heading_parts = []
+        self._heading_depth = 0
+        self._link_first_token = 0
 
     def handle_starttag(self, tag, attrs):
         a = dict(attrs)
@@ -65,17 +75,24 @@ class _Tokens(HTMLParser):
             self.tokens.append((a['datetime'], None))
         if tag == 'a':
             self.link = _safe_article_href(a.get('href'))
+            self._link_first_token = len(self.tokens)
             self._link_parts = []
+            self._heading_parts = []
+            self._heading_depth = 0
+        if tag in ('h2', 'h3', 'h4', 'h5', 'h6') and self.link:
+            self._heading_depth += 1
 
     def handle_data(self, data):
         if self.skip:
             return
-        text = ' '.join(data.split())
-        if not text:
+        value = ' '.join(data.split())
+        if not value:
             return
-        self.tokens.append((text, self.link))
+        self.tokens.append((value, self.link))
         if self.link:
-            self._link_parts.append(text)
+            self._link_parts.append(value)
+            if self._heading_depth:
+                self._heading_parts.append(value)
 
     def handle_endtag(self, tag):
         if tag in ('script', 'style', 'noscript') and self.skip:
@@ -83,39 +100,100 @@ class _Tokens(HTMLParser):
             return
         if self.skip:
             return
+        if tag in ('h2', 'h3', 'h4', 'h5', 'h6') and self._heading_depth:
+            self._heading_depth -= 1
         if tag == 'a':
             if self.link and self._link_parts:
-                self.article_links.append((len(self.tokens) - 1,
-                                          ' '.join(self._link_parts), self.link))
+                self.article_links.append((self._link_first_token,
+                                           list(self._link_parts),
+                                           ' '.join(self._heading_parts), self.link))
             self.link = None
             self._link_parts = []
+            self._heading_parts = []
+            self._heading_depth = 0
 
 
-def _published_date(tokens, end):
-    # Dates on the listing are normally immediately before the article title.
-    # Strict local window: do not inherit an unrelated earlier card's date.
-    context = ' '.join(piece for piece, _ in tokens[max(0, end - 12):end + 1])
-    matches = list(DATE_PATTERN.finditer(norm(context)))
-    if matches:
-        m = matches[-1]
-        if len(context) - m.end() > 160:
+def _read_date(text):
+    match = DATE_PATTERN.search(norm(text))
+    if match:
+        try:
+            return datetime(int(match.group(3)), MONTHS[match.group(2)],
+                            int(match.group(1)), tzinfo=timezone.utc).date()
+        except ValueError:
             return None
-        return datetime(int(m.group(3)), MONTHS[m.group(2)], int(m.group(1)), tzinfo=timezone.utc).date()
-    # Support explicit HTML <time datetime="YYYY-MM-DD"> markup.
-    for text, _ in reversed(tokens[max(0, end - 12):end + 1]):
-        m = re.fullmatch(r'(20\d\d)-(\d\d)-(\d\d)(?:T.*)?', text)
-        if m:
+    return None
+
+
+def _published_date(tokens, first_token, link_parts):
+    # Official card dates sometimes appear WITHIN the clickable <a>, before
+    # its title. Accept them only at the start, not in a body excerpt about
+    # a future/past event, to avoid confusing event and publication dates.
+    combined = ' '.join(link_parts)
+    in_link = DATE_PATTERN.match(norm(combined))
+    if in_link:
+        return _read_date(in_link.group())
+    # Otherwise require a date immediately before the link, within the same
+    # listing card. Never inherit a distant date from an unrelated article.
+    pieces = []
+    for text, url in reversed(tokens[max(0, first_token - 5):first_token]):
+        if url is not None:  # Never borrow a date across a previous article link.
+            break
+        pieces.insert(0, text)
+    if pieces:
+        prev = ' '.join(pieces)
+        match = list(DATE_PATTERN.finditer(norm(prev)))
+        if match and len(prev) - match[-1].end() <= 70:
+            return _read_date(match[-1].group())
+    for text in reversed(pieces):
+        match = re.fullmatch(r'(20\d\d)-(\d\d)-(\d\d)(?:T.*)?', text)
+        if match:
             try:
-                return datetime(int(m.group(1)), int(m.group(2)), int(m.group(3))).date()
+                return datetime(int(match.group(1)), int(match.group(2)),
+                                int(match.group(3))).date()
             except ValueError:
                 return None
     return None
 
 
-def parse_official_news(html, checked_at, max_age_days=MAX_AGE_DAYS):
-    """Return (articles_with_valid_dates, relevant_currently_recent_articles).
+def _link_title(parts, heading):
+    # If a heading is present inside the link, use it (not the teaser).
+    if 20 <= len(heading.strip()) <= 200:
+        return heading.strip()
+    # The usual structure is date / title / summary inside one linked card.
+    for part in parts:
+        candidate = DATE_PATTERN.sub('', norm(part), count=1).strip()
+        if not candidate or len(candidate) < 20 or len(candidate) > 200:
+            continue
+        if any(norm(line) in candidate for line in LINES) or \
+           any(kw in candidate for kw in KEYWORDS):
+            return part.strip()
+    # Last resort: an ordinary title-only <a>, not a long teaser card.
+    joined = ' '.join(parts).strip()
+    joined = DATE_PATTERN.sub('', joined, count=1).strip()
+    return joined if 20 <= len(joined) <= 200 else ''
 
-    Publication date is *not* an outage or disruption start/end time.
+
+def _article_line(title):
+    title_norm = norm(title)
+    found = [line for line in LINES if norm(line) in title_norm]
+    # Precise aliases for lines whose official notices may name a ramal only.
+    aliases = {
+        'Mitre': ('ramal tigre', 'ramales suarez', 'ramales j. l. suarez',
+                  'ramal jose leon suarez', 'ramal bme. mitre'),
+        'Sarmiento': ('ramal once-moreno', 'ramal moreno-mercedes',
+                     'ramal merlo-lobos'),
+    }
+    for line, patterns in aliases.items():
+        if line not in found and any(p in title_norm for p in patterns):
+            found.append(line)
+    return (found[0] if len(found) == 1 else 'Varias líneas') if found else None
+
+
+def parse_official_news(html, checked_at, max_age_days=MAX_AGE_DAYS):
+    """Return (officially dated article count, recent railway notices).
+
+    Never claim live train status; a publication date does not prove an
+    interruption is happening now, or that it has ended.
     """
     checked = datetime.fromisoformat(checked_at.replace('Z', '+00:00'))
     if checked.tzinfo is None:
@@ -126,39 +204,42 @@ def parse_official_news(html, checked_at, max_age_days=MAX_AGE_DAYS):
     found = 0
     relevant = []
     seen = set()
-    for index, raw_title, url in parser.article_links:
-        title = ' '.join(raw_title.split())
-        if not 20 <= len(title) <= 200:
-            continue
-        published = _published_date(parser.tokens, index)
-        if published is None:
+    for first_token, parts, heading, url in parser.article_links:
+        date = _published_date(parser.tokens, first_token, parts)
+        if date is None:
             continue
         found += 1
-        age_days = (checked.date() - published).days
-        if not 0 <= age_days <= max_age_days:
+        age = (checked.date() - date).days
+        if not 0 <= age <= max_age_days:
+            continue
+        title = _link_title(parts, heading)
+        if not title:
             continue
         nt = norm(title)
         if not any(keyword in nt for keyword in KEYWORDS):
             continue
-        matched = [line for line in LINES if norm(line) in nt]
-        if not matched or url in seen:
+        line = _article_line(title)
+        if not line or url in seen:
             continue
         seen.add(url)
         relevant.append({
-            'title': title,
-            'line': matched[0] if len(matched) == 1 else 'Varias líneas',
-            'published_on': published.isoformat(),
-            'source_url': url,
-            'kind': 'comunicado_oficial',
+            'title': title, 'line': line, 'published_on': date.isoformat(),
+            'source_url': url, 'kind': 'comunicado_oficial',
         })
     relevant.sort(key=lambda a: (a['published_on'], a['source_url']), reverse=True)
     return found, relevant[:10]
 
 
-def fetch_official_html():
-    request = Request(SOURCE_URL, headers={'User-Agent': 'HoyMeAfecta/0.5 (public notices; no live status)'})
+def fetch_official_html(url=SOURCE_URL):
+    if url not in (SOURCE_URL, NEWS_INDEX_URL):
+        raise ValueError('URL de consulta no permitida')
+    request = Request(url, headers={
+        'User-Agent': 'Mozilla/5.0 (compatible; HoyMeAfectaPilot/0.5; public articles)',
+        'Accept': 'text/html,application/xhtml+xml',
+    })
     with urlopen(request, timeout=16) as response:
-        if response.geturl().split('/')[2] != 'www.argentina.gob.ar':
+        target = urlparse(response.geturl())
+        if target.scheme != 'https' or target.hostname != 'www.argentina.gob.ar':
             raise ValueError('Redirección a un dominio no oficial')
         raw = response.read(MAX_BYTES + 1)
     if len(raw) > MAX_BYTES:
@@ -167,24 +248,36 @@ def fetch_official_html():
 
 
 def collect_rail_notices(checked_at, fetch_html=None):
-    """Never return alleged live service status; include error/unverified clearly."""
+    """Dated official articles only. No claims about current train status."""
     output = {
-        'status': 'unverified', 'checked_at': checked_at, 'source_url': SOURCE_URL,
+        'status': 'unverified', 'checked_at': checked_at,
+        'source_url': SOURCE_URL,
         'message': 'Comunicados fechados, NO estado en tiempo real. Confirmá antes de viajar.',
         'notices': [],
     }
-    try:
-        body = fetch_html() if fetch_html is not None else fetch_official_html()
-        if not isinstance(body, str):
-            raise ValueError('Contenido HTML inválido')
-        dated, notices = parse_official_news(body, checked_at)
-        if dated == 0:
-            output['message'] = 'No se pudo verificar fecha y enlace de los comunicados oficiales.'
-        else:
-            output['status'] = 'ok'
-            output['notices'] = notices
-            output['dated_items_checked'] = dated
-    except (OSError, UnicodeError, ValueError) as exc:
+    # In production try both official listings. Tests injecting HTML must not
+    # unexpectedly access the network, so an injected fetch is single-source.
+    urls = (SOURCE_URL,) if fetch_html else (SOURCE_URL, NEWS_INDEX_URL)
+    failures = 0
+    output['pages_attempted'] = []
+    for url in urls:
+        output['pages_attempted'].append(url)
+        try:
+            body = fetch_html() if fetch_html is not None else fetch_official_html(url)
+            if not isinstance(body, str):
+                raise ValueError('Contenido HTML inválido')
+            dated, notices = parse_official_news(body, checked_at)
+            if dated:
+                output['status'] = 'ok'
+                output['notices'] = notices
+                output['dated_items_checked'] = dated
+                output['source_url'] = url
+                return output
+        except (OSError, UnicodeError, ValueError) as exc:
+            failures += 1
+            output['message'] = 'No se pudo consultar o verificar la fuente oficial: ' + type(exc).__name__
+    if failures == len(urls):
         output['status'] = 'error'
-        output['message'] = 'No se pudo consultar o verificar la fuente oficial: ' + type(exc).__name__
+    else:
+        output['message'] = 'No se pudo verificar fecha y enlace de los comunicados oficiales.'
     return output
