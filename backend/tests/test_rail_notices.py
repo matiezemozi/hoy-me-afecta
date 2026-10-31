@@ -58,6 +58,59 @@ class RailNoticesTests(unittest.TestCase):
         self.assertEqual(result['status'], 'error')
         self.assertEqual(result['notices'], [])
 
+    def test_official_drupal_card_date_title_and_excerpt_inside_one_link(self):
+        html = '''<div class="views-row"><a href="/noticias/linea-mitre-retoma">
+        <span class="fecha">26 de octubre de 2026</span>
+        <h3>Con un 80% de avance en la renovación de vías del ramal Tigre,
+        la línea Mitre retoma sus servicios</h3>
+        <div>Para mejorar la seguridad operacional se hicieron obras en el ramal
+        Tigre y en otras zonas. ''' + ('Muy largo. ' * 30) + '''</div>
+        </a></div>'''
+        count, notices = parse_official_news(html, NOW)
+        self.assertEqual(count, 1)
+        self.assertEqual(len(notices), 1)
+        self.assertEqual(notices[0]['line'], 'Mitre')
+        self.assertNotIn('Muy largo', notices[0]['title'])
+        self.assertEqual(notices[0]['published_on'], '2026-10-26')
+
+    def test_link_date_inside_link_without_heading(self):
+        html = '''<a href="/noticias/linea-sarmiento-andenes">
+        <span>23 de octubre de 2026</span><div>Línea Sarmiento: vuelven los andenes
+        centrales de Ramos Mejía y Ciudadela</div></a>'''
+        count, notices = parse_official_news(html, NOW)
+        self.assertEqual(count, 1)
+        self.assertEqual(notices[0]['line'], 'Sarmiento')
+        self.assertNotIn('23 de octubre', notices[0]['title'])
+
+    def test_article_excerpt_date_is_not_publication_date(self):
+        html = '''<a href="/noticias/linea-mitre">Línea Mitre informa que
+        el 26 de octubre de 2026 hubo mantenimiento</a>'''
+        count, notices = parse_official_news(html, NOW)
+        self.assertEqual((count, notices), (0, []))
+
+    def test_unverified_first_page_falls_back_to_official_news_index(self):
+        import rail_notices
+        calls = []
+        def fake_get(url):
+            calls.append(url)
+            if url == rail_notices.SOURCE_URL:
+                return '<h1>Trenes Argentinos Operaciones</h1>'
+            return '''<a href="/noticias/linea-mitre-retoma">
+                     <span>26 de octubre de 2026</span>
+                     <h3>Línea Mitre retoma sus servicios</h3></a>'''
+        with patch.object(rail_notices, 'fetch_official_html', side_effect=fake_get):
+            result = collect_rail_notices(NOW)
+        self.assertEqual(calls, [rail_notices.SOURCE_URL, rail_notices.NEWS_INDEX_URL])
+        self.assertEqual(result['status'], 'ok')
+        self.assertEqual(result['source_url'], rail_notices.NEWS_INDEX_URL)
+        self.assertEqual(len(result['notices']), 1)
+
+    def test_no_dated_articles_on_both_official_pages_unverified(self):
+        with patch('rail_notices.fetch_official_html', return_value='<h1>Sin notas verificables</h1>'):
+            result = collect_rail_notices(NOW)
+        self.assertEqual(result['status'], 'unverified')
+        self.assertEqual(result['notices'], [])
+
     def test_future_article_is_excluded(self):
         html = '<time datetime="2026-11-01"></time><a href="/noticias/roca">Línea Roca: servicio interrumpido</a>'
         _, items = parse_official_news(html, NOW)
