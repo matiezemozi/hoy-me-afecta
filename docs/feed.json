@@ -1,7 +1,21 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-01T08:08:48Z",
+  "generated_at": "2026-11-01T08:56:55Z",
   "alerts": [
+    {
+      "category": "electricidad",
+      "title": "Interrupción de media tensión",
+      "company": "Edenor",
+      "partido": "GRAL SAN MARTIN",
+      "localidad": "C JARDIN EL LIBERTADOR",
+      "users_affected": "2489",
+      "expected_restoration": "2026-11-01 09:00",
+      "zone_detail": null,
+      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
+      "observed_at": "2026-11-01T08:56:55Z",
+      "confirmation": "Publicado por ENRE",
+      "id": "b46f4f10f25f381c"
+    },
     {
       "category": "electricidad",
       "title": "Corte programado",
@@ -12,7 +26,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-01T08:08:48Z",
+      "observed_at": "2026-11-01T08:56:55Z",
       "confirmation": "Publicado por ENRE",
       "id": "7accda029d6d84f9"
     },
@@ -26,7 +40,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-01T08:08:48Z",
+      "observed_at": "2026-11-01T08:56:55Z",
       "confirmation": "Publicado por ENRE",
       "id": "5a265d187b1a5844"
     },
@@ -40,7 +54,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-01T08:08:48Z",
+      "observed_at": "2026-11-01T08:56:55Z",
       "confirmation": "Publicado por ENRE",
       "id": "5a514df6629a8320"
     },
@@ -54,7 +68,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-01T08:08:48Z",
+      "observed_at": "2026-11-01T08:56:55Z",
       "confirmation": "Publicado por ENRE",
       "id": "a61ba43054660378"
     },
@@ -68,7 +82,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-01T08:08:48Z",
+      "observed_at": "2026-11-01T08:56:55Z",
       "confirmation": "Publicado por ENRE",
       "id": "5246d326eef8371f"
     },
@@ -82,23 +96,9 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-01T08:08:48Z",
+      "observed_at": "2026-11-01T08:56:55Z",
       "confirmation": "Publicado por ENRE",
       "id": "bfcb79c8ababb5d0"
-    },
-    {
-      "category": "electricidad",
-      "title": "Interrupción de baja tensión",
-      "company": "Edesur",
-      "partido": "LOMAS DE ZAMORA",
-      "localidad": "VILLA FIORITO",
-      "users_affected": "9",
-      "expected_restoration": null,
-      "zone_detail": null,
-      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-01T08:08:48Z",
-      "confirmation": "Publicado por ENRE",
-      "id": "2efe0c41a84d1d99"
     },
     {
       "category": "electricidad",
@@ -110,7 +110,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-01T08:08:48Z",
+      "observed_at": "2026-11-01T08:56:55Z",
       "confirmation": "Publicado por ENRE",
       "id": "4ac6e173a009119a"
     }
@@ -119,14 +119,14 @@
     "edenor": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDN.js",
-      "checked_at": "2026-11-01T08:08:48Z",
-      "event_count": 0
+      "checked_at": "2026-11-01T08:56:55Z",
+      "event_count": 1
     },
     "edesur": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDS.js",
-      "checked_at": "2026-11-01T08:08:48Z",
-      "event_count": 8
+      "checked_at": "2026-11-01T08:56:55Z",
+      "event_count": 7
     }
   },
   "banking": {
@@ -159,7 +159,7 @@
       }
     ],
     "source_retrieval": "ok",
-    "checked_at": "2026-11-01T08:08:48Z"
+    "checked_at": "2026-11-01T08:56:55Z"
   },
   "coverage": {
     "trains": "manual_notices_only",
@@ -175,7 +175,7 @@
       "status": "not_connected",
       "message": "No hay conexión verificada con una fuente automática de estado de la línea 57.",
       "reference_url": "https://www.argentina.gob.ar/sube/cuandosubo",
-      "checked_at": "2026-11-01T08:08:48Z"
+      "checked_at": "2026-11-01T08:56:55Z"
     }
   },
   "edesa_salta": {
@@ -184,7 +184,7 @@
     "country": "Argentina",
     "company": "EDESA",
     "source_url": "https://www.edesa.com.ar/widgets/cortes.php",
-    "checked_at": "2026-11-01T08:08:48Z",
+    "checked_at": "2026-11-01T08:56:55Z",
     "coverage_kind": "planned_outages_only",
     "notices": [
       {
@@ -358,7 +358,7 @@
   },
   "rail_official": {
     "status": "ok",
-    "checked_at": "2026-11-01T08:08:48Z",
+    "checked_at": "2026-11-01T08:56:55Z",
     "source_url": "https://www.argentina.gob.ar/transporte/trenes-argentinos",
     "message": "Comunicados fechados, NO estado en tiempo real. Confirmá antes de viajar.",
     "notices": [
@@ -385,7 +385,7 @@
   "subte": {
     "status": "unverified",
     "message": "La página no publica una fecha de actualización verificable.",
-    "checked_at": "2026-11-01T08:08:48Z",
+    "checked_at": "2026-11-01T08:56:55Z",
     "url": "https://buenosaires.gob.ar/inicio/mis-documentos",
     "lines": []
   },
@@ -393,9 +393,20 @@
   "change_tracking": {
     "status": "ok",
     "meaning": "Las novedades indican cambios respecto del informe anterior; no prueban cuándo comenzó un corte ni que uno ausente esté resuelto.",
-    "compared_to": "2026-11-01T07:10:35Z",
-    "new_in_publication_count": 0,
-    "new_in_publication": [],
+    "compared_to": "2026-11-01T08:08:48Z",
+    "new_in_publication_count": 1,
+    "new_in_publication": [
+      {
+        "id": "b46f4f10f25f381c",
+        "company": "Edenor",
+        "title": "Interrupción de media tensión",
+        "partido": "GRAL SAN MARTIN",
+        "localidad": "C JARDIN EL LIBERTADOR",
+        "observed_at": "2026-11-01T08:56:55Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
+        "meaning": "No figuraba en el informe anterior; inicio real desconocido."
+      }
+    ],
     "no_longer_listed_count": 1,
     "providers_compared": [
       "edenor",
@@ -411,14 +422,14 @@
     "meaning": "Apareció en una publicación nueva; no prueba inicio del corte.",
     "events": [
       {
-        "event_id": "6ed9b38a3246664133921cda",
+        "event_id": "292abe3f7f3a7b519bbc1ab9",
         "kind": "electricity_publication_added",
         "country": "Argentina",
         "company": "Edenor",
         "title": "Interrupción de media tensión",
-        "partido": "SAN FERNANDO",
-        "localidad": "SAN FERNANDO",
-        "first_seen_at": "2026-11-01T05:53:50Z",
+        "partido": "GRAL SAN MARTIN",
+        "localidad": "C JARDIN EL LIBERTADOR",
+        "first_seen_at": "2026-11-01T08:56:55Z",
         "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html"
       }
     ]
