@@ -358,6 +358,7 @@ public class MainActivity extends Activity {
                     12, GREY, false));
             notes.addView(text("Las zonas se comparan por nombre exacto con partido o localidad. " +
                     "No se comprueba si un corte alcanza una dirección específica.", 12, GREY, false));
+            provincialSourcesSummary(notes);
         }
     }
 
@@ -991,7 +992,8 @@ public class MainActivity extends Activity {
             return;
         }
         c.addView(text("Cobertura parcial: ENRE (Edenor/Edesur, AMBA) y trabajos " +
-                "PROGRAMADOS de EDESA (Salta). No hay cobertura nacional de cortes.",
+                "PROGRAMADOS de EDESA (Salta) y EDERSA (Río Negro). " +
+                "Córdoba y Santa Fe aún sin verificación. No hay cobertura nacional de cortes.",
                 12, GREY, false));
         if (feed == null) {
             c.addView(text("Sin información descargada. No se puede determinar el estado del servicio.",
@@ -1060,6 +1062,27 @@ public class MainActivity extends Activity {
                     13, GREY, false));
         }
         showSaltaScheduledWorks(c);
+        showRioNegroScheduledWorks(c);
+    }
+
+    /** Read-only source health; unverified provinces are not shown as connected. */
+    private void provincialSourcesSummary(LinearLayout notes) {
+        if (feed == null || !isFresh() ||
+                !"Argentina".equals(selectedCountry())) return;
+        JSONObject group = feed.optJSONObject("provincial_electricity");
+        if (group == null) return;
+        String[] keys = {"epec_cordoba", "epe_santa_fe", "edersa_rio_negro"};
+        String[] labels = {"EPEC (Córdoba)", "EPE (Santa Fe)", "EDERSA (Río Negro)"};
+        notes.addView(text("Fuentes eléctricas provinciales (solo trabajos programados):",
+                13, INK, true));
+        for (int i = 0; i < keys.length; i++) {
+            JSONObject item = group.optJSONObject(keys[i]);
+            String state = sourceFresh(item) ? "publicaciones verificadas" :
+                    ("stale".equals(usable(item, "status")) ? "publicaciones antiguas" :
+                     "sin verificación actual");
+            notes.addView(text("• " + labels[i] + ": " + state +
+                    ". No indica cortes en curso.", 12, GREY, false));
+        }
     }
 
     /** EDESA is a list of PLANNED works, NOT live outages or push alerts. */
@@ -1118,6 +1141,76 @@ public class MainActivity extends Activity {
             if (wanted.equals(explicit) || checked.contains(" " + wanted + " ")) return true;
         }
         return false;
+    }
+
+    /** EDERSA publishes future planned works, NOT confirmed active interruptions.
+     *  Only exact locality names are considered: no province-wide push alerts.
+     *  It is possible for names to repeat in other provinces, so the user must
+     *  confirm the province before treating a matching name as relevant.
+     */
+    private void showRioNegroScheduledWorks(LinearLayout c) {
+        if (feed == null || !isFresh()) return;
+        JSONObject group = feed.optJSONObject("provincial_electricity");
+        if (group == null) return; // Previous server versions remain supported.
+        JSONObject edersa = group.optJSONObject("edersa_rio_negro");
+        if (!sourceFresh(edersa)) return; // Never display unverified or stale data.
+        JSONArray notices = edersa.optJSONArray("notices");
+        if (notices == null || notices.length() == 0) return;
+
+        int matches = 0;
+        for (int i = 0; i < notices.length() && matches < 6; i++) {
+            JSONObject item = notices.optJSONObject(i);
+            if (item == null || !"scheduled_not_confirmed".equals(
+                    usable(item, "status"))) continue;
+            String locality = usable(item, "locality_hint");
+            // Explicit exact match; never search arbitrary fragments of street names.
+            if (locality.isEmpty() || !selectedAreaMatches("", locality)) continue;
+            String start = usable(item, "scheduled_start");
+            String end = usable(item, "scheduled_end");
+            if (!validScheduledWindow(start, end)) continue;
+            if (matches == 0) {
+                c.addView(text("EDERSA · Provincia de Río Negro · trabajos programados",
+                        15, INK, true));
+            }
+            c.addView(text("• Trabajo previsto en " + locality + ": " +
+                    simpleArgentinaDateTime(start) + " a " +
+                    simpleArgentinaDateTime(end) + " (hora argentina)",
+                    14, INK, true));
+            c.addView(text("Zona publicada: " + usable(item, "zone_detail"),
+                    12, GREY, false));
+            String task = usable(item, "task");
+            if (!task.isEmpty()) c.addView(text("Tarea: " + task, 12, GREY, false));
+            matches++;
+        }
+        if (matches == 0) return; // Hide irrelevant provincial notices.
+        c.addView(text("Coincidencia por nombre de localidad en Río Negro. " +
+                "Confirmá la provincia y la zona en la fuente: no demuestra corte " +
+                "activo ni afectación de tu domicilio.", 12, GREY, false));
+        c.addView(button("Consultar cortes programados de EDERSA", () ->
+                open("https://www.edersa.com.ar/cortes-programados/")));
+    }
+
+    private static boolean validScheduledWindow(String start, String end) {
+        // The collector's verified Argentina ISO-8601 form: yyyy-MM-ddTHH:mm-03:00.
+        if (!start.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}-03:00") ||
+                !end.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}-03:00")) return false;
+        try {
+            java.text.SimpleDateFormat fmt = new java.text.SimpleDateFormat(
+                    "yyyy-MM-dd'T'HH:mmXXX", Locale.US);
+            fmt.setLenient(false);
+            java.util.Date a = fmt.parse(start);
+            java.util.Date b = fmt.parse(end);
+            long now = System.currentTimeMillis();
+            return a != null && b != null && a.getTime() > now &&
+                    b.getTime() > a.getTime() &&
+                    a.getTime() <= now + 14L * 24L * 60L * 60L * 1000L;
+        } catch (Exception ignored) { return false; }
+    }
+
+    private static String simpleArgentinaDateTime(String value) {
+        if (value.length() < 16) return "horario no disponible";
+        return value.substring(8,10) + "/" + value.substring(5,7) + "/" +
+                value.substring(0,4) + " " + value.substring(11,16);
     }
 
     private void buses() {
