@@ -11,6 +11,7 @@ from hashlib import sha256
 from html.parser import HTMLParser
 import re
 from urllib.request import Request, urlopen
+from urllib.parse import urljoin, urlsplit
 
 ART = timezone(timedelta(hours=-3))
 MAX_BYTES = 2_500_000
@@ -21,6 +22,8 @@ PROVIDERS = {
     'edersa_rio_negro': ('EDERSA', 'Río Negro', 'https://www.edersa.com.ar/cortes-programados/'),
 }
 EPE_LEGACY = 'https://www.epe.santafe.gov.ar/reclamosweb/cortes.php/cortes.php'
+EPE_LEGACY_ALT = 'https://epe.santafe.gov.ar/reclamosweb/cortes.php/cortes.php'
+EPEC_ALTERNATE = 'https://epec.com.ar/actualidad/trabajos-mejoras'
 
 
 def _clean(s, limit=700):
@@ -240,14 +243,63 @@ def _parse_epec(html, now):
 
 
 def fetch_html(url):
-    # Plain HTTPS reading of public pages. No JS execution, credentials or APIs.
-    req = Request(url, headers={'User-Agent': 'HoyMeAfecta/0.5 (piloto fuentes provinciales; contacto en repositorio)',
-                                'Accept': 'text/html'})
+    # Official public HTTPS pages; no credentials, JS execution or bypasses.
+    req = Request(url, headers={
+        'User-Agent': 'HoyMeAfecta/0.5 (piloto fuentes provinciales; contacto en repositorio)',
+        'Accept': 'text/html,application/xhtml+xml',
+        'Accept-Language': 'es-AR,es;q=0.9',
+    })
     with urlopen(req, timeout=14) as response:
         raw = response.read(MAX_BYTES + 1)
     if len(raw) > MAX_BYTES:
         raise ValueError('Fuente demasiado grande')
     return raw.decode('utf-8-sig', errors='replace')
+
+
+class _ScriptPaths(HTMLParser):
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.paths = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag != 'script':
+            return
+        src = dict(attrs).get('src', '')
+        if src and len(src) <= 400:
+            self.paths.append(src)
+
+
+def _diagnose_html(html, page, key):
+    """Conservative bounded diagnostics, never exposing raw page text or tokens."""
+    _, visible = _visible(html)
+    patterns = {
+        'epec_cordoba': r'(?<!\d)\d{1,2}/\d{1,2}/20\d\d(?!\d)',
+        'epe_santa_fe': r'(?<!\d)\d{1,2}-\d{1,2}-20\d\d(?!\d)',
+    }
+    expected = patterns.get(key, '')
+    dates = len(re.findall(expected, visible)) if expected else 0
+    low = visible.lower()
+    diag = {
+        'html_bytes': len(html.encode('utf-8')),
+        'date_markers': min(dates, 5000),
+        'has_locality': 'localidad' in low,
+        'has_zone': 'zona' in low,
+        'dynamic_shell': 'acá se cargan los cortes' in low or 'aca se cargan los cortes' in low,
+    }
+    scanner = _ScriptPaths()
+    scanner.feed(html)
+    official_host = urlsplit(page).hostname or ''
+    paths = []
+    for raw in scanner.paths:
+        absolute = urljoin(page, raw)
+        parsed = urlsplit(absolute)
+        # Only report script paths hosted on the same official origin.
+        if parsed.hostname == official_host and parsed.scheme == 'https':
+            cleaned = parsed.path[:160]  # Deliberately omit query params and credentials.
+            if cleaned and cleaned not in paths:
+                paths.append(cleaned)
+    diag['same_origin_script_paths'] = paths[:8]
+    return diag
 
 
 def collect_one(key, checked_at, fetcher=None):
@@ -258,28 +310,45 @@ def collect_one(key, checked_at, fetcher=None):
     output = {'status': 'unverified', 'province': province, 'country': 'Argentina',
               'company': company, 'source_url': url, 'checked_at': checked_at,
               'coverage_kind': 'planned_outages_only', 'notices': [],
-              'message': 'Sin verificación de publicaciones; no implica suministro normal.'}
+              'message': 'Sin verificación de publicaciones; no implica suministro normal.',
+              'source_attempts': []}
     fetch = fetcher or fetch_html
-    pages = [url, EPE_LEGACY] if key == 'epe_santa_fe' else [url]
+    if key == 'epe_santa_fe':
+        pages = [url, EPE_LEGACY, EPE_LEGACY_ALT]
+    elif key == 'epec_cordoba':
+        pages = [url, EPEC_ALTERNATE]
+    else:
+        pages = [url]
     problems = []
     for page in pages:
+        attempt = {'url': page}
         try:
             html = fetch(page)
+            # Diagnostics are collected from the actual HTML returned at GitHub,
+            # not from search engine snippets, so failures can be distinguished.
+            attempt.update(_diagnose_html(html, page, key))
             if key == 'edersa_rio_negro':
                 notices, count, newest = _parse_edersa(html, now)
             elif key == 'epe_santa_fe':
                 notices, count, newest = _parse_epe(html, now, page)
             else:
                 notices, count, newest = _parse_epec(html, now)
+            attempt['records_checked'] = count
+            if newest is not None:
+                attempt['latest_published_date'] = newest.isoformat()
             if count == 0 or newest is None:
-                problems.append('No se reconocieron registros completos en página consultada')
+                attempt['result'] = ('dynamic_shell' if attempt.get('dynamic_shell')
+                                     else 'no_complete_records')
+                problems.append(attempt['result'])
                 continue
-            # Stale archive is not valid evidence of currently updated schedules.
+            # A page full of old schedules is not evidence of current coverage.
             if newest < (now - timedelta(days=2)).date():
+                attempt['result'] = 'stale'
                 problems.append('La última fecha publicada es antigua')
                 output.update(status='stale', source_url=page, records_checked=count,
                               latest_published_date=newest.isoformat())
                 continue
+            attempt['result'] = 'verified'
             output.update(status='ok', source_url=page, notices=notices,
                           records_checked=count, latest_published_date=newest.isoformat(),
                           message='Trabajos programados, NO confirmación de corte en curso.')
@@ -287,7 +356,12 @@ def collect_one(key, checked_at, fetcher=None):
                 output['message'] = 'Sin trabajos futuros reconocidos en la consulta; NO confirma servicio normal.'
             return output
         except Exception as exc:
+            attempt['result'] = 'fetch_or_parse_error'
+            attempt['error_type'] = type(exc).__name__
+            # Deliberately do not store exception strings: they can expose URLs.
             problems.append(type(exc).__name__)
+        finally:
+            output['source_attempts'].append(attempt)
     if output['status'] == 'stale':
         output['message'] = 'Solo se reconocieron publicaciones antiguas; no hay datos futuros verificables.'
     else:
