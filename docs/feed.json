@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-03T02:59:29Z",
+  "generated_at": "2026-11-03T04:00:22Z",
   "alerts": [
     {
       "category": "electricidad",
@@ -12,7 +12,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
-      "observed_at": "2026-11-03T02:59:29Z",
+      "observed_at": "2026-11-03T04:00:22Z",
       "confirmation": "Publicado por ENRE",
       "id": "49a82395ca194758"
     },
@@ -22,13 +22,13 @@
       "company": "Edesur",
       "partido": "ALMIRANTE BROWN",
       "localidad": "GLEW",
-      "users_affected": "916",
+      "users_affected": "396",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-03T02:59:29Z",
+      "observed_at": "2026-11-03T04:00:22Z",
       "confirmation": "Publicado por ENRE",
-      "id": "627e43ce8cf569c2"
+      "id": "c91a6bb219ac1010"
     },
     {
       "category": "electricidad",
@@ -40,7 +40,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-03T02:59:29Z",
+      "observed_at": "2026-11-03T04:00:22Z",
       "confirmation": "Publicado por ENRE",
       "id": "a8805c9ae7744e3e"
     },
@@ -50,13 +50,27 @@
       "company": "Edesur",
       "partido": "ALMIRANTE BROWN",
       "localidad": "MARMOL",
-      "users_affected": "1275",
+      "users_affected": "1809",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-03T02:59:29Z",
+      "observed_at": "2026-11-03T04:00:22Z",
       "confirmation": "Publicado por ENRE",
-      "id": "a9ae496e200316eb"
+      "id": "28268a40a6741053"
+    },
+    {
+      "category": "electricidad",
+      "title": "Corte programado",
+      "company": "Edesur",
+      "partido": "ALMIRANTE BROWN",
+      "localidad": "SAN JOSE",
+      "users_affected": "198",
+      "expected_restoration": null,
+      "zone_detail": null,
+      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
+      "observed_at": "2026-11-03T04:00:22Z",
+      "confirmation": "Publicado por ENRE",
+      "id": "0e12f718e543c5fa"
     },
     {
       "category": "electricidad",
@@ -68,7 +82,7 @@
       "expected_restoration": "2026-11-03 02:51",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-03T02:59:29Z",
+      "observed_at": "2026-11-03T04:00:22Z",
       "confirmation": "Publicado por ENRE",
       "id": "6ec5e0670dd65f98"
     },
@@ -82,7 +96,7 @@
       "expected_restoration": "2026-11-03 02:51",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-03T02:59:29Z",
+      "observed_at": "2026-11-03T04:00:22Z",
       "confirmation": "Publicado por ENRE",
       "id": "9325a1feeaedb890"
     },
@@ -96,7 +110,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-03T02:59:29Z",
+      "observed_at": "2026-11-03T04:00:22Z",
       "confirmation": "Publicado por ENRE",
       "id": "db3e8cdffb4ac6fb"
     },
@@ -110,7 +124,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-03T02:59:29Z",
+      "observed_at": "2026-11-03T04:00:22Z",
       "confirmation": "Publicado por ENRE",
       "id": "53e47a7a8ca47523"
     }
@@ -119,14 +133,14 @@
     "edenor": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDN.js",
-      "checked_at": "2026-11-03T02:59:29Z",
+      "checked_at": "2026-11-03T04:00:22Z",
       "event_count": 1
     },
     "edesur": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDS.js",
-      "checked_at": "2026-11-03T02:59:29Z",
-      "event_count": 7
+      "checked_at": "2026-11-03T04:00:22Z",
+      "event_count": 8
     }
   },
   "banking": {
@@ -134,7 +148,7 @@
     "year": 2026,
     "country": "Argentina",
     "source_url": "https://www.bcra.gob.ar/consulta-feriados-bancarios-2026/",
-    "source_reviewed_at": "2026-11-02",
+    "source_reviewed_at": "2026-11-03",
     "message": "Calendario del BCRA consultado y verificado automáticamente; no indica el estado en vivo de sucursales.",
     "upcoming": [
       {
@@ -159,7 +173,7 @@
       }
     ],
     "source_retrieval": "ok",
-    "checked_at": "2026-11-03T02:59:29Z"
+    "checked_at": "2026-11-03T04:00:22Z"
   },
   "coverage": {
     "trains": "manual_notices_only",
@@ -175,7 +189,7 @@
       "status": "not_connected",
       "message": "No hay conexión verificada con una fuente automática de estado de la línea 57.",
       "reference_url": "https://www.argentina.gob.ar/sube/cuandosubo",
-      "checked_at": "2026-11-03T02:59:29Z"
+      "checked_at": "2026-11-03T04:00:22Z"
     }
   },
   "edesa_salta": {
@@ -184,7 +198,7 @@
     "country": "Argentina",
     "company": "EDESA",
     "source_url": "https://www.edesa.com.ar/widgets/cortes.php",
-    "checked_at": "2026-11-03T02:59:29Z",
+    "checked_at": "2026-11-03T04:00:22Z",
     "coverage_kind": "planned_outages_only",
     "notices": [
       {
@@ -328,7 +342,7 @@
       "country": "Argentina",
       "company": "EPEC",
       "source_url": "https://www.epec.com.ar/actualidad/trabajos-mejoras",
-      "checked_at": "2026-11-03T02:59:29Z",
+      "checked_at": "2026-11-03T04:00:22Z",
       "coverage_kind": "planned_outages_only",
       "notices": [],
       "message": "No se pudo verificar la fuente: no_complete_records, no_complete_records",
@@ -373,10 +387,10 @@
       "country": "Argentina",
       "company": "EPE",
       "source_url": "https://www.epe.santafe.gov.ar/institucional/trabajos-programados",
-      "checked_at": "2026-11-03T02:59:29Z",
+      "checked_at": "2026-11-03T04:00:22Z",
       "coverage_kind": "planned_outages_only",
       "notices": [],
-      "message": "No se pudo verificar la fuente: dynamic_shell, HTTPError, RemoteDisconnected",
+      "message": "No se pudo verificar la fuente: dynamic_shell, HTTPError, URLError",
       "source_attempts": [
         {
           "url": "https://www.epe.santafe.gov.ar/institucional/trabajos-programados",
@@ -401,7 +415,7 @@
         {
           "url": "https://epe.santafe.gov.ar/reclamosweb/cortes.php/cortes.php",
           "result": "fetch_or_parse_error",
-          "error_type": "RemoteDisconnected"
+          "error_type": "URLError"
         }
       ]
     },
@@ -411,7 +425,7 @@
       "country": "Argentina",
       "company": "EDERSA",
       "source_url": "https://www.edersa.com.ar/cortes-programados/",
-      "checked_at": "2026-11-03T02:59:29Z",
+      "checked_at": "2026-11-03T04:00:22Z",
       "coverage_kind": "planned_outages_only",
       "notices": [
         {
@@ -530,7 +544,7 @@
   },
   "rail_official": {
     "status": "ok",
-    "checked_at": "2026-11-03T02:59:29Z",
+    "checked_at": "2026-11-03T04:00:22Z",
     "source_url": "https://www.argentina.gob.ar/transporte/trenes-argentinos",
     "message": "Comunicados fechados, NO estado en tiempo real. Confirmá antes de viajar.",
     "notices": [
@@ -557,7 +571,7 @@
   "subte": {
     "status": "unverified",
     "message": "La página no publica una fecha de actualización verificable.",
-    "checked_at": "2026-11-03T02:59:29Z",
+    "checked_at": "2026-11-03T04:00:22Z",
     "url": "https://buenosaires.gob.ar/inicio/mis-documentos",
     "lines": []
   },
@@ -565,10 +579,21 @@
   "change_tracking": {
     "status": "ok",
     "meaning": "Las novedades indican cambios respecto del informe anterior; no prueban cuándo comenzó un corte ni que uno ausente esté resuelto.",
-    "compared_to": "2026-11-03T01:53:07Z",
-    "new_in_publication_count": 0,
-    "new_in_publication": [],
-    "no_longer_listed_count": 1,
+    "compared_to": "2026-11-03T02:59:29Z",
+    "new_in_publication_count": 1,
+    "new_in_publication": [
+      {
+        "id": "0e12f718e543c5fa",
+        "company": "Edesur",
+        "title": "Corte programado",
+        "partido": "ALMIRANTE BROWN",
+        "localidad": "SAN JOSE",
+        "observed_at": "2026-11-03T04:00:22Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
+        "meaning": "No figuraba en el informe anterior; inicio real desconocido."
+      }
+    ],
+    "no_longer_listed_count": 0,
     "providers_compared": [
       "edenor",
       "edesur"
@@ -582,6 +607,17 @@
     "retention_hours": 3,
     "meaning": "Apareció en una publicación nueva; no prueba inicio del corte.",
     "events": [
+      {
+        "event_id": "b3677e5486bfe5693e5b1b25",
+        "kind": "electricity_publication_added",
+        "country": "Argentina",
+        "company": "Edesur",
+        "title": "Corte programado",
+        "partido": "ALMIRANTE BROWN",
+        "localidad": "SAN JOSE",
+        "first_seen_at": "2026-11-03T04:00:22Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html"
+      },
       {
         "event_id": "9b5ef24de6d16af866742877",
         "kind": "electricity_publication_added",
