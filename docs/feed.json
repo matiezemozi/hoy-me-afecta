@@ -1,21 +1,7 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-03T07:23:13Z",
+  "generated_at": "2026-11-03T09:00:54Z",
   "alerts": [
-    {
-      "category": "electricidad",
-      "title": "Interrupción de media tensión",
-      "company": "Edenor",
-      "partido": "CAPITAL FEDERAL",
-      "localidad": "PALERMO",
-      "users_affected": "126",
-      "expected_restoration": "2026-11-03 05:00",
-      "zone_detail": null,
-      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
-      "observed_at": "2026-11-03T07:23:13Z",
-      "confirmation": "Publicado por ENRE",
-      "id": "35c011b80d0f0c60"
-    },
     {
       "category": "electricidad",
       "title": "Interrupción de baja tensión",
@@ -26,7 +12,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
-      "observed_at": "2026-11-03T07:23:13Z",
+      "observed_at": "2026-11-03T09:00:54Z",
       "confirmation": "Publicado por ENRE",
       "id": "49a82395ca194758"
     },
@@ -40,7 +26,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-03T07:23:13Z",
+      "observed_at": "2026-11-03T09:00:54Z",
       "confirmation": "Publicado por ENRE",
       "id": "c91a6bb219ac1010"
     },
@@ -54,7 +40,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-03T07:23:13Z",
+      "observed_at": "2026-11-03T09:00:54Z",
       "confirmation": "Publicado por ENRE",
       "id": "a8805c9ae7744e3e"
     },
@@ -68,7 +54,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-03T07:23:13Z",
+      "observed_at": "2026-11-03T09:00:54Z",
       "confirmation": "Publicado por ENRE",
       "id": "28268a40a6741053"
     },
@@ -82,7 +68,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-03T07:23:13Z",
+      "observed_at": "2026-11-03T09:00:54Z",
       "confirmation": "Publicado por ENRE",
       "id": "0e12f718e543c5fa"
     },
@@ -96,7 +82,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-03T07:23:13Z",
+      "observed_at": "2026-11-03T09:00:54Z",
       "confirmation": "Publicado por ENRE",
       "id": "db3e8cdffb4ac6fb"
     },
@@ -110,7 +96,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-03T07:23:13Z",
+      "observed_at": "2026-11-03T09:00:54Z",
       "confirmation": "Publicado por ENRE",
       "id": "fb2308944def44d7"
     },
@@ -124,7 +110,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-03T07:23:13Z",
+      "observed_at": "2026-11-03T09:00:54Z",
       "confirmation": "Publicado por ENRE",
       "id": "53e47a7a8ca47523"
     }
@@ -133,13 +119,13 @@
     "edenor": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDN.js",
-      "checked_at": "2026-11-03T07:23:13Z",
-      "event_count": 2
+      "checked_at": "2026-11-03T09:00:54Z",
+      "event_count": 1
     },
     "edesur": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDS.js",
-      "checked_at": "2026-11-03T07:23:13Z",
+      "checked_at": "2026-11-03T09:00:54Z",
       "event_count": 7
     }
   },
@@ -173,7 +159,7 @@
       }
     ],
     "source_retrieval": "ok",
-    "checked_at": "2026-11-03T07:23:13Z"
+    "checked_at": "2026-11-03T09:00:54Z"
   },
   "coverage": {
     "trains": "manual_notices_only",
@@ -189,7 +175,7 @@
       "status": "not_connected",
       "message": "No hay conexión verificada con una fuente automática de estado de la línea 57.",
       "reference_url": "https://www.argentina.gob.ar/sube/cuandosubo",
-      "checked_at": "2026-11-03T07:23:13Z"
+      "checked_at": "2026-11-03T09:00:54Z"
     }
   },
   "edesa_salta": {
@@ -198,7 +184,7 @@
     "country": "Argentina",
     "company": "EDESA",
     "source_url": "https://www.edesa.com.ar/widgets/cortes.php",
-    "checked_at": "2026-11-03T07:23:13Z",
+    "checked_at": "2026-11-03T09:00:54Z",
     "coverage_kind": "planned_outages_only",
     "notices": [
       {
@@ -342,7 +328,7 @@
       "country": "Argentina",
       "company": "EPEC",
       "source_url": "https://www.epec.com.ar/actualidad/trabajos-mejoras",
-      "checked_at": "2026-11-03T07:23:13Z",
+      "checked_at": "2026-11-03T09:00:54Z",
       "coverage_kind": "planned_outages_only",
       "notices": [],
       "message": "No se pudo verificar la fuente: no_complete_records, no_complete_records",
@@ -387,7 +373,7 @@
       "country": "Argentina",
       "company": "EPE",
       "source_url": "https://www.epe.santafe.gov.ar/institucional/trabajos-programados",
-      "checked_at": "2026-11-03T07:23:13Z",
+      "checked_at": "2026-11-03T09:00:54Z",
       "coverage_kind": "planned_outages_only",
       "notices": [],
       "message": "No se pudo verificar la fuente: dynamic_shell, HTTPError, URLError",
@@ -425,7 +411,7 @@
       "country": "Argentina",
       "company": "EDERSA",
       "source_url": "https://www.edersa.com.ar/cortes-programados/",
-      "checked_at": "2026-11-03T07:23:13Z",
+      "checked_at": "2026-11-03T09:00:54Z",
       "coverage_kind": "planned_outages_only",
       "notices": [
         {
@@ -544,7 +530,7 @@
   },
   "rail_official": {
     "status": "ok",
-    "checked_at": "2026-11-03T07:23:13Z",
+    "checked_at": "2026-11-03T09:00:54Z",
     "source_url": "https://www.argentina.gob.ar/transporte/trenes-argentinos",
     "message": "Comunicados fechados, NO estado en tiempo real. Confirmá antes de viajar.",
     "notices": [
@@ -571,7 +557,7 @@
   "subte": {
     "status": "unverified",
     "message": "La página no publica una fecha de actualización verificable.",
-    "checked_at": "2026-11-03T07:23:13Z",
+    "checked_at": "2026-11-03T09:00:54Z",
     "url": "https://buenosaires.gob.ar/inicio/mis-documentos",
     "lines": []
   },
@@ -579,20 +565,9 @@
   "change_tracking": {
     "status": "ok",
     "meaning": "Las novedades indican cambios respecto del informe anterior; no prueban cuándo comenzó un corte ni que uno ausente esté resuelto.",
-    "compared_to": "2026-11-03T06:02:19Z",
-    "new_in_publication_count": 1,
-    "new_in_publication": [
-      {
-        "id": "35c011b80d0f0c60",
-        "company": "Edenor",
-        "title": "Interrupción de media tensión",
-        "partido": "CAPITAL FEDERAL",
-        "localidad": "PALERMO",
-        "observed_at": "2026-11-03T07:23:13Z",
-        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
-        "meaning": "No figuraba en el informe anterior; inicio real desconocido."
-      }
-    ],
+    "compared_to": "2026-11-03T07:23:13Z",
+    "new_in_publication_count": 0,
+    "new_in_publication": [],
     "no_longer_listed_count": 1,
     "providers_compared": [
       "edenor",
