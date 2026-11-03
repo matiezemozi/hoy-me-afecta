@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-03T01:53:07Z",
+  "generated_at": "2026-11-03T02:59:29Z",
   "alerts": [
     {
       "category": "electricidad",
@@ -12,7 +12,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
-      "observed_at": "2026-11-03T01:53:07Z",
+      "observed_at": "2026-11-03T02:59:29Z",
       "confirmation": "Publicado por ENRE",
       "id": "49a82395ca194758"
     },
@@ -26,7 +26,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-03T01:53:07Z",
+      "observed_at": "2026-11-03T02:59:29Z",
       "confirmation": "Publicado por ENRE",
       "id": "627e43ce8cf569c2"
     },
@@ -40,7 +40,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-03T01:53:07Z",
+      "observed_at": "2026-11-03T02:59:29Z",
       "confirmation": "Publicado por ENRE",
       "id": "a8805c9ae7744e3e"
     },
@@ -54,23 +54,9 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-03T01:53:07Z",
+      "observed_at": "2026-11-03T02:59:29Z",
       "confirmation": "Publicado por ENRE",
       "id": "a9ae496e200316eb"
-    },
-    {
-      "category": "electricidad",
-      "title": "Corte programado",
-      "company": "Edesur",
-      "partido": "QUILMES",
-      "localidad": "SAN FRANCISCO SOLANO (Q)",
-      "users_affected": "373",
-      "expected_restoration": null,
-      "zone_detail": null,
-      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-03T01:53:07Z",
-      "confirmation": "Publicado por ENRE",
-      "id": "f0263f515b231990"
     },
     {
       "category": "electricidad",
@@ -82,7 +68,7 @@
       "expected_restoration": "2026-11-03 02:51",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-03T01:53:07Z",
+      "observed_at": "2026-11-03T02:59:29Z",
       "confirmation": "Publicado por ENRE",
       "id": "6ec5e0670dd65f98"
     },
@@ -96,7 +82,7 @@
       "expected_restoration": "2026-11-03 02:51",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-03T01:53:07Z",
+      "observed_at": "2026-11-03T02:59:29Z",
       "confirmation": "Publicado por ENRE",
       "id": "9325a1feeaedb890"
     },
@@ -110,7 +96,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-03T01:53:07Z",
+      "observed_at": "2026-11-03T02:59:29Z",
       "confirmation": "Publicado por ENRE",
       "id": "db3e8cdffb4ac6fb"
     },
@@ -120,27 +106,27 @@
       "company": "Edesur",
       "partido": "LOMAS DE ZAMORA",
       "localidad": "VILLA FIORITO",
-      "users_affected": "6",
+      "users_affected": "10",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-03T01:53:07Z",
+      "observed_at": "2026-11-03T02:59:29Z",
       "confirmation": "Publicado por ENRE",
-      "id": "df476d8669c764cd"
+      "id": "53e47a7a8ca47523"
     }
   ],
   "sources": {
     "edenor": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDN.js",
-      "checked_at": "2026-11-03T01:53:07Z",
+      "checked_at": "2026-11-03T02:59:29Z",
       "event_count": 1
     },
     "edesur": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDS.js",
-      "checked_at": "2026-11-03T01:53:07Z",
-      "event_count": 8
+      "checked_at": "2026-11-03T02:59:29Z",
+      "event_count": 7
     }
   },
   "banking": {
@@ -173,7 +159,7 @@
       }
     ],
     "source_retrieval": "ok",
-    "checked_at": "2026-11-03T01:53:07Z"
+    "checked_at": "2026-11-03T02:59:29Z"
   },
   "coverage": {
     "trains": "manual_notices_only",
@@ -189,7 +175,7 @@
       "status": "not_connected",
       "message": "No hay conexión verificada con una fuente automática de estado de la línea 57.",
       "reference_url": "https://www.argentina.gob.ar/sube/cuandosubo",
-      "checked_at": "2026-11-03T01:53:07Z"
+      "checked_at": "2026-11-03T02:59:29Z"
     }
   },
   "edesa_salta": {
@@ -198,7 +184,7 @@
     "country": "Argentina",
     "company": "EDESA",
     "source_url": "https://www.edesa.com.ar/widgets/cortes.php",
-    "checked_at": "2026-11-03T01:53:07Z",
+    "checked_at": "2026-11-03T02:59:29Z",
     "coverage_kind": "planned_outages_only",
     "notices": [
       {
@@ -342,7 +328,7 @@
       "country": "Argentina",
       "company": "EPEC",
       "source_url": "https://www.epec.com.ar/actualidad/trabajos-mejoras",
-      "checked_at": "2026-11-03T01:53:07Z",
+      "checked_at": "2026-11-03T02:59:29Z",
       "coverage_kind": "planned_outages_only",
       "notices": [],
       "message": "No se pudo verificar la fuente: no_complete_records, no_complete_records",
@@ -361,14 +347,6 @@
             "/actualidad/main.7408cd4426f1ac179abd.js"
           ],
           "records_checked": 0,
-          "javascript_diagnostics": [
-            {
-              "script_path": "/actualidad/main.7408cd4426f1ac179abd.js",
-              "status": "fetch_or_scan_error",
-              "error_type": "ScriptProbeError",
-              "error_code": "returned_html_instead_of_js"
-            }
-          ],
           "result": "no_complete_records"
         },
         {
@@ -395,10 +373,10 @@
       "country": "Argentina",
       "company": "EPE",
       "source_url": "https://www.epe.santafe.gov.ar/institucional/trabajos-programados",
-      "checked_at": "2026-11-03T01:53:07Z",
+      "checked_at": "2026-11-03T02:59:29Z",
       "coverage_kind": "planned_outages_only",
       "notices": [],
-      "message": "No se pudo verificar la fuente: dynamic_shell, HTTPError, URLError",
+      "message": "No se pudo verificar la fuente: dynamic_shell, HTTPError, RemoteDisconnected",
       "source_attempts": [
         {
           "url": "https://www.epe.santafe.gov.ar/institucional/trabajos-programados",
@@ -413,28 +391,6 @@
             "/institucional/js/epe.js"
           ],
           "records_checked": 0,
-          "javascript_diagnostics": [
-            {
-              "script_path": "/institucional/_astro/TrabajosProgramados.astro_astro_type_script_index_0_lang.C1JoA2Kk.js",
-              "status": "scanned",
-              "asset_bytes_sampled": 27720,
-              "javascript_requests_found": {
-                "fetch": 0,
-                "axios_mentions": 0,
-                "httpclient_mentions": 1,
-                "httpclient_method_calls": 0
-              },
-              "keyword_counts": {
-                "corte": 5,
-                "trabajo": 0,
-                "api": 0
-              },
-              "official_hosts_seen": [],
-              "candidate_public_paths": [],
-              "note": "Pistas estáticas, NO API verificadas; no se consultaron las rutas inferidas.",
-              "asset_sample_truncated": false
-            }
-          ],
           "result": "dynamic_shell"
         },
         {
@@ -445,7 +401,7 @@
         {
           "url": "https://epe.santafe.gov.ar/reclamosweb/cortes.php/cortes.php",
           "result": "fetch_or_parse_error",
-          "error_type": "URLError"
+          "error_type": "RemoteDisconnected"
         }
       ]
     },
@@ -455,7 +411,7 @@
       "country": "Argentina",
       "company": "EDERSA",
       "source_url": "https://www.edersa.com.ar/cortes-programados/",
-      "checked_at": "2026-11-03T01:53:07Z",
+      "checked_at": "2026-11-03T02:59:29Z",
       "coverage_kind": "planned_outages_only",
       "notices": [
         {
@@ -574,7 +530,7 @@
   },
   "rail_official": {
     "status": "ok",
-    "checked_at": "2026-11-03T01:53:07Z",
+    "checked_at": "2026-11-03T02:59:29Z",
     "source_url": "https://www.argentina.gob.ar/transporte/trenes-argentinos",
     "message": "Comunicados fechados, NO estado en tiempo real. Confirmá antes de viajar.",
     "notices": [
@@ -601,7 +557,7 @@
   "subte": {
     "status": "unverified",
     "message": "La página no publica una fecha de actualización verificable.",
-    "checked_at": "2026-11-03T01:53:07Z",
+    "checked_at": "2026-11-03T02:59:29Z",
     "url": "https://buenosaires.gob.ar/inicio/mis-documentos",
     "lines": []
   },
@@ -609,10 +565,10 @@
   "change_tracking": {
     "status": "ok",
     "meaning": "Las novedades indican cambios respecto del informe anterior; no prueban cuándo comenzó un corte ni que uno ausente esté resuelto.",
-    "compared_to": "2026-11-03T01:43:09Z",
+    "compared_to": "2026-11-03T01:53:07Z",
     "new_in_publication_count": 0,
     "new_in_publication": [],
-    "no_longer_listed_count": 2,
+    "no_longer_listed_count": 1,
     "providers_compared": [
       "edenor",
       "edesur"
@@ -646,50 +602,6 @@
         "partido": "CAPITAL",
         "localidad": "BARRACAS",
         "first_seen_at": "2026-11-03T01:15:22Z",
-        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html"
-      },
-      {
-        "event_id": "375569d283a274cec877ec2f",
-        "kind": "electricity_publication_added",
-        "country": "Argentina",
-        "company": "Edesur",
-        "title": "Corte programado",
-        "partido": "QUILMES",
-        "localidad": "SAN FRANCISCO SOLANO (Q)",
-        "first_seen_at": "2026-11-02T23:46:26Z",
-        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html"
-      },
-      {
-        "event_id": "21981aff08db202e7ba95526",
-        "kind": "electricity_publication_added",
-        "country": "Argentina",
-        "company": "Edesur",
-        "title": "Interrupción de baja tensión",
-        "partido": "CAÑUELAS",
-        "localidad": "ZONA RURAL",
-        "first_seen_at": "2026-11-02T23:46:26Z",
-        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html"
-      },
-      {
-        "event_id": "2a37946e4d5842b08757fdd1",
-        "kind": "electricity_publication_added",
-        "country": "Argentina",
-        "company": "Edesur",
-        "title": "Interrupción de baja tensión",
-        "partido": "LANUS",
-        "localidad": "MONTE CHINGOLO",
-        "first_seen_at": "2026-11-02T23:46:26Z",
-        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html"
-      },
-      {
-        "event_id": "041086b6f76a72ef41c02e7a",
-        "kind": "electricity_publication_added",
-        "country": "Argentina",
-        "company": "Edesur",
-        "title": "Interrupción de baja tensión",
-        "partido": "LOMAS DE ZAMORA",
-        "localidad": "VILLA FIORITO",
-        "first_seen_at": "2026-11-02T23:46:26Z",
         "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html"
       }
     ]
