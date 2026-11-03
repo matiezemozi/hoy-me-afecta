@@ -10,8 +10,11 @@ from datetime import datetime, timedelta, timezone
 from hashlib import sha256
 from html.parser import HTMLParser
 import re
+import os
 from urllib.request import Request, urlopen
 from urllib.parse import urljoin, urlsplit
+
+from source_javascript_diagnostics import probe_official_scripts
 
 ART = timezone(timedelta(hours=-3))
 MAX_BYTES = 2_500_000
@@ -302,7 +305,7 @@ def _diagnose_html(html, page, key):
     return diag
 
 
-def collect_one(key, checked_at, fetcher=None):
+def collect_one(key, checked_at, fetcher=None, script_fetcher=None):
     if key not in PROVIDERS:
         raise KeyError(key)
     company, province, url = PROVIDERS[key]
@@ -320,6 +323,7 @@ def collect_one(key, checked_at, fetcher=None):
     else:
         pages = [url]
     problems = []
+    js_probe_completed = False
     for page in pages:
         attempt = {'url': page}
         try:
@@ -337,6 +341,15 @@ def collect_one(key, checked_at, fetcher=None):
             if newest is not None:
                 attempt['latest_published_date'] = newest.isoformat()
             if count == 0 or newest is None:
+                # Probe one preidentified public JS bundle only when the server
+                # cannot read complete records from the static page.
+                if (key in ('epec_cordoba', 'epe_santa_fe') and not js_probe_completed
+                        and (script_fetcher is not None or (fetcher is None
+                             and os.environ.get('GITHUB_EVENT_NAME') == 'workflow_dispatch'))):
+                    attempt['javascript_diagnostics'] = probe_official_scripts(
+                        page, key, attempt.get('same_origin_script_paths', []),
+                        fetcher=script_fetcher)
+                    js_probe_completed = True
                 attempt['result'] = ('dynamic_shell' if attempt.get('dynamic_shell')
                                      else 'no_complete_records')
                 problems.append(attempt['result'])
