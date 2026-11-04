@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-04T06:09:07Z",
+  "generated_at": "2026-11-04T07:29:41Z",
   "alerts": [
     {
       "category": "electricidad",
@@ -9,12 +9,12 @@
       "partido": "QUILMES",
       "localidad": "BERNAL",
       "users_affected": "118",
-      "expected_restoration": "2026-11-04 04:17",
+      "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-04T06:09:07Z",
+      "observed_at": "2026-11-04T07:29:41Z",
       "confirmation": "Publicado por ENRE",
-      "id": "2a25e2cd5f45bb22"
+      "id": "9cb3346ea929eea4"
     },
     {
       "category": "electricidad",
@@ -23,12 +23,12 @@
       "partido": "QUILMES",
       "localidad": "QUILMES OESTE",
       "users_affected": "728",
-      "expected_restoration": "2026-11-04 04:17",
+      "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-04T06:09:07Z",
+      "observed_at": "2026-11-04T07:29:41Z",
       "confirmation": "Publicado por ENRE",
-      "id": "c3f37e6e059d3332"
+      "id": "651b63cf993e5e33"
     },
     {
       "category": "electricidad",
@@ -40,7 +40,7 @@
       "expected_restoration": "2026-11-04 06:37",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-04T06:09:07Z",
+      "observed_at": "2026-11-04T07:29:41Z",
       "confirmation": "Publicado por ENRE",
       "id": "6190d0476e52babb"
     },
@@ -54,7 +54,7 @@
       "expected_restoration": "2026-11-04 08:34",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-04T06:09:07Z",
+      "observed_at": "2026-11-04T07:29:41Z",
       "confirmation": "Publicado por ENRE",
       "id": "41271526563dcb05"
     },
@@ -68,7 +68,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-04T06:09:07Z",
+      "observed_at": "2026-11-04T07:29:41Z",
       "confirmation": "Publicado por ENRE",
       "id": "f3678033f12a2710"
     },
@@ -82,7 +82,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-04T06:09:07Z",
+      "observed_at": "2026-11-04T07:29:41Z",
       "confirmation": "Publicado por ENRE",
       "id": "8dd4ede4cd550664"
     },
@@ -96,7 +96,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-04T06:09:07Z",
+      "observed_at": "2026-11-04T07:29:41Z",
       "confirmation": "Publicado por ENRE",
       "id": "43c302f4701d1fd5"
     },
@@ -110,7 +110,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-04T06:09:07Z",
+      "observed_at": "2026-11-04T07:29:41Z",
       "confirmation": "Publicado por ENRE",
       "id": "89e94ef2f673fae8"
     },
@@ -124,7 +124,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-04T06:09:07Z",
+      "observed_at": "2026-11-04T07:29:41Z",
       "confirmation": "Publicado por ENRE",
       "id": "50963febc06c196b"
     }
@@ -133,13 +133,13 @@
     "edenor": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDN.js",
-      "checked_at": "2026-11-04T06:09:07Z",
+      "checked_at": "2026-11-04T07:29:41Z",
       "event_count": 0
     },
     "edesur": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDS.js",
-      "checked_at": "2026-11-04T06:09:07Z",
+      "checked_at": "2026-11-04T07:29:41Z",
       "event_count": 9
     }
   },
@@ -173,7 +173,7 @@
       }
     ],
     "source_retrieval": "ok",
-    "checked_at": "2026-11-04T06:09:07Z"
+    "checked_at": "2026-11-04T07:29:41Z"
   },
   "coverage": {
     "trains": "manual_notices_only",
@@ -189,7 +189,7 @@
       "status": "not_connected",
       "message": "No hay conexión verificada con una fuente automática de estado de la línea 57.",
       "reference_url": "https://www.argentina.gob.ar/sube/cuandosubo",
-      "checked_at": "2026-11-04T06:09:07Z"
+      "checked_at": "2026-11-04T07:29:41Z"
     }
   },
   "edesa_salta": {
@@ -198,7 +198,7 @@
     "country": "Argentina",
     "company": "EDESA",
     "source_url": "https://www.edesa.com.ar/widgets/cortes.php",
-    "checked_at": "2026-11-04T06:09:07Z",
+    "checked_at": "2026-11-04T07:29:41Z",
     "coverage_kind": "planned_outages_only",
     "notices": [
       {
@@ -329,7 +329,7 @@
       "country": "Argentina",
       "company": "EPEC",
       "source_url": "https://www.epec.com.ar/actualidad/trabajos-mejoras",
-      "checked_at": "2026-11-04T06:09:07Z",
+      "checked_at": "2026-11-04T07:29:41Z",
       "coverage_kind": "planned_outages_only",
       "notices": [],
       "message": "No se pudo verificar la fuente: no_complete_records, no_complete_records",
@@ -374,7 +374,7 @@
       "country": "Argentina",
       "company": "EPE",
       "source_url": "https://www.epe.santafe.gov.ar/institucional/trabajos-programados",
-      "checked_at": "2026-11-04T06:09:07Z",
+      "checked_at": "2026-11-04T07:29:41Z",
       "coverage_kind": "planned_outages_only",
       "notices": [],
       "message": "No se pudo verificar la fuente: dynamic_shell, HTTPError, RemoteDisconnected",
@@ -412,7 +412,7 @@
       "country": "Argentina",
       "company": "EDERSA",
       "source_url": "https://www.edersa.com.ar/cortes-programados/",
-      "checked_at": "2026-11-04T06:09:07Z",
+      "checked_at": "2026-11-04T07:29:41Z",
       "coverage_kind": "planned_outages_only",
       "notices": [
         {
@@ -465,7 +465,7 @@
     "province": "Neuquén",
     "company": "EPEN",
     "source_url": "https://www.epen.gov.ar/index.php/cortes-programados/",
-    "checked_at": "2026-11-04T06:09:07Z",
+    "checked_at": "2026-11-04T07:29:41Z",
     "coverage_kind": "dated_planned_work_bulletins_only",
     "notices": [],
     "message": "No se verificaron comunicados futuros; no significa servicio normal.",
@@ -519,7 +519,7 @@
   },
   "rail_official": {
     "status": "ok",
-    "checked_at": "2026-11-04T06:09:07Z",
+    "checked_at": "2026-11-04T07:29:41Z",
     "source_url": "https://www.argentina.gob.ar/transporte/trenes-argentinos",
     "message": "Comunicados fechados, NO estado en tiempo real. Confirmá antes de viajar.",
     "notices": [
@@ -539,7 +539,7 @@
   "subte": {
     "status": "unverified",
     "message": "La página no publica una fecha de actualización verificable.",
-    "checked_at": "2026-11-04T06:09:07Z",
+    "checked_at": "2026-11-04T07:29:41Z",
     "url": "https://buenosaires.gob.ar/inicio/mis-documentos",
     "lines": []
   },
@@ -547,10 +547,10 @@
   "change_tracking": {
     "status": "ok",
     "meaning": "Las novedades indican cambios respecto del informe anterior; no prueban cuándo comenzó un corte ni que uno ausente esté resuelto.",
-    "compared_to": "2026-11-04T05:08:12Z",
+    "compared_to": "2026-11-04T06:09:07Z",
     "new_in_publication_count": 0,
     "new_in_publication": [],
-    "no_longer_listed_count": 1,
+    "no_longer_listed_count": 0,
     "providers_compared": [
       "edenor",
       "edesur"
@@ -584,28 +584,6 @@
         "partido": "ESTEBAN ECHEVERRIA",
         "localidad": "LUIS GUILLON",
         "first_seen_at": "2026-11-04T05:08:12Z",
-        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html"
-      },
-      {
-        "event_id": "0d282b3d8554210365a12d8e",
-        "kind": "electricity_publication_added",
-        "country": "Argentina",
-        "company": "Edesur",
-        "title": "Corte programado",
-        "partido": "QUILMES",
-        "localidad": "BERNAL",
-        "first_seen_at": "2026-11-04T04:02:33Z",
-        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html"
-      },
-      {
-        "event_id": "897c9b5f67dd1b9bcff49cec",
-        "kind": "electricity_publication_added",
-        "country": "Argentina",
-        "company": "Edesur",
-        "title": "Corte programado",
-        "partido": "QUILMES",
-        "localidad": "QUILMES OESTE",
-        "first_seen_at": "2026-11-04T04:02:33Z",
         "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html"
       }
     ]
