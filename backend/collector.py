@@ -24,6 +24,7 @@ from notification_events import journal
 from rail_notices import collect_rail_notices
 from salta_outages import collect_edesa_salta
 from provincial_outages import collect_provincial, PROVIDERS
+from epen_neuquen import collect_epen
 
 BASE = 'https://www.enre.gov.ar/paginacorte/js/'
 FEEDS = {'edenor': BASE + 'data_EDN.js', 'edesur': BASE + 'data_EDS.js'}
@@ -181,7 +182,7 @@ def load_bus_alerts(path, generated_at):
     return output
 
 
-def collect(dest, manual, public_manual=None, *, fetch_subte=None, fetch_banking=None, fetch_rail=None, fetch_salta=None, fetch_provincial=None):
+def collect(dest, manual, public_manual=None, *, fetch_subte=None, fetch_banking=None, fetch_rail=None, fetch_salta=None, fetch_provincial=None, fetch_epen=None):
     previous = None
     if dest.exists():
         try:
@@ -237,12 +238,28 @@ def collect(dest, manual, public_manual=None, *, fetch_subte=None, fetch_banking
             key: {'status': 'not_checked', 'province': info[1],
                   'source_url': info[2], 'checked_at': timestamp, 'notices': []}
             for key, info in PROVIDERS.items()}
+    # Neuquén: dated official EPEN bulletins, not reports of active outages.
+    if fetch_epen is not None:
+        try:
+            output['epen_neuquen'] = fetch_epen(timestamp)
+        except Exception as exc:
+            output['epen_neuquen'] = {
+                'status': 'unverified', 'province': 'Neuquén', 'company': 'EPEN',
+                'checked_at': timestamp, 'notices': [],
+                'message': 'No se verificó EPEN: ' + type(exc).__name__}
+    else:
+        output['epen_neuquen'] = {
+            'status': 'not_checked', 'province': 'Neuquén', 'company': 'EPEN',
+            'checked_at': timestamp, 'notices': []}
     output['coverage_argentina'] = {
         'country': 'Argentina', 'national_electricity_coverage': False,
         'electricity': [
             {'provider': 'Edenor', 'area': 'Concesión Edenor, AMBA', 'kind': 'published_outages'},
             {'provider': 'Edesur', 'area': 'Concesión Edesur, AMBA', 'kind': 'published_outages'},
             {'provider': 'EDESA', 'area': 'Provincia de Salta', 'kind': 'scheduled_only'},
+            {'provider': 'EPEN', 'area': 'Provincia de Neuquén',
+             'kind': 'dated_planned_work_bulletins_if_verified',
+             'source_status': output['epen_neuquen']['status']},
             *[{'provider': info[0], 'area': 'Provincia de ' + info[1],
                 'kind': 'scheduled_only_if_verified',
                 'source_status': output['provincial_electricity'][key]['status']}
@@ -317,6 +334,8 @@ def collect(dest, manual, public_manual=None, *, fetch_subte=None, fetch_banking
     print(f'EDESA Salta (solo programados): {edesa["status"]}; futuros: {len(edesa.get("notices", []))}; examinados: {edesa.get("records_checked", "no verificado")}')
     for key, item in output['provincial_electricity'].items():
         print(f'{key}: {item["status"]}; futuros: {len(item.get("notices", []))}; examinados: {item.get("records_checked", "no verificado")}')
+    epen = output['epen_neuquen']
+    print(f'EPEN Neuquén (comunicados fechados): {epen["status"]}; comunicados: {len(epen.get("notices", []))}')
     status = output['subte']
     print(f'subte CABA: {status["status"]}; {status.get("message", status.get("event_count", 0))}')
     print(f'Cambios ENRE: {output["change_tracking"]["status"]}; nuevos en publicación: {output["change_tracking"]["new_in_publication_count"]}')
@@ -333,4 +352,4 @@ if __name__ == '__main__':
     collect(Path(args.output), Path(args.manual), Path(args.public_manual),
             fetch_subte=collect_subte, fetch_banking=refresh_official_calendar,
             fetch_rail=collect_rail_notices, fetch_salta=collect_edesa_salta,
-            fetch_provincial=collect_provincial)
+            fetch_provincial=collect_provincial, fetch_epen=collect_epen)
