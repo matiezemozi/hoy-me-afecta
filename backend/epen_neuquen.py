@@ -10,12 +10,14 @@ from __future__ import annotations
 from datetime import date, datetime, timedelta, timezone
 from hashlib import sha256
 from html.parser import HTMLParser
+from xml.etree import ElementTree as ET
 import re
 import unicodedata
 from urllib.parse import urljoin, urlsplit
 from urllib.request import Request, urlopen
 
 SOURCE_URL = 'https://www.epen.gov.ar/index.php/cortes-programados/'
+RSS_URL = 'https://www.epen.gov.ar/index.php/feed/'
 ART = timezone(timedelta(hours=-3))
 MAX_BYTES = 700_000
 MAX_LINKS = 200
@@ -58,6 +60,7 @@ class _Links(HTMLParser):
         self.current = None
         self.depth = 0
         self.words = []
+        self.link_attrs = {}
         self.links = []
 
     def handle_starttag(self, tag, attrs):
@@ -67,10 +70,15 @@ class _Links(HTMLParser):
         if self.ignore:
             return
         if tag == 'a' and self.current is None:
-            self.current = dict(attrs).get('href')
+            self.link_attrs = dict(attrs)
+            self.current = self.link_attrs.get('href')
             self.words = []
             self.depth = 1
         elif self.current is not None:
+            if tag == 'img':
+                alternative = dict(attrs).get('alt', '')
+                if alternative:
+                    self.words.append(_clean(alternative, 350))
             self.depth += 1
 
     def handle_data(self, data):
@@ -88,9 +96,13 @@ class _Links(HTMLParser):
         self.depth -= 1
         if tag == 'a' or self.depth <= 0:
             if len(self.links) < MAX_LINKS:
-                self.links.append((self.current, _clean(' '.join(self.words), 350)))
+                title = _clean(' '.join(self.words), 350)
+                if not title:
+                    title = _clean(self.link_attrs.get('title') or self.link_attrs.get('aria-label') or '', 350)
+                self.links.append((self.current, title))
             self.current = None
             self.words = []
+            self.link_attrs = {}
             self.depth = 0
 
 
@@ -112,20 +124,16 @@ def _last_day_in_title(title):
     return max(candidates) if candidates else None
 
 
-def extract_dated_bulletins(html, checked_at):
-    """Return (publications, eligible_candidates, future_ends), offline/testable."""
-    if not isinstance(html, str) or not html.strip() or len(html.encode('utf-8')) > MAX_BYTES:
-        raise ValueError('HTML de EPEN vacío o demasiado grande')
+def _extract_official_pairs(links, checked_at):
+    """Only keep dated, upcoming bulletins with verifiable EPEN article URLs."""
     now = datetime.fromisoformat(checked_at.replace('Z', '+00:00'))
     if now.tzinfo is None:
         raise ValueError('Comprobación sin zona horaria')
     today = now.astimezone(ART).date()
-    parser = _Links()
-    parser.feed(html)
     notices = {}
     eligible = 0
     future_ends = 0
-    for href, title in parser.links:
+    for href, title in links:
         valid = _official_article(href)
         if valid is None:
             continue
@@ -161,11 +169,37 @@ def extract_dated_bulletins(html, checked_at):
     return sorted(notices.values(), key=lambda n: (n['scheduled_last_day'], n['published_on'], n['title'])), eligible, future_ends
 
 
+
+def extract_dated_bulletins(html, checked_at):
+    """Read official archive article links; never infer outages in progress."""
+    if not isinstance(html, str) or not html.strip() or len(html.encode('utf-8')) > MAX_BYTES:
+        raise ValueError('HTML de EPEN vacío o demasiado grande')
+    parser = _Links()
+    parser.feed(html)
+    return _extract_official_pairs(parser.links, checked_at)
+
+
+def extract_rss_bulletins(xml, checked_at):
+    """Read EPEN official RSS. RSS is a fallback when archive cards lack titles."""
+    if not isinstance(xml, str) or not xml.strip() or len(xml.encode('utf-8')) > MAX_BYTES:
+        raise ValueError('RSS de EPEN vacío o demasiado grande')
+    root = ET.fromstring(xml)
+    if root.tag not in ('rss', '{http://www.w3.org/2005/Atom}feed'):
+        raise ValueError('La respuesta de EPEN no es RSS/Atom')
+    pairs = []
+    for item in root.findall('./channel/item')[:MAX_LINKS]:
+        title = item.findtext('title', default='')
+        url = item.findtext('link', default='')
+        pairs.append((url, title))
+    # A valid but empty RSS is not proof of normal electrical service.
+    return _extract_official_pairs(pairs, checked_at)
+
+
 def fetch_html(url=SOURCE_URL):
-    if url != SOURCE_URL:
-        raise ValueError('Solo se permite la portada oficial de cortes programados de EPEN')
+    if url not in (SOURCE_URL, RSS_URL):
+        raise ValueError('Solo se permiten las páginas públicas oficiales de EPEN')
     req = Request(url, headers={'User-Agent':'HoyMeAfecta/0.5 (comunicados oficiales fechados)',
-                                'Accept': 'text/html,application/xhtml+xml',
+                                'Accept': 'text/html,application/xhtml+xml,application/rss+xml,application/xml',
                                 'Accept-Language': 'es-AR,es;q=0.9'})
     with urlopen(req, timeout=15) as response:
         data = response.read(MAX_BYTES + 1)
@@ -185,6 +219,25 @@ def collect_epen(checked_at, fetcher=None):
         html = (fetcher or fetch_html)(SOURCE_URL)
         items, eligible, future_ends = extract_dated_bulletins(html, checked_at)
         output['records_checked'] = eligible
+        output['archive_candidates'] = eligible
+        output['fallback_rss'] = 'not_needed'
+        if not items:
+            # EPEN publishes an official WordPress RSS feed. Its <item> fields
+            # carry article titles even if the archive uses image-only links.
+            # This is NOT an outage-status API and it never triggers push alerts.
+            try:
+                rss = (fetcher or fetch_html)(RSS_URL)
+                rss_items, rss_eligible, _ = extract_rss_bulletins(rss, checked_at)
+                output['rss_candidates'] = rss_eligible
+                output['records_checked'] += rss_eligible
+                if rss_items:
+                    items = rss_items
+                    output['fallback_rss'] = 'verified'
+                else:
+                    output['fallback_rss'] = 'no_upcoming_bulletins'
+            except (OSError, UnicodeError, ValueError, TimeoutError, ET.ParseError) as exc:
+                output['fallback_rss'] = 'unverified'
+                output['rss_error_type'] = type(exc).__name__
         if items:
             output['notices'] = items
             output['status'] = 'ok'
