@@ -1,4 +1,4 @@
-"""EDEN, EDEA and EDES: public, dated work plans for Buenos Aires Province.
+"""EDEN, EDEA, EDES and EDELAP: official, dated grid-work schedules.
 
 A scheduled grid improvement MAY affect service; it is never confirmation of an
 active outage. This module is intentionally independent of ENRE alerts, change
@@ -19,6 +19,7 @@ SOURCES = {
     'eden_buenos_aires': ('EDEN', 'https://www.edensa.com.ar/obras-en-tu-barrio/'),
     'edea_buenos_aires': ('EDEA', 'https://www.edeaweb.com.ar/obras-en-tu-barrio/'),
     'edes_buenos_aires': ('EDES', 'https://www.infoedes.com/obras-en-tu-barrio/'),
+    'edelap_buenos_aires': ('EDELAP', 'https://www.edelap.com.ar/obras-en-tu-barrio/'),
 }
 ART = timezone(timedelta(hours=-3))
 MAX_BYTES = 650_000
@@ -40,10 +41,46 @@ TIME_RE = re.compile(
 EDES_PREFIX_TIME_RE = re.compile(
     r'\b([01]?\d|2[0-3])(?:[:.]([0-5]\d))?\s*(?:hs\.?)?\s+'
     r'a\s+([01]?\d|2[0-3])(?:[:.]([0-5]\d))?\s*(?:hs\.?)?\b', re.I)
+# EDELAP publishes works as individual lines (no uppercase locality heading),
+# with the area after the last comma: "de 8 a 16 hs. ... , Ensenada".
+# Whitelist only localities directly recognized in the published official
+# example; others stay unverified until their meaning is checked.
+EDELAP_KNOWN_LOCALITIES = {
+    'ensenada', 'san carlos', 'abasto', 'la plata', 'punta lara',
+    'berisso', 'city bell', 'gonnet', 'tolosa', 'villa elisa',
+    'los hornos', 'olmos', 'melchor romero', 'ringuelet',
+}
+EDELAP_LINE_RE = re.compile(
+    r'^de\s+([01]?\d|2[0-3])(?::([0-5]\d))?\s+a\s+'
+    r'([01]?\d|2[0-3])(?::([0-5]\d))?\s*hs\.?\s+(.+)$', re.I)
+
+
+def _edelap_line(text):
+    """Parse only explicitly localized official work notices; never infer a city."""
+    if any(word in _normalize(text) for word in CANCELED):
+        return None
+    m = EDELAP_LINE_RE.fullmatch(_line(text))
+    if not m:
+        return None
+    sh, sm, eh, em = (int(m.group(1)), int(m.group(2) or 0),
+                      int(m.group(3)), int(m.group(4) or 0))
+    if not (0 < (eh * 60 + em) - (sh * 60 + sm) <= 14 * 60):
+        return None
+    tail = m.group(5).strip(' .')
+    if ',' not in tail:
+        return None
+    zone, locality = (_line(x).strip(' .') for x in tail.rsplit(',', 1))
+    if not (6 <= len(zone) <= 700 and 3 <= len(locality) <= 55):
+        return None
+    if _normalize(locality) not in EDELAP_KNOWN_LOCALITIES:
+        return None
+    return time(sh, sm), time(eh, em), zone, locality
+
+
 CANCELED = ('suspendid', 'cancelad', 'anulad', 'no se realiz', 'reprogramad')
 MAX_DAYS_AHEAD = 14
 # Identificador visible en docs/feed.json para verificar el archivo desplegado.
-PARSER_REVISION = 'BA-v5.17.1'
+PARSER_REVISION = 'BA-v5.18'
 
 
 def _normalize(value):
@@ -201,16 +238,23 @@ def extract_works(html, key, checked_at, diagnostics=None):
             continue
         if day is None:
             continue
-        if _is_locality(line):
-            locality = _line(line)[:90]
+        if company == 'EDELAP':
+            candidate = _edelap_line(line)
+            if not candidate:
+                continue
+            start_t, end_t, zone, locality = candidate
             areas += 1
-            continue
-        if locality is None:
-            continue
-        candidate = _zone_line(line, source=company)
-        if not candidate:
-            continue
-        start_t, end_t, zone = candidate
+        else:
+            if _is_locality(line):
+                locality = _line(line)[:90]
+                areas += 1
+                continue
+            if locality is None:
+                continue
+            candidate = _zone_line(line, source=company)
+            if not candidate:
+                continue
+            start_t, end_t, zone = candidate
         start = datetime.combine(day, start_t, tzinfo=ART)
         end = datetime.combine(day, end_t, tzinfo=ART)
         complete_work_entries += 1
