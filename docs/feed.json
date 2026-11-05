@@ -1,34 +1,34 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-05T02:59:21Z",
+  "generated_at": "2026-11-05T04:03:52Z",
   "alerts": [
     {
       "category": "electricidad",
-      "title": "Interrupción de baja tensión",
+      "title": "Interrupción de media tensión",
       "company": "Edenor",
-      "partido": "LA MATANZA",
-      "localidad": "GONZALEZ CATAN",
-      "users_affected": "19",
-      "expected_restoration": null,
+      "partido": "CAPITAL FEDERAL",
+      "localidad": "RECOLETA",
+      "users_affected": "338",
+      "expected_restoration": "2026-11-05 04:00",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
-      "observed_at": "2026-11-05T02:59:21Z",
+      "observed_at": "2026-11-05T04:03:52Z",
       "confirmation": "Publicado por ENRE",
-      "id": "1ae71b38293dc9c3"
+      "id": "21204e4db807ed15"
     },
     {
       "category": "electricidad",
-      "title": "Interrupción de baja tensión",
+      "title": "Interrupción de media tensión",
       "company": "Edenor",
-      "partido": "TIGRE",
-      "localidad": "EL TALAR",
-      "users_affected": "74",
-      "expected_restoration": null,
+      "partido": "SAN ISIDRO",
+      "localidad": "SAN ISIDRO",
+      "users_affected": "134",
+      "expected_restoration": "2026-11-05 04:00",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
-      "observed_at": "2026-11-05T02:59:21Z",
+      "observed_at": "2026-11-05T04:03:52Z",
       "confirmation": "Publicado por ENRE",
-      "id": "1ed0e08eae9ba57b"
+      "id": "161d131a5bc76e7c"
     },
     {
       "category": "electricidad",
@@ -40,7 +40,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-05T02:59:21Z",
+      "observed_at": "2026-11-05T04:03:52Z",
       "confirmation": "Publicado por ENRE",
       "id": "306f735e58ab16dd"
     },
@@ -54,7 +54,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-05T02:59:21Z",
+      "observed_at": "2026-11-05T04:03:52Z",
       "confirmation": "Publicado por ENRE",
       "id": "3dc43bf842a91786"
     },
@@ -68,7 +68,7 @@
       "expected_restoration": "2026-11-05 02:34",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-05T02:59:21Z",
+      "observed_at": "2026-11-05T04:03:52Z",
       "confirmation": "Publicado por ENRE",
       "id": "868c514b8abf11c7"
     },
@@ -82,7 +82,7 @@
       "expected_restoration": "2026-11-05 03:06",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-05T02:59:21Z",
+      "observed_at": "2026-11-05T04:03:52Z",
       "confirmation": "Publicado por ENRE",
       "id": "2b1e1dd116cecba9"
     },
@@ -96,7 +96,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-05T02:59:21Z",
+      "observed_at": "2026-11-05T04:03:52Z",
       "confirmation": "Publicado por ENRE",
       "id": "2769d94f6aa68cdc"
     },
@@ -106,13 +106,13 @@
       "company": "Edesur",
       "partido": "CAPITAL",
       "localidad": "CAPITAL",
-      "users_affected": "19",
+      "users_affected": "23",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-05T02:59:21Z",
+      "observed_at": "2026-11-05T04:03:52Z",
       "confirmation": "Publicado por ENRE",
-      "id": "4d66751bf8802e3c"
+      "id": "a4c7867bfe65ed4a"
     },
     {
       "category": "electricidad",
@@ -124,7 +124,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-05T02:59:21Z",
+      "observed_at": "2026-11-05T04:03:52Z",
       "confirmation": "Publicado por ENRE",
       "id": "61b7cd33e2f392c0"
     },
@@ -134,13 +134,13 @@
       "company": "Edesur",
       "partido": "LANUS",
       "localidad": "LANUS",
-      "users_affected": "39",
+      "users_affected": "40",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-05T02:59:21Z",
+      "observed_at": "2026-11-05T04:03:52Z",
       "confirmation": "Publicado por ENRE",
-      "id": "62452d63c6f180a5"
+      "id": "e125ff8f09b70ef7"
     },
     {
       "category": "electricidad",
@@ -148,26 +148,26 @@
       "company": "Edesur",
       "partido": "QUILMES",
       "localidad": "QUILMES",
-      "users_affected": "21",
+      "users_affected": "29",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-05T02:59:21Z",
+      "observed_at": "2026-11-05T04:03:52Z",
       "confirmation": "Publicado por ENRE",
-      "id": "5a62d99a6770fca7"
+      "id": "bc734a3d45242f4d"
     }
   ],
   "sources": {
     "edenor": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDN.js",
-      "checked_at": "2026-11-05T02:59:21Z",
+      "checked_at": "2026-11-05T04:03:52Z",
       "event_count": 2
     },
     "edesur": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDS.js",
-      "checked_at": "2026-11-05T02:59:21Z",
+      "checked_at": "2026-11-05T04:03:52Z",
       "event_count": 9
     }
   },
@@ -176,7 +176,7 @@
     "year": 2026,
     "country": "Argentina",
     "source_url": "https://www.bcra.gob.ar/consulta-feriados-bancarios-2026/",
-    "source_reviewed_at": "2026-11-04",
+    "source_reviewed_at": "2026-11-05",
     "message": "Calendario del BCRA consultado y verificado automáticamente; no indica el estado en vivo de sucursales.",
     "upcoming": [
       {
@@ -201,7 +201,7 @@
       }
     ],
     "source_retrieval": "ok",
-    "checked_at": "2026-11-05T02:59:21Z"
+    "checked_at": "2026-11-05T04:03:52Z"
   },
   "coverage": {
     "trains": "manual_notices_only",
@@ -217,7 +217,7 @@
       "status": "not_connected",
       "message": "No hay conexión verificada con una fuente automática de estado de la línea 57.",
       "reference_url": "https://www.argentina.gob.ar/sube/cuandosubo",
-      "checked_at": "2026-11-05T02:59:21Z"
+      "checked_at": "2026-11-05T04:03:52Z"
     }
   },
   "edesa_salta": {
@@ -226,7 +226,7 @@
     "country": "Argentina",
     "company": "EDESA",
     "source_url": "https://www.edesa.com.ar/widgets/cortes.php",
-    "checked_at": "2026-11-05T02:59:21Z",
+    "checked_at": "2026-11-05T04:03:52Z",
     "coverage_kind": "planned_outages_only",
     "notices": [
       {
@@ -335,7 +335,7 @@
       }
     ],
     "message": "Cortes programados, no estado eléctrico en tiempo real.",
-    "records_checked": 21
+    "records_checked": 17
   },
   "provincial_electricity": {
     "epec_cordoba": {
@@ -344,7 +344,7 @@
       "country": "Argentina",
       "company": "EPEC",
       "source_url": "https://www.epec.com.ar/actualidad/trabajos-mejoras",
-      "checked_at": "2026-11-05T02:59:21Z",
+      "checked_at": "2026-11-05T04:03:52Z",
       "coverage_kind": "planned_outages_only",
       "notices": [],
       "message": "No se pudo verificar la fuente: no_complete_records, no_complete_records",
@@ -389,7 +389,7 @@
       "country": "Argentina",
       "company": "EPE",
       "source_url": "https://www.epe.santafe.gov.ar/institucional/trabajos-programados",
-      "checked_at": "2026-11-05T02:59:21Z",
+      "checked_at": "2026-11-05T04:03:52Z",
       "coverage_kind": "planned_outages_only",
       "notices": [],
       "message": "No se pudo verificar la fuente: dynamic_shell, HTTPError, RemoteDisconnected",
@@ -427,7 +427,7 @@
       "country": "Argentina",
       "company": "EDERSA",
       "source_url": "https://www.edersa.com.ar/cortes-programados/",
-      "checked_at": "2026-11-05T02:59:21Z",
+      "checked_at": "2026-11-05T04:03:52Z",
       "coverage_kind": "planned_outages_only",
       "notices": [
         {
@@ -480,48 +480,9 @@
     "province": "Neuquén",
     "company": "EPEN",
     "source_url": "https://www.epen.gov.ar/index.php/cortes-programados/",
-    "checked_at": "2026-11-05T02:59:21Z",
+    "checked_at": "2026-11-05T04:03:52Z",
     "coverage_kind": "dated_planned_work_bulletins_only",
     "notices": [
-      {
-        "id": "epen-bc272a289e1c6ef52a",
-        "country": "Argentina",
-        "province": "Neuquén",
-        "company": "EPEN",
-        "kind": "dated_official_planned_work_bulletin",
-        "status": "publication_only_not_current_outage",
-        "title": "Corte Programado en sectores de Centenario el 04/11/2026",
-        "published_on": "2026-11-03",
-        "scheduled_last_day": "2026-11-04",
-        "source_url": "https://www.epen.gov.ar/index.php/2026/11/03/corte-programado-en-sectores-de-centenario-el-04-11-2026/",
-        "message": "Comunicado oficial fechado; el estado y las zonas afectadas deben comprobarse en la fuente. No confirma un corte actual."
-      },
-      {
-        "id": "epen-91b2560859f05382ac",
-        "country": "Argentina",
-        "province": "Neuquén",
-        "company": "EPEN",
-        "kind": "dated_official_planned_work_bulletin",
-        "status": "publication_only_not_current_outage",
-        "title": "Corte programado en sectores de Rincón de los Sauces el 4/11/26",
-        "published_on": "2026-11-03",
-        "scheduled_last_day": "2026-11-04",
-        "source_url": "https://www.epen.gov.ar/index.php/2026/11/03/corte-programado-en-sectores-de-rincon-de-los-sauces-el-4-11-26/",
-        "message": "Comunicado oficial fechado; el estado y las zonas afectadas deben comprobarse en la fuente. No confirma un corte actual."
-      },
-      {
-        "id": "epen-bc0d177e01e4f4bbc6",
-        "country": "Argentina",
-        "province": "Neuquén",
-        "company": "EPEN",
-        "kind": "dated_official_planned_work_bulletin",
-        "status": "publication_only_not_current_outage",
-        "title": "Corte programado en sectores de Tricao Malal el 4/11/26",
-        "published_on": "2026-11-03",
-        "scheduled_last_day": "2026-11-04",
-        "source_url": "https://www.epen.gov.ar/index.php/2026/11/03/corte-programado-en-sectores-de-tricao-malal-el-4-11-26/",
-        "message": "Comunicado oficial fechado; el estado y las zonas afectadas deben comprobarse en la fuente. No confirma un corte actual."
-      },
       {
         "id": "epen-3f76e192cb946ec9dd",
         "country": "Argentina",
@@ -573,7 +534,7 @@
     "province": "Corrientes",
     "company": "DPEC",
     "source_url": "https://www.dpec.com.ar/comercial/cortes-programados/",
-    "checked_at": "2026-11-05T02:59:21Z",
+    "checked_at": "2026-11-05T04:03:52Z",
     "coverage_kind": "dated_planned_work_bulletins_only",
     "notices": [],
     "message": "La pagina consultada no proporciono comunicados completos con enlace, fecha y horario.",
@@ -586,7 +547,7 @@
     "province": "Entre Rios",
     "company": "ENERSA",
     "source_url": "https://www.enersa.com.ar/tag/cortes/",
-    "checked_at": "2026-11-05T02:59:21Z",
+    "checked_at": "2026-11-05T04:03:52Z",
     "coverage_kind": "dated_planned_work_bulletins_only",
     "notices": [],
     "message": "Sin comunicados futuros verificables. No significa servicio normal.",
@@ -664,7 +625,7 @@
   },
   "rail_official": {
     "status": "ok",
-    "checked_at": "2026-11-05T02:59:21Z",
+    "checked_at": "2026-11-05T04:03:52Z",
     "source_url": "https://www.argentina.gob.ar/transporte/trenes-argentinos",
     "message": "Comunicados fechados, NO estado en tiempo real. Confirmá antes de viajar.",
     "notices": [
@@ -684,7 +645,7 @@
   "subte": {
     "status": "unverified",
     "message": "La página no publica una fecha de actualización verificable.",
-    "checked_at": "2026-11-05T02:59:21Z",
+    "checked_at": "2026-11-05T04:03:52Z",
     "url": "https://buenosaires.gob.ar/inicio/mis-documentos",
     "lines": []
   },
@@ -692,31 +653,31 @@
   "change_tracking": {
     "status": "ok",
     "meaning": "Las novedades indican cambios respecto del informe anterior; no prueban cuándo comenzó un corte ni que uno ausente esté resuelto.",
-    "compared_to": "2026-11-05T01:18:17Z",
+    "compared_to": "2026-11-05T02:59:21Z",
     "new_in_publication_count": 2,
     "new_in_publication": [
       {
-        "id": "306f735e58ab16dd",
-        "company": "Edesur",
-        "title": "Corte programado",
+        "id": "21204e4db807ed15",
+        "company": "Edenor",
+        "title": "Interrupción de media tensión",
         "partido": "CAPITAL FEDERAL",
-        "localidad": "VILLA REAL",
-        "observed_at": "2026-11-05T02:59:21Z",
-        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
+        "localidad": "RECOLETA",
+        "observed_at": "2026-11-05T04:03:52Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
         "meaning": "No figuraba en el informe anterior; inicio real desconocido."
       },
       {
-        "id": "2b1e1dd116cecba9",
-        "company": "Edesur",
+        "id": "161d131a5bc76e7c",
+        "company": "Edenor",
         "title": "Interrupción de media tensión",
-        "partido": "CAPITAL FEDERAL",
-        "localidad": "VILLA LUGANO",
-        "observed_at": "2026-11-05T02:59:21Z",
-        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
+        "partido": "SAN ISIDRO",
+        "localidad": "SAN ISIDRO",
+        "observed_at": "2026-11-05T04:03:52Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
         "meaning": "No figuraba en el informe anterior; inicio real desconocido."
       }
     ],
-    "no_longer_listed_count": 4,
+    "no_longer_listed_count": 2,
     "providers_compared": [
       "edenor",
       "edesur"
@@ -730,6 +691,28 @@
     "retention_hours": 3,
     "meaning": "Apareció en una publicación nueva; no prueba inicio del corte.",
     "events": [
+      {
+        "event_id": "3dccebe57bc46804c675c8c6",
+        "kind": "electricity_publication_added",
+        "country": "Argentina",
+        "company": "Edenor",
+        "title": "Interrupción de media tensión",
+        "partido": "CAPITAL FEDERAL",
+        "localidad": "RECOLETA",
+        "first_seen_at": "2026-11-05T04:03:52Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html"
+      },
+      {
+        "event_id": "de7db7e7c01dbcdcf48b3906",
+        "kind": "electricity_publication_added",
+        "country": "Argentina",
+        "company": "Edenor",
+        "title": "Interrupción de media tensión",
+        "partido": "SAN ISIDRO",
+        "localidad": "SAN ISIDRO",
+        "first_seen_at": "2026-11-05T04:03:52Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html"
+      },
       {
         "event_id": "56897281a6a2a26f3fa5bcba",
         "kind": "electricity_publication_added",
