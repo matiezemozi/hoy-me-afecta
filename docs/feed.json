@@ -1,21 +1,7 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-05T20:58:47Z",
+  "generated_at": "2026-11-05T21:55:55Z",
   "alerts": [
-    {
-      "category": "electricidad",
-      "title": "Interrupción de media tensión",
-      "company": "Edenor",
-      "partido": "MALVINAS ARGENTINAS",
-      "localidad": "LOS POLVORINES",
-      "users_affected": "87",
-      "expected_restoration": "2026-11-05 21:00",
-      "zone_detail": null,
-      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
-      "observed_at": "2026-11-05T20:58:47Z",
-      "confirmation": "Publicado por ENRE",
-      "id": "e682c825c26a68ea"
-    },
     {
       "category": "electricidad",
       "title": "Interrupción de media tensión",
@@ -26,23 +12,9 @@
       "expected_restoration": "2026-11-05 21:00",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
-      "observed_at": "2026-11-05T20:58:47Z",
+      "observed_at": "2026-11-05T21:55:55Z",
       "confirmation": "Publicado por ENRE",
       "id": "cc0fcf895f7a593f"
-    },
-    {
-      "category": "electricidad",
-      "title": "Interrupción de media tensión",
-      "company": "Edenor",
-      "partido": "MALVINAS ARGENTINAS",
-      "localidad": "VILLA DE MAYO",
-      "users_affected": "397",
-      "expected_restoration": "2026-11-05 21:00",
-      "zone_detail": null,
-      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
-      "observed_at": "2026-11-05T20:58:47Z",
-      "confirmation": "Publicado por ENRE",
-      "id": "c92204472c263517"
     },
     {
       "category": "electricidad",
@@ -54,7 +26,7 @@
       "expected_restoration": "2026-11-05 20:00",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
-      "observed_at": "2026-11-05T20:58:47Z",
+      "observed_at": "2026-11-05T21:55:55Z",
       "confirmation": "Publicado por ENRE",
       "id": "9d492735c9347a90"
     },
@@ -68,7 +40,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-05T20:58:47Z",
+      "observed_at": "2026-11-05T21:55:55Z",
       "confirmation": "Publicado por ENRE",
       "id": "0f9b9d101fe6659b"
     },
@@ -82,7 +54,7 @@
       "expected_restoration": "2026-11-05 21:20",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-05T20:58:47Z",
+      "observed_at": "2026-11-05T21:55:55Z",
       "confirmation": "Publicado por ENRE",
       "id": "6b197a7751a75322"
     },
@@ -96,7 +68,7 @@
       "expected_restoration": "2026-11-05 21:20",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-05T20:58:47Z",
+      "observed_at": "2026-11-05T21:55:55Z",
       "confirmation": "Publicado por ENRE",
       "id": "05bd036ded2eddb9"
     },
@@ -110,23 +82,9 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-05T20:58:47Z",
+      "observed_at": "2026-11-05T21:55:55Z",
       "confirmation": "Publicado por ENRE",
       "id": "3f4a26c5f746320a"
-    },
-    {
-      "category": "electricidad",
-      "title": "Corte programado",
-      "company": "Edesur",
-      "partido": "ESTEBAN ECHEVERRIA",
-      "localidad": "MONTE GRANDE",
-      "users_affected": "485",
-      "expected_restoration": null,
-      "zone_detail": null,
-      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-05T20:58:47Z",
-      "confirmation": "Publicado por ENRE",
-      "id": "88e544fb8ce34e8a"
     },
     {
       "category": "electricidad",
@@ -138,9 +96,79 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-05T20:58:47Z",
+      "observed_at": "2026-11-05T21:55:55Z",
       "confirmation": "Publicado por ENRE",
       "id": "a93be092fe4f2530"
+    },
+    {
+      "category": "electricidad",
+      "title": "Interrupción de media tensión",
+      "company": "Edesur",
+      "partido": "AVELLANEDA",
+      "localidad": "AVELLANEDA",
+      "users_affected": "648",
+      "expected_restoration": "2026-11-06 03:11",
+      "zone_detail": null,
+      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
+      "observed_at": "2026-11-05T21:55:55Z",
+      "confirmation": "Publicado por ENRE",
+      "id": "24d5aa4eace9cfeb"
+    },
+    {
+      "category": "electricidad",
+      "title": "Interrupción de media tensión",
+      "company": "Edesur",
+      "partido": "AVELLANEDA",
+      "localidad": "PIÑEYRO",
+      "users_affected": "105",
+      "expected_restoration": "2026-11-06 03:11",
+      "zone_detail": null,
+      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
+      "observed_at": "2026-11-05T21:55:55Z",
+      "confirmation": "Publicado por ENRE",
+      "id": "eb015c9531e259fc"
+    },
+    {
+      "category": "electricidad",
+      "title": "Interrupción de media tensión",
+      "company": "Edesur",
+      "partido": "CAÑUELAS",
+      "localidad": "MAXIMO PAZ",
+      "users_affected": "2194",
+      "expected_restoration": "2026-11-06 03:16",
+      "zone_detail": null,
+      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
+      "observed_at": "2026-11-05T21:55:55Z",
+      "confirmation": "Publicado por ENRE",
+      "id": "5ee6fd8d145a8849"
+    },
+    {
+      "category": "electricidad",
+      "title": "Interrupción de media tensión",
+      "company": "Edesur",
+      "partido": "CAÑUELAS",
+      "localidad": "ZONA RURAL 8",
+      "users_affected": "2",
+      "expected_restoration": "2026-11-06 03:16",
+      "zone_detail": null,
+      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
+      "observed_at": "2026-11-05T21:55:55Z",
+      "confirmation": "Publicado por ENRE",
+      "id": "0600cd22d131ca73"
+    },
+    {
+      "category": "electricidad",
+      "title": "Interrupción de media tensión",
+      "company": "Edesur",
+      "partido": "CAÑUELAS",
+      "localidad": "ZONA RURAL 9",
+      "users_affected": "1409",
+      "expected_restoration": "2026-11-06 03:16",
+      "zone_detail": null,
+      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
+      "observed_at": "2026-11-05T21:55:55Z",
+      "confirmation": "Publicado por ENRE",
+      "id": "4255ed03929ca142"
     },
     {
       "category": "electricidad",
@@ -149,12 +177,12 @@
       "partido": "CAPITAL FEDERAL",
       "localidad": "BARRACAS",
       "users_affected": "2487",
-      "expected_restoration": "2026-11-06 01:22",
+      "expected_restoration": "2026-11-05 22:57",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-05T20:58:47Z",
+      "observed_at": "2026-11-05T21:55:55Z",
       "confirmation": "Publicado por ENRE",
-      "id": "8b615c3af2d466a1"
+      "id": "95a5367cea04b004"
     },
     {
       "category": "electricidad",
@@ -162,13 +190,13 @@
       "company": "Edesur",
       "partido": "CAPITAL FEDERAL",
       "localidad": "CONSTITUCION",
-      "users_affected": "1622",
-      "expected_restoration": "2026-11-06 00:43",
+      "users_affected": "1",
+      "expected_restoration": "2026-11-05 23:06",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-05T20:58:47Z",
+      "observed_at": "2026-11-05T21:55:55Z",
       "confirmation": "Publicado por ENRE",
-      "id": "156ed81a2f96488a"
+      "id": "ad070bfa73897d19"
     },
     {
       "category": "electricidad",
@@ -177,12 +205,12 @@
       "partido": "CAPITAL FEDERAL",
       "localidad": "LA BOCA",
       "users_affected": "401",
-      "expected_restoration": "2026-11-06 01:22",
+      "expected_restoration": "2026-11-05 22:57",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-05T20:58:47Z",
+      "observed_at": "2026-11-05T21:55:55Z",
       "confirmation": "Publicado por ENRE",
-      "id": "d91750113f7402ec"
+      "id": "06efe0c4a84ff8f3"
     },
     {
       "category": "electricidad",
@@ -191,12 +219,26 @@
       "partido": "CAPITAL FEDERAL",
       "localidad": "PARQUE PATRICIOS",
       "users_affected": "1068",
-      "expected_restoration": "2026-11-06 01:22",
+      "expected_restoration": "2026-11-05 22:57",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-05T20:58:47Z",
+      "observed_at": "2026-11-05T21:55:55Z",
       "confirmation": "Publicado por ENRE",
-      "id": "0da4ff52a3d3c44f"
+      "id": "b2bc6b67fd3a7375"
+    },
+    {
+      "category": "electricidad",
+      "title": "Interrupción de media tensión",
+      "company": "Edesur",
+      "partido": "EZEIZA",
+      "localidad": "CARLOS SPEGAZZINNI",
+      "users_affected": "153",
+      "expected_restoration": "2026-11-06 03:16",
+      "zone_detail": null,
+      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
+      "observed_at": "2026-11-05T21:55:55Z",
+      "confirmation": "Publicado por ENRE",
+      "id": "35083c12fe889888"
     },
     {
       "category": "electricidad",
@@ -204,13 +246,13 @@
       "company": "Edesur",
       "partido": "ALMIRANTE BROWN",
       "localidad": "MARMOL",
-      "users_affected": "7",
+      "users_affected": "8",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-05T20:58:47Z",
+      "observed_at": "2026-11-05T21:55:55Z",
       "confirmation": "Publicado por ENRE",
-      "id": "6fa9d574f7d7465a"
+      "id": "dd90680fab0c55f1"
     },
     {
       "category": "electricidad",
@@ -218,27 +260,13 @@
       "company": "Edesur",
       "partido": "BERAZATEGUI",
       "localidad": "BERAZATEGUI",
-      "users_affected": "22",
+      "users_affected": "20",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-05T20:58:47Z",
+      "observed_at": "2026-11-05T21:55:55Z",
       "confirmation": "Publicado por ENRE",
-      "id": "ebd3fdd6df997ffd"
-    },
-    {
-      "category": "electricidad",
-      "title": "Interrupción de baja tensión",
-      "company": "Edesur",
-      "partido": "CAPITAL",
-      "localidad": "BALVANERA",
-      "users_affected": "46",
-      "expected_restoration": null,
-      "zone_detail": null,
-      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-05T20:58:47Z",
-      "confirmation": "Publicado por ENRE",
-      "id": "2bfe3a6ffb444581"
+      "id": "374e4cf2cd699428"
     },
     {
       "category": "electricidad",
@@ -250,7 +278,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-05T20:58:47Z",
+      "observed_at": "2026-11-05T21:55:55Z",
       "confirmation": "Publicado por ENRE",
       "id": "b51f637adad6bd72"
     },
@@ -260,13 +288,13 @@
       "company": "Edesur",
       "partido": "CAPITAL",
       "localidad": "CABALLITO",
-      "users_affected": "15",
+      "users_affected": "16",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-05T20:58:47Z",
+      "observed_at": "2026-11-05T21:55:55Z",
       "confirmation": "Publicado por ENRE",
-      "id": "e8563281899cd567"
+      "id": "970633a37a7f369b"
     },
     {
       "category": "electricidad",
@@ -278,7 +306,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-05T20:58:47Z",
+      "observed_at": "2026-11-05T21:55:55Z",
       "confirmation": "Publicado por ENRE",
       "id": "8fb64292b9bef02f"
     },
@@ -292,7 +320,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-05T20:58:47Z",
+      "observed_at": "2026-11-05T21:55:55Z",
       "confirmation": "Publicado por ENRE",
       "id": "259e805d64d37e8f"
     },
@@ -306,7 +334,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-05T20:58:47Z",
+      "observed_at": "2026-11-05T21:55:55Z",
       "confirmation": "Publicado por ENRE",
       "id": "94d952468fcdaa90"
     },
@@ -314,29 +342,15 @@
       "category": "electricidad",
       "title": "Interrupción de baja tensión",
       "company": "Edesur",
-      "partido": "CAPITAL",
-      "localidad": "VILLA STA. RITA",
+      "partido": "EZEIZA",
+      "localidad": "TRISTAN SUAREZ",
       "users_affected": "4",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-05T20:58:47Z",
+      "observed_at": "2026-11-05T21:55:55Z",
       "confirmation": "Publicado por ENRE",
-      "id": "ae6f587fb78e9e48"
-    },
-    {
-      "category": "electricidad",
-      "title": "Interrupción de baja tensión",
-      "company": "Edesur",
-      "partido": "EZEIZA",
-      "localidad": "TRISTAN SUAREZ",
-      "users_affected": "15",
-      "expected_restoration": null,
-      "zone_detail": null,
-      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-05T20:58:47Z",
-      "confirmation": "Publicado por ENRE",
-      "id": "ab72a19783932e4f"
+      "id": "0c23b881aec4b023"
     },
     {
       "category": "electricidad",
@@ -348,7 +362,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-05T20:58:47Z",
+      "observed_at": "2026-11-05T21:55:55Z",
       "confirmation": "Publicado por ENRE",
       "id": "584e306e7dfda1ca"
     }
@@ -357,14 +371,14 @@
     "edenor": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDN.js",
-      "checked_at": "2026-11-05T20:58:47Z",
-      "event_count": 4
+      "checked_at": "2026-11-05T21:55:55Z",
+      "event_count": 2
     },
     "edesur": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDS.js",
-      "checked_at": "2026-11-05T20:58:47Z",
-      "event_count": 21
+      "checked_at": "2026-11-05T21:55:55Z",
+      "event_count": 24
     }
   },
   "banking": {
@@ -397,7 +411,7 @@
       }
     ],
     "source_retrieval": "ok",
-    "checked_at": "2026-11-05T20:58:47Z"
+    "checked_at": "2026-11-05T21:55:55Z"
   },
   "coverage": {
     "trains": "manual_notices_only",
@@ -413,7 +427,7 @@
       "status": "not_connected",
       "message": "No hay conexión verificada con una fuente automática de estado de la línea 57.",
       "reference_url": "https://www.argentina.gob.ar/sube/cuandosubo",
-      "checked_at": "2026-11-05T20:58:47Z"
+      "checked_at": "2026-11-05T21:55:55Z"
     }
   },
   "edesa_salta": {
@@ -422,7 +436,7 @@
     "country": "Argentina",
     "company": "EDESA",
     "source_url": "https://www.edesa.com.ar/widgets/cortes.php",
-    "checked_at": "2026-11-05T20:58:47Z",
+    "checked_at": "2026-11-05T21:55:55Z",
     "coverage_kind": "planned_outages_only",
     "notices": [
       {
@@ -501,7 +515,7 @@
       "country": "Argentina",
       "company": "EPEC",
       "source_url": "https://www.epec.com.ar/actualidad/trabajos-mejoras",
-      "checked_at": "2026-11-05T20:58:47Z",
+      "checked_at": "2026-11-05T21:55:55Z",
       "coverage_kind": "planned_outages_only",
       "notices": [],
       "message": "No se pudo verificar la fuente: no_complete_records, no_complete_records",
@@ -546,7 +560,7 @@
       "country": "Argentina",
       "company": "EPE",
       "source_url": "https://www.epe.santafe.gov.ar/institucional/trabajos-programados",
-      "checked_at": "2026-11-05T20:58:47Z",
+      "checked_at": "2026-11-05T21:55:55Z",
       "coverage_kind": "planned_outages_only",
       "notices": [],
       "message": "No se pudo verificar la fuente: dynamic_shell, HTTPError, URLError",
@@ -584,7 +598,7 @@
       "country": "Argentina",
       "company": "EDERSA",
       "source_url": "https://www.edersa.com.ar/cortes-programados/",
-      "checked_at": "2026-11-05T20:58:47Z",
+      "checked_at": "2026-11-05T21:55:55Z",
       "coverage_kind": "planned_outages_only",
       "notices": [
         {
@@ -727,7 +741,7 @@
     "province": "Neuquén",
     "company": "EPEN",
     "source_url": "https://www.epen.gov.ar/index.php/cortes-programados/",
-    "checked_at": "2026-11-05T20:58:47Z",
+    "checked_at": "2026-11-05T21:55:55Z",
     "coverage_kind": "dated_planned_work_bulletins_only",
     "notices": [
       {
@@ -794,7 +808,7 @@
     "province": "Corrientes",
     "company": "DPEC",
     "source_url": "https://www.dpec.com.ar/comercial/cortes-programados/",
-    "checked_at": "2026-11-05T20:58:47Z",
+    "checked_at": "2026-11-05T21:55:55Z",
     "coverage_kind": "dated_planned_work_bulletins_only",
     "notices": [],
     "message": "La pagina consultada no proporciono comunicados completos con enlace, fecha y horario.",
@@ -807,7 +821,7 @@
     "province": "Entre Rios",
     "company": "ENERSA",
     "source_url": "https://www.enersa.com.ar/tag/cortes/",
-    "checked_at": "2026-11-05T20:58:47Z",
+    "checked_at": "2026-11-05T21:55:55Z",
     "coverage_kind": "dated_planned_work_bulletins_only",
     "notices": [],
     "message": "Sin comunicados futuros verificables. No significa servicio normal.",
@@ -832,7 +846,7 @@
       "province": "Buenos Aires",
       "country": "Argentina",
       "source_url": "https://www.edensa.com.ar/obras-en-tu-barrio/",
-      "checked_at": "2026-11-05T20:58:47Z",
+      "checked_at": "2026-11-05T21:55:55Z",
       "coverage_kind": "planned_network_work_may_interrupt_only",
       "notices": [],
       "date_sections_recognized": 1,
@@ -845,7 +859,7 @@
       "province": "Buenos Aires",
       "country": "Argentina",
       "source_url": "https://www.edeaweb.com.ar/obras-en-tu-barrio/",
-      "checked_at": "2026-11-05T20:58:47Z",
+      "checked_at": "2026-11-05T21:55:55Z",
       "coverage_kind": "planned_network_work_may_interrupt_only",
       "notices": [],
       "date_sections_recognized": 1,
@@ -925,7 +939,7 @@
   },
   "rail_official": {
     "status": "ok",
-    "checked_at": "2026-11-05T20:58:47Z",
+    "checked_at": "2026-11-05T21:55:55Z",
     "source_url": "https://www.argentina.gob.ar/transporte/trenes-argentinos",
     "message": "Comunicados fechados, NO estado en tiempo real. Confirmá antes de viajar.",
     "notices": [
@@ -945,7 +959,7 @@
   "subte": {
     "status": "unverified",
     "message": "La página no publica una fecha de actualización verificable.",
-    "checked_at": "2026-11-05T20:58:47Z",
+    "checked_at": "2026-11-05T21:55:55Z",
     "url": "https://buenosaires.gob.ar/inicio/mis-documentos",
     "lines": []
   },
@@ -953,121 +967,71 @@
   "change_tracking": {
     "status": "ok",
     "meaning": "Las novedades indican cambios respecto del informe anterior; no prueban cuándo comenzó un corte ni que uno ausente esté resuelto.",
-    "compared_to": "2026-11-05T20:01:41Z",
-    "new_in_publication_count": 11,
+    "compared_to": "2026-11-05T20:58:47Z",
+    "new_in_publication_count": 6,
     "new_in_publication": [
       {
-        "id": "e682c825c26a68ea",
-        "company": "Edenor",
-        "title": "Interrupción de media tensión",
-        "partido": "MALVINAS ARGENTINAS",
-        "localidad": "LOS POLVORINES",
-        "observed_at": "2026-11-05T20:58:47Z",
-        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
-        "meaning": "No figuraba en el informe anterior; inicio real desconocido."
-      },
-      {
-        "id": "cc0fcf895f7a593f",
-        "company": "Edenor",
-        "title": "Interrupción de media tensión",
-        "partido": "MALVINAS ARGENTINAS",
-        "localidad": "PABLO NOGUES",
-        "observed_at": "2026-11-05T20:58:47Z",
-        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
-        "meaning": "No figuraba en el informe anterior; inicio real desconocido."
-      },
-      {
-        "id": "c92204472c263517",
-        "company": "Edenor",
-        "title": "Interrupción de media tensión",
-        "partido": "MALVINAS ARGENTINAS",
-        "localidad": "VILLA DE MAYO",
-        "observed_at": "2026-11-05T20:58:47Z",
-        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
-        "meaning": "No figuraba en el informe anterior; inicio real desconocido."
-      },
-      {
-        "id": "6b197a7751a75322",
+        "id": "24d5aa4eace9cfeb",
         "company": "Edesur",
-        "title": "Corte programado",
-        "partido": "ALMIRANTE BROWN",
-        "localidad": "RAFAEL CALZADA",
-        "observed_at": "2026-11-05T20:58:47Z",
+        "title": "Interrupción de media tensión",
+        "partido": "AVELLANEDA",
+        "localidad": "AVELLANEDA",
+        "observed_at": "2026-11-05T21:55:55Z",
         "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
         "meaning": "No figuraba en el informe anterior; inicio real desconocido."
       },
       {
-        "id": "05bd036ded2eddb9",
-        "company": "Edesur",
-        "title": "Corte programado",
-        "partido": "ALMIRANTE BROWN",
-        "localidad": "SAN JOSE",
-        "observed_at": "2026-11-05T20:58:47Z",
-        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-        "meaning": "No figuraba en el informe anterior; inicio real desconocido."
-      },
-      {
-        "id": "8b615c3af2d466a1",
+        "id": "eb015c9531e259fc",
         "company": "Edesur",
         "title": "Interrupción de media tensión",
-        "partido": "CAPITAL FEDERAL",
-        "localidad": "BARRACAS",
-        "observed_at": "2026-11-05T20:58:47Z",
+        "partido": "AVELLANEDA",
+        "localidad": "PIÑEYRO",
+        "observed_at": "2026-11-05T21:55:55Z",
         "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
         "meaning": "No figuraba en el informe anterior; inicio real desconocido."
       },
       {
-        "id": "156ed81a2f96488a",
+        "id": "5ee6fd8d145a8849",
         "company": "Edesur",
         "title": "Interrupción de media tensión",
-        "partido": "CAPITAL FEDERAL",
-        "localidad": "CONSTITUCION",
-        "observed_at": "2026-11-05T20:58:47Z",
+        "partido": "CAÑUELAS",
+        "localidad": "MAXIMO PAZ",
+        "observed_at": "2026-11-05T21:55:55Z",
         "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
         "meaning": "No figuraba en el informe anterior; inicio real desconocido."
       },
       {
-        "id": "d91750113f7402ec",
+        "id": "0600cd22d131ca73",
         "company": "Edesur",
         "title": "Interrupción de media tensión",
-        "partido": "CAPITAL FEDERAL",
-        "localidad": "LA BOCA",
-        "observed_at": "2026-11-05T20:58:47Z",
+        "partido": "CAÑUELAS",
+        "localidad": "ZONA RURAL 8",
+        "observed_at": "2026-11-05T21:55:55Z",
         "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
         "meaning": "No figuraba en el informe anterior; inicio real desconocido."
       },
       {
-        "id": "0da4ff52a3d3c44f",
+        "id": "4255ed03929ca142",
         "company": "Edesur",
         "title": "Interrupción de media tensión",
-        "partido": "CAPITAL FEDERAL",
-        "localidad": "PARQUE PATRICIOS",
-        "observed_at": "2026-11-05T20:58:47Z",
+        "partido": "CAÑUELAS",
+        "localidad": "ZONA RURAL 9",
+        "observed_at": "2026-11-05T21:55:55Z",
         "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
         "meaning": "No figuraba en el informe anterior; inicio real desconocido."
       },
       {
-        "id": "2bfe3a6ffb444581",
+        "id": "35083c12fe889888",
         "company": "Edesur",
-        "title": "Interrupción de baja tensión",
-        "partido": "CAPITAL",
-        "localidad": "BALVANERA",
-        "observed_at": "2026-11-05T20:58:47Z",
-        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-        "meaning": "No figuraba en el informe anterior; inicio real desconocido."
-      },
-      {
-        "id": "ab72a19783932e4f",
-        "company": "Edesur",
-        "title": "Interrupción de baja tensión",
+        "title": "Interrupción de media tensión",
         "partido": "EZEIZA",
-        "localidad": "TRISTAN SUAREZ",
-        "observed_at": "2026-11-05T20:58:47Z",
+        "localidad": "CARLOS SPEGAZZINNI",
+        "observed_at": "2026-11-05T21:55:55Z",
         "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
         "meaning": "No figuraba en el informe anterior; inicio real desconocido."
       }
     ],
-    "no_longer_listed_count": 3,
+    "no_longer_listed_count": 5,
     "providers_compared": [
       "edenor",
       "edesur"
@@ -1081,6 +1045,72 @@
     "retention_hours": 3,
     "meaning": "Apareció en una publicación nueva; no prueba inicio del corte.",
     "events": [
+      {
+        "event_id": "36c0acdefe402590e4fccd73",
+        "kind": "electricity_publication_added",
+        "country": "Argentina",
+        "company": "Edesur",
+        "title": "Interrupción de media tensión",
+        "partido": "AVELLANEDA",
+        "localidad": "AVELLANEDA",
+        "first_seen_at": "2026-11-05T21:55:55Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html"
+      },
+      {
+        "event_id": "9b29820751633dcd0a988f9e",
+        "kind": "electricity_publication_added",
+        "country": "Argentina",
+        "company": "Edesur",
+        "title": "Interrupción de media tensión",
+        "partido": "AVELLANEDA",
+        "localidad": "PIÑEYRO",
+        "first_seen_at": "2026-11-05T21:55:55Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html"
+      },
+      {
+        "event_id": "b955d2a542851d7b8aa6cb10",
+        "kind": "electricity_publication_added",
+        "country": "Argentina",
+        "company": "Edesur",
+        "title": "Interrupción de media tensión",
+        "partido": "CAÑUELAS",
+        "localidad": "MAXIMO PAZ",
+        "first_seen_at": "2026-11-05T21:55:55Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html"
+      },
+      {
+        "event_id": "76291902758493e74a8868cd",
+        "kind": "electricity_publication_added",
+        "country": "Argentina",
+        "company": "Edesur",
+        "title": "Interrupción de media tensión",
+        "partido": "CAÑUELAS",
+        "localidad": "ZONA RURAL 8",
+        "first_seen_at": "2026-11-05T21:55:55Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html"
+      },
+      {
+        "event_id": "b38f3fc3e9b078535278c602",
+        "kind": "electricity_publication_added",
+        "country": "Argentina",
+        "company": "Edesur",
+        "title": "Interrupción de media tensión",
+        "partido": "CAÑUELAS",
+        "localidad": "ZONA RURAL 9",
+        "first_seen_at": "2026-11-05T21:55:55Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html"
+      },
+      {
+        "event_id": "ae2d163316679e566fee922c",
+        "kind": "electricity_publication_added",
+        "country": "Argentina",
+        "company": "Edesur",
+        "title": "Interrupción de media tensión",
+        "partido": "EZEIZA",
+        "localidad": "CARLOS SPEGAZZINNI",
+        "first_seen_at": "2026-11-05T21:55:55Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html"
+      },
       {
         "event_id": "1e23b742b770e75e3318c7fc",
         "kind": "electricity_publication_added",
