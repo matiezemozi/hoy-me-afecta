@@ -27,6 +27,7 @@ from provincial_outages import collect_provincial, PROVIDERS
 from epen_neuquen import collect_epen
 from dpec_corrientes import collect_dpec
 from enersa_entre_rios import collect_enersa
+from buenos_aires_work import collect_buenos_aires, SOURCES as BUENOS_AIRES_WORK_SOURCES
 
 BASE = 'https://www.enre.gov.ar/paginacorte/js/'
 FEEDS = {'edenor': BASE + 'data_EDN.js', 'edesur': BASE + 'data_EDS.js'}
@@ -184,7 +185,7 @@ def load_bus_alerts(path, generated_at):
     return output
 
 
-def collect(dest, manual, public_manual=None, *, fetch_subte=None, fetch_banking=None, fetch_rail=None, fetch_salta=None, fetch_provincial=None, fetch_epen=None, fetch_dpec=None, fetch_enersa=None):
+def collect(dest, manual, public_manual=None, *, fetch_subte=None, fetch_banking=None, fetch_rail=None, fetch_salta=None, fetch_provincial=None, fetch_epen=None, fetch_dpec=None, fetch_enersa=None, fetch_buenos_aires_work=None):
     previous = None
     if dest.exists():
         try:
@@ -279,12 +280,34 @@ def collect(dest, manual, public_manual=None, *, fetch_subte=None, fetch_banking
         output['enersa_entre_rios'] = {
             'status': 'not_checked', 'province': 'Entre Rios', 'company': 'ENERSA',
             'checked_at': timestamp, 'notices': []}
+    # Buenos Aires Province: EDEN/EDEA public works schedule only.
+    # Never merge into ENRE live incidents or notification events.
+    if fetch_buenos_aires_work is not None:
+        try:
+            output['buenos_aires_work'] = fetch_buenos_aires_work(timestamp)
+        except Exception as exc:
+            output['buenos_aires_work'] = {
+                key: {'status': 'unverified', 'company': company,
+                      'province': 'Buenos Aires', 'source_url': url,
+                      'checked_at': timestamp, 'notices': [],
+                      'message': 'No se verificó la fuente: ' + type(exc).__name__}
+                for key, (company, url) in BUENOS_AIRES_WORK_SOURCES.items()}
+    else:
+        output['buenos_aires_work'] = {
+            key: {'status': 'not_checked', 'company': company,
+                  'province': 'Buenos Aires', 'source_url': url,
+                  'checked_at': timestamp, 'notices': []}
+            for key, (company, url) in BUENOS_AIRES_WORK_SOURCES.items()}
     output['coverage_argentina'] = {
         'country': 'Argentina', 'national_electricity_coverage': False,
         'electricity': [
             {'provider': 'Edenor', 'area': 'Concesión Edenor, AMBA', 'kind': 'published_outages'},
             {'provider': 'Edesur', 'area': 'Concesión Edesur, AMBA', 'kind': 'published_outages'},
             {'provider': 'EDESA', 'area': 'Provincia de Salta', 'kind': 'scheduled_only'},
+            *[{'provider': info[0], 'area': 'Provincia de Buenos Aires',
+               'kind': 'planned_network_work_may_interrupt_if_verified',
+               'source_status': output['buenos_aires_work'][key]['status']}
+              for key, info in BUENOS_AIRES_WORK_SOURCES.items()],
             {'provider': 'ENERSA', 'area': 'Provincia de Entre Rios',
              'kind': 'dated_planned_work_bulletins_if_verified',
              'source_status': output['enersa_entre_rios']['status']},
@@ -368,6 +391,8 @@ def collect(dest, manual, public_manual=None, *, fetch_subte=None, fetch_banking
     print(f'EDESA Salta (solo programados): {edesa["status"]}; futuros: {len(edesa.get("notices", []))}; examinados: {edesa.get("records_checked", "no verificado")}')
     for key, item in output['provincial_electricity'].items():
         print(f'{key}: {item["status"]}; futuros: {len(item.get("notices", []))}; examinados: {item.get("records_checked", "no verificado")}')
+    for key, entry in output['buenos_aires_work'].items():
+        print(f'{key}: {entry["status"]}; obras futuras: {len(entry.get("notices", []))}')
     dpec = output['dpec_corrientes']
     print(f'DPEC Corrientes (comunicados fechados): {dpec["status"]}; comunicados: {len(dpec.get("notices", []))}')
     enersa = output['enersa_entre_rios']
@@ -391,4 +416,5 @@ if __name__ == '__main__':
             fetch_subte=collect_subte, fetch_banking=refresh_official_calendar,
             fetch_rail=collect_rail_notices, fetch_salta=collect_edesa_salta,
             fetch_provincial=collect_provincial, fetch_epen=collect_epen,
-            fetch_dpec=collect_dpec, fetch_enersa=collect_enersa)
+            fetch_dpec=collect_dpec, fetch_enersa=collect_enersa,
+            fetch_buenos_aires_work=collect_buenos_aires)
