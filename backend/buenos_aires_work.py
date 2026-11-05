@@ -42,6 +42,8 @@ EDES_PREFIX_TIME_RE = re.compile(
     r'a\s+([01]?\d|2[0-3])(?:[:.]([0-5]\d))?\s*(?:hs\.?)?\b', re.I)
 CANCELED = ('suspendid', 'cancelad', 'anulad', 'no se realiz', 'reprogramad')
 MAX_DAYS_AHEAD = 14
+# Identificador visible en docs/feed.json para verificar el archivo desplegado.
+PARSER_REVISION = 'BA-v5.17.1'
 
 
 def _normalize(value):
@@ -257,6 +259,7 @@ def collect_buenos_aires(checked_at, fetch=fetch_html):
             'status': 'unverified', 'company': company, 'province': 'Buenos Aires',
             'country': 'Argentina', 'source_url': url, 'checked_at': checked_at,
             'coverage_kind': 'planned_network_work_may_interrupt_only', 'notices': [],
+            'parser_revision': PARSER_REVISION,
         }
         try:
             html = fetch(url)
