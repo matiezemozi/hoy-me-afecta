@@ -25,6 +25,8 @@ from rail_notices import collect_rail_notices
 from salta_outages import collect_edesa_salta
 from provincial_outages import collect_provincial, PROVIDERS
 from epen_neuquen import collect_epen
+from dpec_corrientes import collect_dpec
+from enersa_entre_rios import collect_enersa
 
 BASE = 'https://www.enre.gov.ar/paginacorte/js/'
 FEEDS = {'edenor': BASE + 'data_EDN.js', 'edesur': BASE + 'data_EDS.js'}
@@ -182,7 +184,7 @@ def load_bus_alerts(path, generated_at):
     return output
 
 
-def collect(dest, manual, public_manual=None, *, fetch_subte=None, fetch_banking=None, fetch_rail=None, fetch_salta=None, fetch_provincial=None, fetch_epen=None):
+def collect(dest, manual, public_manual=None, *, fetch_subte=None, fetch_banking=None, fetch_rail=None, fetch_salta=None, fetch_provincial=None, fetch_epen=None, fetch_dpec=None, fetch_enersa=None):
     previous = None
     if dest.exists():
         try:
@@ -251,12 +253,44 @@ def collect(dest, manual, public_manual=None, *, fetch_subte=None, fetch_banking
         output['epen_neuquen'] = {
             'status': 'not_checked', 'province': 'Neuquén', 'company': 'EPEN',
             'checked_at': timestamp, 'notices': []}
+    # Corrientes: linked dated public DPEC bulletins, never live outages.
+    if fetch_dpec is not None:
+        try:
+            output['dpec_corrientes'] = fetch_dpec(timestamp)
+        except Exception as exc:
+            output['dpec_corrientes'] = {
+                'status': 'unverified', 'province': 'Corrientes', 'company': 'DPEC',
+                'checked_at': timestamp, 'notices': [],
+                'message': 'No se verifico DPEC: ' + type(exc).__name__}
+    else:
+        output['dpec_corrientes'] = {
+            'status': 'not_checked', 'province': 'Corrientes', 'company': 'DPEC',
+            'checked_at': timestamp, 'notices': []}
+    # Entre Rios: dated public ENERSA bulletins only; not live outages.
+    if fetch_enersa is not None:
+        try:
+            output['enersa_entre_rios'] = fetch_enersa(timestamp)
+        except Exception as exc:
+            output['enersa_entre_rios'] = {
+                'status': 'unverified', 'province': 'Entre Rios', 'company': 'ENERSA',
+                'checked_at': timestamp, 'notices': [],
+                'message': 'No se verifico ENERSA: ' + type(exc).__name__}
+    else:
+        output['enersa_entre_rios'] = {
+            'status': 'not_checked', 'province': 'Entre Rios', 'company': 'ENERSA',
+            'checked_at': timestamp, 'notices': []}
     output['coverage_argentina'] = {
         'country': 'Argentina', 'national_electricity_coverage': False,
         'electricity': [
             {'provider': 'Edenor', 'area': 'Concesión Edenor, AMBA', 'kind': 'published_outages'},
             {'provider': 'Edesur', 'area': 'Concesión Edesur, AMBA', 'kind': 'published_outages'},
             {'provider': 'EDESA', 'area': 'Provincia de Salta', 'kind': 'scheduled_only'},
+            {'provider': 'ENERSA', 'area': 'Provincia de Entre Rios',
+             'kind': 'dated_planned_work_bulletins_if_verified',
+             'source_status': output['enersa_entre_rios']['status']},
+            {'provider': 'DPEC', 'area': 'Provincia de Corrientes',
+             'kind': 'dated_planned_work_bulletins_if_verified',
+             'source_status': output['dpec_corrientes']['status']},
             {'provider': 'EPEN', 'area': 'Provincia de Neuquén',
              'kind': 'dated_planned_work_bulletins_if_verified',
              'source_status': output['epen_neuquen']['status']},
@@ -334,6 +368,10 @@ def collect(dest, manual, public_manual=None, *, fetch_subte=None, fetch_banking
     print(f'EDESA Salta (solo programados): {edesa["status"]}; futuros: {len(edesa.get("notices", []))}; examinados: {edesa.get("records_checked", "no verificado")}')
     for key, item in output['provincial_electricity'].items():
         print(f'{key}: {item["status"]}; futuros: {len(item.get("notices", []))}; examinados: {item.get("records_checked", "no verificado")}')
+    dpec = output['dpec_corrientes']
+    print(f'DPEC Corrientes (comunicados fechados): {dpec["status"]}; comunicados: {len(dpec.get("notices", []))}')
+    enersa = output['enersa_entre_rios']
+    print(f'ENERSA Entre Rios (comunicados fechados): {enersa["status"]}; comunicados: {len(enersa.get("notices", []))}')
     epen = output['epen_neuquen']
     print(f'EPEN Neuquén (comunicados fechados): {epen["status"]}; comunicados: {len(epen.get("notices", []))}')
     status = output['subte']
@@ -352,4 +390,5 @@ if __name__ == '__main__':
     collect(Path(args.output), Path(args.manual), Path(args.public_manual),
             fetch_subte=collect_subte, fetch_banking=refresh_official_calendar,
             fetch_rail=collect_rail_notices, fetch_salta=collect_edesa_salta,
-            fetch_provincial=collect_provincial, fetch_epen=collect_epen)
+            fetch_provincial=collect_provincial, fetch_epen=collect_epen,
+            fetch_dpec=collect_dpec, fetch_enersa=collect_enersa)
