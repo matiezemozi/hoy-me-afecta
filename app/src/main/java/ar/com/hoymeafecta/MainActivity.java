@@ -221,7 +221,7 @@ public class MainActivity extends Activity {
 
         root.addView(text("HOY ME AFECTA", 26, INK, true));
         root.addView(text("Lo que te conviene saber antes de salir", 14, GREY, false));
-        root.addView(text("Piloto v5.11 · Argentina: nuevas fuentes provinciales", 12, GREY, false));
+        root.addView(text("Piloto v5.19 · Obras programadas en Buenos Aires", 12, GREY, false));
         LinearLayout status = card();
         status.addView(text(connection, 14, BLUE, false));
         if (feed != null) {
@@ -895,6 +895,12 @@ public class MainActivity extends Activity {
                     15, count == 0 ? GREY : INK, true));
             box.addView(text("Cobertura parcial: ENRE para Edenor/Edesur, no todas " +
                     "las distribuidoras.", 12, GREY, false));
+            int publishedWorks = countBuenosAiresScheduledMatches();
+            if (publishedWorks > 0) {
+                box.addView(text(publishedWorks + " obra(s) eléctrica(s) programada(s) " +
+                        "en tus localidades de Buenos Aires. Consultá el apartado Electricidad. " +
+                        "No confirma cortes actuales.", 12, BLUE, true));
+            }
         }
         if (sectionVisible("colectivos")) {
             box.addView(text("Colectivo " + favoriteLine() +
@@ -991,9 +997,10 @@ public class MainActivity extends Activity {
                     selectedCountry() + ". La cobertura está en preparación.", 14, GREY, false));
             return;
         }
-        c.addView(text("Cobertura parcial: ENRE (Edenor/Edesur, AMBA) y trabajos " +
-                "PROGRAMADOS de EDESA (Salta) y EDERSA (Río Negro). " +
-                "Córdoba y Santa Fe aún sin verificación. No hay cobertura nacional de cortes.",
+        c.addView(text("Cobertura parcial: ENRE (Edenor/Edesur, AMBA). " +
+                "Trabajos programados: EDESA (Salta), EDERSA (Río Negro), " +
+                "EDEN, EDEA, EDES y EDELAP (Buenos Aires). " +
+                "Los trabajos no prueban cortes en curso ni hay cobertura nacional completa.",
                 12, GREY, false));
         if (feed == null) {
             c.addView(text("Sin información descargada. No se puede determinar el estado del servicio.",
@@ -1063,6 +1070,7 @@ public class MainActivity extends Activity {
         }
         showSaltaScheduledWorks(c);
         showRioNegroScheduledWorks(c);
+        showBuenosAiresScheduledWorks(c);
     }
 
     /** Read-only source health; unverified provinces are not shown as connected. */
@@ -1082,6 +1090,22 @@ public class MainActivity extends Activity {
                      "sin verificación actual");
             notes.addView(text("• " + labels[i] + ": " + state +
                     ". No indica cortes en curso.", 12, GREY, false));
+        }
+        JSONObject ba = feed.optJSONObject("buenos_aires_work");
+        if (ba != null) {
+            String[] baKeys = {"eden_buenos_aires", "edea_buenos_aires",
+                    "edes_buenos_aires", "edelap_buenos_aires"};
+            String[] baLabels = {"EDEN", "EDEA", "EDES", "EDELAP"};
+            notes.addView(text("Obras anunciadas · Buenos Aires:", 13, INK, true));
+            for (int i = 0; i < baKeys.length; i++) {
+                JSONObject item = ba.optJSONObject(baKeys[i]);
+                String status = usable(item, "status");
+                String state = sourceFresh(item) ? "avisos futuros verificados" :
+                        ("stale".equals(status) ? "sin horarios futuros vigentes en la consulta" :
+                         "fuente no verificada");
+                notes.addView(text("• " + baLabels[i] + ": " + state +
+                        ". No indica cortes en curso.", 12, GREY, false));
+            }
         }
     }
 
@@ -1160,14 +1184,17 @@ public class MainActivity extends Activity {
         int matches = 0;
         for (int i = 0; i < notices.length() && matches < 6; i++) {
             JSONObject item = notices.optJSONObject(i);
-            if (item == null || !"scheduled_not_confirmed".equals(
-                    usable(item, "status"))) continue;
+            if (item == null) continue;
+            String recordStatus = usable(item, "status");
+            if (!"scheduled_not_confirmed".equals(recordStatus) &&
+                    !"scheduled_zone_unverified".equals(recordStatus)) continue;
             String locality = usable(item, "locality_hint");
             // Explicit exact match; never search arbitrary fragments of street names.
             if (locality.isEmpty() || !selectedAreaMatches("", locality)) continue;
             String start = usable(item, "scheduled_start");
             String end = usable(item, "scheduled_end");
-            if (!validScheduledWindow(start, end)) continue;
+            if (!ScheduledWorkWindow.isPublishedWindowRelevant(
+                    start, end, System.currentTimeMillis())) continue;
             if (matches == 0) {
                 c.addView(text("EDERSA · Provincia de Río Negro · trabajos programados",
                         15, INK, true));
@@ -1176,8 +1203,17 @@ public class MainActivity extends Activity {
                     simpleArgentinaDateTime(start) + " a " +
                     simpleArgentinaDateTime(end) + " (hora argentina)",
                     14, INK, true));
-            c.addView(text("Zona publicada: " + usable(item, "zone_detail"),
-                    12, GREY, false));
+            boolean doubtfulZone = "scheduled_zone_unverified".equals(recordStatus) ||
+                    item.optBoolean("source_zone_conflict", false);
+            if (doubtfulZone) {
+                c.addView(text("Zona NO verificada: la fuente publicó la misma " +
+                        "descripción para localidades diferentes. Revisá el enlace oficial.",
+                        12, GREY, true));
+            } else {
+                String zone = usable(item, "zone_detail");
+                if (!zone.isEmpty()) c.addView(text("Zona publicada: " + zone,
+                        12, GREY, false));
+            }
             String task = usable(item, "task");
             if (!task.isEmpty()) c.addView(text("Tarea: " + task, 12, GREY, false));
             matches++;
@@ -1190,27 +1226,110 @@ public class MainActivity extends Activity {
                 open("https://www.edersa.com.ar/cortes-programados/")));
     }
 
-    private static boolean validScheduledWindow(String start, String end) {
-        // The collector's verified Argentina ISO-8601 form: yyyy-MM-ddTHH:mm-03:00.
-        if (!start.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}-03:00") ||
-                !end.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}-03:00")) return false;
-        try {
-            java.text.SimpleDateFormat fmt = new java.text.SimpleDateFormat(
-                    "yyyy-MM-dd'T'HH:mmXXX", Locale.US);
-            fmt.setLenient(false);
-            java.util.Date a = fmt.parse(start);
-            java.util.Date b = fmt.parse(end);
-            long now = System.currentTimeMillis();
-            return a != null && b != null && a.getTime() > now &&
-                    b.getTime() > a.getTime() &&
-                    a.getTime() <= now + 14L * 24L * 60L * 60L * 1000L;
-        } catch (Exception ignored) { return false; }
-    }
-
     private static String simpleArgentinaDateTime(String value) {
         if (value.length() < 16) return "horario no disponible";
         return value.substring(8,10) + "/" + value.substring(5,7) + "/" +
                 value.substring(0,4) + " " + value.substring(11,16);
+    }
+
+    /** Visual presentation of dated electricity work notices from Buenos Aires.
+     *  Never merge these into ENRE active outages or notification history.
+     *  A matching locality may exist in another province: confirm location on the source.
+     */
+    private int countBuenosAiresScheduledMatches() {
+        if (feed == null || !isFresh() || !"Argentina".equals(selectedCountry())) return 0;
+        JSONObject group = feed.optJSONObject("buenos_aires_work");
+        if (group == null) return 0;
+        String[] keys = {"eden_buenos_aires", "edea_buenos_aires",
+                "edes_buenos_aires", "edelap_buenos_aires"};
+        String[] names = {"EDEN", "EDEA", "EDES", "EDELAP"};
+        int count = 0;
+        for (int p = 0; p < keys.length; p++) {
+            JSONObject provider = group.optJSONObject(keys[p]);
+            if (!sourceFresh(provider)) continue;
+            JSONArray notices = provider.optJSONArray("notices");
+            if (notices == null) continue;
+            for (int i = 0; i < notices.length(); i++) {
+                JSONObject item = notices.optJSONObject(i);
+                if (item == null || !"scheduled_not_confirmed".equals(
+                        usable(item, "status"))) continue;
+                if (!"Buenos Aires".equals(usable(item, "province")) ||
+                        !names[p].equals(usable(item, "company"))) continue;
+                String locality = usable(item, "locality_hint");
+                if (locality.isEmpty() || !selectedAreaMatches("", locality)) continue;
+                if (!ScheduledWorkWindow.isPublishedWindowRelevant(
+                        usable(item, "scheduled_start"), usable(item, "scheduled_end"),
+                        System.currentTimeMillis())) continue;
+                String expectedUrl = p == 0 ? "https://www.edensa.com.ar/obras-en-tu-barrio/" :
+                        p == 1 ? "https://www.edeaweb.com.ar/obras-en-tu-barrio/" :
+                        p == 2 ? "https://www.infoedes.com/obras-en-tu-barrio/" :
+                                 "https://www.edelap.com.ar/obras-en-tu-barrio/";
+                if (!expectedUrl.equals(usable(item, "source_url"))) continue;
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private void showBuenosAiresScheduledWorks(LinearLayout c) {
+        if (feed == null || !isFresh()) return;
+        JSONObject group = feed.optJSONObject("buenos_aires_work");
+        if (group == null) return; // Gracefully support older server reports.
+        String[] keys = {"eden_buenos_aires", "edea_buenos_aires",
+                "edes_buenos_aires", "edelap_buenos_aires"};
+        String[] names = {"EDEN", "EDEA", "EDES", "EDELAP"};
+        String[] links = {"https://www.edensa.com.ar/obras-en-tu-barrio/",
+                "https://www.edeaweb.com.ar/obras-en-tu-barrio/",
+                "https://www.infoedes.com/obras-en-tu-barrio/",
+                "https://www.edelap.com.ar/obras-en-tu-barrio/"};
+        int displayed = 0;
+        for (int p = 0; p < keys.length && displayed < 12; p++) {
+            JSONObject provider = group.optJSONObject(keys[p]);
+            if (!sourceFresh(provider)) continue; // stale/unverified => not current data.
+            JSONArray notices = provider.optJSONArray("notices");
+            if (notices == null) continue;
+            int companyShown = 0;
+            for (int i = 0; i < notices.length() && companyShown < 6 && displayed < 12; i++) {
+                JSONObject item = notices.optJSONObject(i);
+                if (item == null || !"scheduled_not_confirmed".equals(
+                        usable(item, "status"))) continue;
+                if (!"Buenos Aires".equals(usable(item, "province")) ||
+                        !names[p].equals(usable(item, "company"))) continue;
+                String locality = usable(item, "locality_hint");
+                // Only exact names, not street fragments or partial city names.
+                if (locality.isEmpty() || !selectedAreaMatches("", locality)) continue;
+                String start = usable(item, "scheduled_start");
+                String end = usable(item, "scheduled_end");
+                if (!ScheduledWorkWindow.isPublishedWindowRelevant(
+                        start, end, System.currentTimeMillis())) continue;
+                if (!links[p].equals(usable(item, "source_url"))) continue;
+                if (displayed == 0) {
+                    c.addView(text("Buenos Aires · obras eléctricas anunciadas",
+                            15, INK, true));
+                    c.addView(text("Son franjas horarias previstas por la empresa. " +
+                            "No confirman un corte actual ni que tu domicilio resulte afectado.",
+                            12, GREY, false));
+                }
+                c.addView(text("• " + names[p] + " · " + locality,
+                        14, INK, true));
+                c.addView(text("Franja publicada: " + simpleArgentinaDateTime(start) +
+                        " a " + simpleArgentinaDateTime(end) + " (hora argentina)",
+                        12, GREY, false));
+                String zone = usable(item, "zone_detail");
+                if (!zone.isEmpty()) c.addView(text("Zona descrita: " + zone,
+                        12, GREY, false));
+                final String official = links[p];
+                c.addView(button("Ver publicación oficial de " + names[p],
+                        () -> open(official)));
+                companyShown++;
+                displayed++;
+            }
+        }
+        if (displayed > 0) {
+            c.addView(text("Solo coincidencias exactas de localidad. Si hay localidades " +
+                    "homónimas en otras provincias, confirmá jurisdicción y calles.",
+                    12, GREY, false));
+        }
     }
 
     private void buses() {
