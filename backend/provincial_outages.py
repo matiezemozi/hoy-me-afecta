@@ -176,7 +176,39 @@ def _parse_edersa(html, now):
             continue
         items.append(_notice('EDERSA', 'Río Negro', PROVIDERS['edersa_rio_negro'][2],
                              locality, start, end, zone, task))
-    return _filter_window(items, now), seen, newest
+    # The official EDERSA page occasionally repeats exactly the same long zone
+    # description for different localities on the same day (e.g. Viedma and El
+    # Bolson on 6 November 2026). Do not present such a geographical description
+    # as verified. Keep the real, dated bulletin with an explicit uncertainty.
+    return _flag_ambiguous_edersa_zones(_filter_window(items, now)), seen, newest
+
+
+def _flag_ambiguous_edersa_zones(notices):
+    # Restrict to long, specific descriptions: short generic phrases like
+    # 'zona rural' are insufficient evidence of a mistaken source publication.
+    zone_localities = {}
+    for notice in notices:
+        zone = _clean(notice.get('zone_detail', ''), 700).casefold()
+        if len(zone) < 100:
+            continue
+        key = (notice['scheduled_start'][:10], zone)
+        zone_localities.setdefault(key, set()).add(_clean(notice.get('locality_hint'), 100).casefold())
+
+    for notice in notices:
+        zone = _clean(notice.get('zone_detail', ''), 700).casefold()
+        key = (notice['scheduled_start'][:10], zone)
+        if len(zone_localities.get(key, ())) <= 1:
+            continue
+        # The date, company, locality and hours remain source-derived; only
+        # the zone association is ambiguous, so we withhold it.
+        notice['zone_detail'] = None
+        notice['status'] = 'scheduled_zone_unverified'
+        notice['source_zone_conflict'] = True
+        notice['message'] = ('La fuente oficial publica la misma zona detallada '
+                             'para distintas localidades en la misma fecha. '
+                             'Zona no verificada; consultar el enlace original. '
+                             'No confirma corte actual.')
+    return notices
 
 
 _EPE = re.compile(
@@ -315,6 +347,8 @@ def collect_one(key, checked_at, fetcher=None, script_fetcher=None):
               'coverage_kind': 'planned_outages_only', 'notices': [],
               'message': 'Sin verificación de publicaciones; no implica suministro normal.',
               'source_attempts': []}
+    if key == 'edersa_rio_negro':
+        output['parser_revision'] = 'EDERSA-v5.18.1'
     fetch = fetcher or fetch_html
     if key == 'epe_santa_fe':
         pages = [url, EPE_LEGACY, EPE_LEGACY_ALT]
@@ -338,6 +372,10 @@ def collect_one(key, checked_at, fetcher=None, script_fetcher=None):
             else:
                 notices, count, newest = _parse_epec(html, now)
             attempt['records_checked'] = count
+            if key == 'edersa_rio_negro':
+                # This is a *source-content* warning, not a parsing failure.
+                attempt['source_zone_conflict_count'] = sum(
+                    1 for notice in notices if notice.get('source_zone_conflict'))
             if newest is not None:
                 attempt['latest_published_date'] = newest.isoformat()
             if count == 0 or newest is None:
@@ -365,6 +403,13 @@ def collect_one(key, checked_at, fetcher=None, script_fetcher=None):
             output.update(status='ok', source_url=page, notices=notices,
                           records_checked=count, latest_published_date=newest.isoformat(),
                           message='Trabajos programados, NO confirmación de corte en curso.')
+            if key == 'edersa_rio_negro':
+                conflict_count = attempt['source_zone_conflict_count']
+                output['source_zone_conflict_count'] = conflict_count
+                if conflict_count:
+                    output['message'] = (f'Trabajos programados; {conflict_count} avisos tienen '
+                                         'zona no verificada por contradicción en la fuente. '
+                                         'NO confirma cortes en curso.')
             if not notices:
                 output['message'] = 'Sin trabajos futuros reconocidos en la consulta; NO confirma servicio normal.'
             return output
