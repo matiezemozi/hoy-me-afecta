@@ -31,7 +31,9 @@ import java.net.URL;
 import java.text.Normalizer;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.TimeZone;
 
 public class MainActivity extends Activity {
@@ -76,6 +78,8 @@ public class MainActivity extends Activity {
     private long detailNetworkFeedRecordId = -1L;
     private int historyDisplayed = 25;
     private int historyScrollPosition = 0;
+    private ScrollView mainScroll;
+    private final Map<String, View> sectionAnchors = new HashMap<>();
 
     @Override public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -153,10 +157,46 @@ public class MainActivity extends Activity {
     }
 
     private void title(String label) {
+        title(label, null);
+    }
+
+    /** Register the real heading so personal-report rows can scroll to it. */
+    private void title(String label, String sectionKey) {
         TextView heading = text(label, 19, INK, true);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
         lp.setMargins(0, dp(15), 0, dp(9));
         root.addView(heading, lp);
+        if (sectionKey != null) sectionAnchors.put(sectionKey, heading);
+    }
+
+    /** Keep navigation inside the existing page: no new screen or feed fetch. */
+    private void jumpToSection(String key) {
+        final ScrollView scroll = mainScroll;
+        final View heading = sectionAnchors.get(key);
+        if (scroll == null || heading == null) return;
+        scroll.post(() -> {
+            if (mainScroll == scroll && sectionAnchors.get(key) == heading) {
+                scroll.smoothScrollTo(0, Math.max(0, heading.getTop() - dp(12)));
+            }
+        });
+    }
+
+    /** Each summary entry is itself a large, accessible touch target. */
+    private void reportLink(LinearLayout parent, String key,
+                            String heading, String detail) {
+        LinearLayout tile = new LinearLayout(this);
+        tile.setOrientation(LinearLayout.VERTICAL);
+        tile.setPadding(dp(12), dp(10), dp(12), dp(10));
+        tile.setBackground(background(Color.rgb(235, 243, 252), 10));
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
+        lp.setMargins(0, dp(6), 0, dp(4));
+        parent.addView(tile, lp);
+        tile.addView(text(heading + "  ›", 15, BLUE, true));
+        tile.addView(text(detail, 13, INK, false));
+        tile.setOnClickListener(v -> jumpToSection(key));
+        tile.setClickable(true);
+        tile.setFocusable(true);
+        tile.setContentDescription(heading + ". " + detail + ". Abrir sección.");
     }
 
     private String selectedCountry() {
@@ -211,6 +251,10 @@ public class MainActivity extends Activity {
             return;
         }
         ScrollView scroll = new ScrollView(this);
+        // Save the main scroll and rebuild anchors after each feed refresh.
+        final int previousScroll = mainScroll == null ? 0 : mainScroll.getScrollY();
+        mainScroll = scroll;
+        sectionAnchors.clear();
         scroll.setFillViewport(true);
         scroll.setBackgroundColor(LIGHT);
         root = new LinearLayout(this);
@@ -221,7 +265,7 @@ public class MainActivity extends Activity {
 
         root.addView(text("HOY ME AFECTA", 26, INK, true));
         root.addView(text("Lo que te conviene saber antes de salir", 14, GREY, false));
-        root.addView(text("Piloto v5.19 · Obras programadas en Buenos Aires", 12, GREY, false));
+        root.addView(text("Piloto v5.20 · Historial y resumen navegable", 12, GREY, false));
         LinearLayout status = card();
         status.addView(text(connection, 14, BLUE, false));
         if (feed != null) {
@@ -233,7 +277,7 @@ public class MainActivity extends Activity {
 
         // Put relevant information before configuration and unconnected categories.
         if (sectionVisible("informe")) {
-            title("Tu informe personal");
+            title("Tu informe personal", "informe");
             personalReport();
         }
 
@@ -301,46 +345,46 @@ public class MainActivity extends Activity {
         title("Notificaciones (prueba)");
         notificationSettings();
         if (sectionVisible("historial")) {
-            title("Mis avisos");
+            title("Mis avisos", "historial");
             historySummary();
         }
         if (sectionVisible("electricidad")) {
-            title("Electricidad · fuentes oficiales");
+            title("Electricidad · fuentes oficiales", "electricidad");
             electricity();
         }
         if (sectionVisible("colectivos")) {
-            title("Transporte · colectivos");
+            title("Transporte · colectivos", "colectivos");
             buses();
         }
         if (sectionVisible("subtes")) {
-            title("Subtes · Ciudad de Buenos Aires");
+            title("Subtes · Ciudad de Buenos Aires", "subtes");
             subtes();
         }
         if (sectionVisible("trenes")) {
-            title("Trenes");
+            title("Trenes", "trenes");
             trainNotices();
         }
         if (sectionVisible("bancos")) {
-            title("Bancos · atención presencial");
+            title("Bancos · atención presencial", "bancos");
             banks();
         }
         if (sectionVisible("operativos")) {
-            title("Operativos públicos · impacto en la circulación");
+            title("Operativos públicos · impacto en la circulación", "operativos");
             publicCategory("operativo_publico", "Avisos de accesos y circulación", "Solo se muestran efectos anunciados oficialmente sobre la circulación o eventos públicos. No se muestran ubicaciones de controles ni despliegues policiales.",
                     "Consultar seguridad y tránsito CABA", "https://buenosaires.gob.ar/");
         }
         if (sectionVisible("agua")) {
-            title("Agua");
+            title("Agua", "agua");
             publicCategory("agua", "Interrupciones del suministro", "Todavía no existe un conector automático verificado para el servicio de agua.",
                     "Consultar AySA", "https://www.aysa.com.ar/");
         }
         if (sectionVisible("transito")) {
-            title("Tránsito y vías públicas");
+            title("Tránsito y vías públicas", "transito");
             publicCategory("transito", "Cortes, obras y desvíos", "Aún no hay un conector automático verificado para cortes de tránsito.",
                     "Consultar BA Cómo Llego", "https://mapa.buenosaires.gob.ar/");
         }
         if (sectionVisible("fuentes")) {
-            title("Información y fuentes");
+            title("Información y fuentes", "fuentes");
             LinearLayout notes = card();
             notes.addView(text("Fuentes: ENRE para Edenor y Edesur. Estado de subtes en prueba mediante " +
                     "una página pública de CABA, solo cuando tiene fecha verificable y reciente. " +
@@ -360,29 +404,60 @@ public class MainActivity extends Activity {
                     "No se comprueba si un corte alcanza una dirección específica.", 12, GREY, false));
             provincialSourcesSummary(notes);
         }
+        if (previousScroll > 0) {
+            scroll.post(() -> {
+                if (mainScroll == scroll) scroll.scrollTo(0, previousScroll);
+            });
+        }
     }
 
     private void historySummary() {
         LinearLayout c = card();
+        long total = -1;
         try (NotificationHistory history = new NotificationHistory(this)) {
-            long total = history.count();
+            total = history.count();
             c.addView(text(total == 0 ? "Todavía no hay avisos guardados." :
                     "Avisos guardados en este teléfono: " + total, 14, INK, true));
-            c.addView(text("Vaciado automático: " +
-                    HistoryCleanup.label(HistoryCleanup.frequency(this)), 12, GREY, false));
+            c.addView(text("Borrado automático: " +
+                    HistoryCleanup.label(HistoryCleanup.frequency(this)), 13, BLUE, true));
+            c.addView(text(HistoryCleanup.description(this), 12, GREY, false));
         } catch (RuntimeException ex) {
             c.addView(text("No se pudo abrir el historial local.", 13, GREY, false));
         }
-        c.addView(text("Se conservan las notificaciones guardadas desde la versión 5.7. " +
-                "Los avisos anteriores no se pueden recuperar automáticamente.",
-                12, GREY, false));
-        c.addView(button("Abrir Mis avisos", () -> {
+        c.addView(button("Elegir limpieza: Mensual / Semanal / Nunca", this::chooseHistoryCleanup));
+        if (total > 0) c.addView(button("Borrar historial ahora", this::confirmClearHistory));
+        c.addView(button("Ver historial de avisos", () -> {
             historyDetailId = -1L;
             historyScreen = true;
             historyDisplayed = 25;
             historyScrollPosition = 0;
             draw();
         }));
+        c.addView(text("Solo se borran las notificaciones guardadas: tus localidades, " +
+                "preferencias y avisos futuros se conservan.", 12, GREY, false));
+    }
+
+    /** Explicit confirmation; never deletes subscriptions or duplicate protection. */
+    private void confirmClearHistory() {
+        new AlertDialog.Builder(this)
+                .setTitle("¿Borrar el historial?")
+                .setMessage("Se borrarán todas las notificaciones guardadas en este " +
+                        "teléfono. No se pueden recuperar. Tus localidades, preferencias, " +
+                        "notificaciones activadas y control de duplicados no se modificarán.")
+                .setNegativeButton("Cancelar", (dialog, which) -> { })
+                .setPositiveButton("Borrar historial", (dialog, which) -> {
+                    try (NotificationHistory history = new NotificationHistory(this)) {
+                        history.clearAll();
+                        HistoryCleanup.afterManualClear(this);
+                        historyDisplayed = 25;
+                        historyScrollPosition = 0;
+                        draw();
+                    } catch (RuntimeException ex) {
+                        android.widget.Toast.makeText(this,
+                                "No se pudo borrar el historial.",
+                                android.widget.Toast.LENGTH_LONG).show();
+                    }
+                }).show();
     }
 
     private void chooseHistoryCleanup() {
@@ -396,7 +471,7 @@ public class MainActivity extends Activity {
                     try {
                         HistoryCleanup.setFrequency(this,
                                 HistoryCleanup.frequencyForIndex(chosen[0]));
-                        drawHistory();
+                        draw();
                     } catch (RuntimeException error) {
                         android.widget.Toast.makeText(this,
                                 "No se pudo guardar la frecuencia.",
@@ -436,34 +511,14 @@ public class MainActivity extends Activity {
             String lastClear = HistoryCleanup.lastAutomaticClear(this);
             if (!lastClear.isEmpty()) controls.addView(text(lastClear, 12, GREY, false));
             controls.addView(button("Configurar vaciado automático", this::chooseHistoryCleanup));
-            controls.addView(text("Podés elegir Nunca, Semanalmente (cada 7 días) o " +
-                    "Mensualmente (un mes calendario). El vaciado borra TODO el historial; " +
-                    "la opción Nunca es la predeterminada.", 12, GREY, false));
+            controls.addView(text("Opciones: Mensualmente (predeterminada; un mes calendario), " +
+                    "Semanalmente (cada 7 días) o Nunca. Se borra el historial local completo, " +
+                    "sin límite de cantidad de avisos.", 12, GREY, false));
             controls.addView(text("Los registros del ENRE describen publicaciones, no " +
                     "confirman la duración del corte. Las pruebas están identificadas.",
                     12, GREY, false));
             if (total > 0) {
-                controls.addView(button("Vaciar historial", () ->
-                        new AlertDialog.Builder(this)
-                                .setTitle("¿Vaciar historial?")
-                                .setMessage("Se borrarán todos los avisos guardados en este " +
-                                        "teléfono. No se pueden recuperar. " +
-                                        "Tus zonas, notificaciones activadas y control de " +
-                                        "duplicados no se modificarán.")
-                                .setNegativeButton("Cancelar", (dialog, which) -> { })
-                                .setPositiveButton("Vaciar historial", (dialog, which) -> {
-                                    try (NotificationHistory storage = new NotificationHistory(this)) {
-                                        storage.clearAll();
-                                        HistoryCleanup.afterManualClear(this);
-                                        historyDisplayed = 25;
-                                        historyScrollPosition = 0;
-                                        drawHistory();
-                                    } catch (RuntimeException ex) {
-                                        android.widget.Toast.makeText(this,
-                                                "No se pudo borrar el historial.",
-                                                android.widget.Toast.LENGTH_LONG).show();
-                                    }
-                                }).show()));
+                controls.addView(button("Borrar historial ahora", this::confirmClearHistory));
             }
             if (total == 0) {
                 LinearLayout empty = card();
@@ -859,87 +914,125 @@ public class MainActivity extends Activity {
 
     private void personalReport() {
         LinearLayout box = card();
+        box.addView(text("Seleccioná un servicio para ir a sus avisos y fuentes.",
+                13, BLUE, true));
         if (!"Argentina".equals(selectedCountry())) {
             box.addView(text("Cobertura en preparación para " + selectedCountry() +
-                    ". El país se puede seleccionar, pero todavía no tenemos conectores locales.",
+                    ". Todavía no contamos con conectores locales verificados.",
                     13, GREY, false));
             return;
         }
-        if (!isFresh()) {
-            box.addView(text("No hay un informe suficientemente reciente. " +
-                    "No es posible conocer el estado actual de tus zonas.", 13, GREY, false));
-            return;
+        final boolean fresh = isFresh();
+        final boolean hasZones = !prefs.getString("place", "").trim().isEmpty();
+        box.addView(text("Localidades: " + (hasZones ? prefs.getString("place", "") :
+                "sin configurar"), 12, GREY, false));
+        if (!fresh) {
+            box.addView(text("Informe no actualizado: no podemos verificar la situación " +
+                    "actual. Podés abrir igualmente cada sección para consultar sus fuentes.",
+                    13, GREY, true));
+        } else if (!hasZones) {
+            box.addView(text("Elegí una o varias localidades en Tus preferencias " +
+                    "para recibir un resumen local.", 13, GREY, false));
         }
-        if (prefs.getString("place", "").trim().isEmpty()) {
-            box.addView(text("Elegí una o varias zonas para comenzar.", 13, GREY, false));
-            return;
-        }
-        box.addView(text("Zona(s): " + prefs.getString("place", "Sin configurar"),
-                12, GREY, false));
-        boolean showElectricity = sectionVisible("electricidad");
-        if (showElectricity) {
-            showRecentPublicationHighlights(box);
-            JSONObject sources = feed.optJSONObject("sources");
-            boolean electricityConnected = sources != null &&
-                    (sourceFresh(sources.optJSONObject("edenor")) ||
-                     sourceFresh(sources.optJSONObject("edesur")));
-            if (!electricityConnected) {
-                box.addView(text("No hay fuentes eléctricas recientes verificadas.",
-                        13, GREY, true));
+
+        int categories = 0;
+        if (sectionVisible("electricidad")) {
+            categories++;
+            String detail;
+            if (!fresh) {
+                detail = "No hay informe reciente para validar avisos.";
+            } else if (!hasZones) {
+                detail = "Faltan localidades para filtrar avisos eléctricos.";
+            } else {
+                JSONObject sources = feed.optJSONObject("sources");
+                boolean connected = sources != null &&
+                        (sourceFresh(sources.optJSONObject("edenor")) ||
+                         sourceFresh(sources.optJSONObject("edesur")));
+                int enre = matchingElectricityCount();
+                int works = countBuenosAiresScheduledMatches();
+                detail = (connected ? enre + (enre == 1 ?
+                        " aviso del ENRE coincidente" : " avisos del ENRE coincidentes") :
+                        "ENRE sin consulta reciente verificable") +
+                        "; " + works + (works == 1 ? " trabajo programado" :
+                        " trabajos programados") + " en Buenos Aires. " +
+                        "No confirma cortes actuales.";
             }
-            int count = matchingElectricityCount();
-            box.addView(text(!electricityConnected ? "Estado eléctrico no comprobado" :
-                            count == 0 ? "Sin avisos eléctricos coincidentes en las fuentes disponibles" :
-                            count + (count == 1 ? " aviso eléctrico coincidente" :
-                                    " avisos eléctricos coincidentes"),
-                    15, count == 0 ? GREY : INK, true));
-            box.addView(text("Cobertura parcial: ENRE para Edenor/Edesur, no todas " +
-                    "las distribuidoras.", 12, GREY, false));
-            int publishedWorks = countBuenosAiresScheduledMatches();
-            if (publishedWorks > 0) {
-                box.addView(text(publishedWorks + " obra(s) eléctrica(s) programada(s) " +
-                        "en tus localidades de Buenos Aires. Consultá el apartado Electricidad. " +
-                        "No confirma cortes actuales.", 12, BLUE, true));
-            }
+            reportLink(box, "electricidad", "Electricidad", detail);
         }
         if (sectionVisible("colectivos")) {
-            box.addView(text("Colectivo " + favoriteLine() +
-                    ": sin conexión automática verificada de demoras.", 12, GREY, false));
+            categories++;
+            reportLink(box, "colectivos", "Colectivos · línea " + favoriteLine(),
+                    "Sin datos automáticos verificados de demoras. " +
+                    "Consultá los avisos documentados y los enlaces oficiales.");
         }
-        if (sectionVisible("trenes") && "Argentina".equals(selectedCountry())) {
-            int count = countDatedRailPublications();
-            box.addView(text(count == 0 ?
-                    "Trenes: sin comunicados recientes verificados para tu selección; " +
-                    "no confirma circulación normal." :
-                    "Trenes: " + count + " comunicado(s) oficial(es) reciente(s). " +
-                    "No indican el estado en vivo.", 12, GREY, false));
+        if (sectionVisible("subtes")) {
+            categories++;
+            reportLink(box, "subtes", "Subtes de CABA",
+                    fresh ? "Estado publicado para la red; comprobá su fecha y vigencia." :
+                            "Estado actual no verificado. Consultá las fuentes.");
         }
-        int other = 0;
-        if (sectionVisible("trenes")) other += countPublicMatches("tren");
-        if (sectionVisible("agua")) other += countPublicMatches("agua");
-        if (sectionVisible("transito")) other += countPublicMatches("transito");
-        if (sectionVisible("bancos")) other += countPublicMatches("banco");
-        if (sectionVisible("operativos")) other += countPublicMatches("operativo_publico");
-        if (sectionVisible("trenes") || sectionVisible("agua") ||
-                sectionVisible("transito") || sectionVisible("bancos") ||
-                sectionVisible("operativos")) {
-            box.addView(text(other == 0 ?
-                    "Sin otros avisos públicos vigentes verificados para tus zonas" :
-                    other + " avisos públicos verificados para tus zonas",
-                    12, GREY, false));
+        if (sectionVisible("trenes")) {
+            categories++;
+            String detail;
+            if (!fresh) {
+                detail = "No hay consulta reciente verificable de comunicados.";
+            } else {
+                JSONObject rail = feed.optJSONObject("rail_official");
+                if (!"ok".equals(usable(rail, "status"))) {
+                    detail = "Fuente ferroviaria no verificada en esta consulta.";
+                } else {
+                    int railCount = countDatedRailPublications();
+                    int localCount = hasZones ? countPublicMatches("tren") : 0;
+                    detail = railCount + (railCount == 1 ?
+                            " comunicado oficial reciente" : " comunicados oficiales recientes") +
+                            (localCount > 0 ? "; " + localCount +
+                                    " aviso(s) documentado(s) para tus zonas" : "") +
+                            ". No informa circulación en vivo.";
+                }
+            }
+            reportLink(box, "trenes", "Trenes", detail);
         }
         if (sectionVisible("bancos")) {
-            box.addView(text("Feriados bancarios: calendario oficial nacional disponible " +
-                    "en su sección; no equivale a estado de sucursales.", 12, GREY, false));
+            categories++;
+            JSONObject banking = fresh ? feed.optJSONObject("banking") : null;
+            boolean calendar = "published_reference_2026".equals(usable(banking, "status"));
+            int alerts = fresh && hasZones ? countPublicMatches("banco") : 0;
+            reportLink(box, "bancos", "Bancos",
+                    (calendar ? "Calendario nacional de feriados disponible" :
+                            "Calendario actual no comprobado") +
+                    (alerts > 0 ? "; " + alerts + " aviso(s) local(es)" : "") +
+                    ". No confirma el estado de cada sucursal.");
         }
-        if (!showElectricity && !sectionVisible("colectivos") &&
-                !sectionVisible("subtes") && !sectionVisible("trenes") &&
-                !sectionVisible("bancos") && !sectionVisible("operativos") &&
-                !sectionVisible("agua") && !sectionVisible("transito")) {
-            box.addView(text("No hay categorías de servicios visibles. " +
-                    "Podés activarlas en Personalizar pantalla.", 13, GREY, false));
+        if (sectionVisible("operativos")) {
+            categories++;
+            int alerts = fresh && hasZones ? countPublicMatches("operativo_publico") : 0;
+            reportLink(box, "operativos", "Operativos públicos",
+                    fresh && hasZones ? alerts + " aviso(s) documentado(s) para tus zonas. " +
+                            "Cobertura parcial de circulación." :
+                            "Sin información local actual verificable.");
         }
-        box.addView(text("Ausencia de reportes no significa ausencia de problemas.",
+        if (sectionVisible("agua")) {
+            categories++;
+            int alerts = fresh && hasZones ? countPublicMatches("agua") : 0;
+            reportLink(box, "agua", "Agua",
+                    fresh && hasZones ? alerts + " aviso(s) documentado(s) para tus zonas. " +
+                            "Sin conector automático completo." :
+                            "Sin información local actual verificable.");
+        }
+        if (sectionVisible("transito")) {
+            categories++;
+            int alerts = fresh && hasZones ? countPublicMatches("transito") : 0;
+            reportLink(box, "transito", "Tránsito y obras",
+                    fresh && hasZones ? alerts + " aviso(s) documentado(s) para tus zonas. " +
+                            "Cobertura incompleta." :
+                            "Sin información local actual verificable.");
+        }
+        if (categories == 0) {
+            box.addView(text("No hay categorías de servicios visibles. Podés activarlas " +
+                    "en Personalizar pantalla.", 13, GREY, false));
+        }
+        box.addView(text("Un cero significa que no se encontraron publicaciones " +
+                "coincidentes en las fuentes disponibles; no garantiza que todo funcione.",
                 12, GREY, false));
     }
 
@@ -1068,6 +1161,7 @@ public class MainActivity extends Activity {
                     "Esto NO garantiza suministro normal ni cobertura de esa zona.",
                     13, GREY, false));
         }
+        showRecentPublicationHighlights(c);
         showSaltaScheduledWorks(c);
         showRioNegroScheduledWorks(c);
         showBuenosAiresScheduledWorks(c);
@@ -1426,7 +1520,7 @@ public class MainActivity extends Activity {
             if ("ok".equals(status)) {
                 JSONArray news = rail.optJSONArray("notices");
                 int shown = 0;
-                if (news != null) for (int i = 0; i < news.length() && shown < 6; i++) {
+                if (news != null) for (int i = 0; i < news.length(); i++) {
                     JSONObject item = news.optJSONObject(i);
                     if (item == null || !matchesChosenTrain(usable(item, "line"))) continue;
                     String url = usable(item, "source_url");

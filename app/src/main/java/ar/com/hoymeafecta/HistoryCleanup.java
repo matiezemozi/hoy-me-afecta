@@ -13,7 +13,9 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * Opt-in local archive clearing. The default is NEVER, including v5.7 upgrades.
+ * Local archive clearing. The default is MONTHLY for new installations and
+ * previous installations without a saved choice. Explicit saved preferences
+ * (including NEVER) remain intact after upgrading.
  * A weekly/monthly choice clears the whole archive after one full period from
  * enabling that choice (or from a later manual clear). Android may defer jobs.
  * No internet connection or notification permission is required.
@@ -35,8 +37,8 @@ public final class HistoryCleanup {
 
     public static String frequency(Context context) {
         String v = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-                .getString(FREQUENCY_KEY, NEVER);
-        return valid(v) ? v : NEVER;
+                .getString(FREQUENCY_KEY, MONTHLY);
+        return valid(v) ? v : MONTHLY;
     }
 
     private static boolean valid(String frequency) {
