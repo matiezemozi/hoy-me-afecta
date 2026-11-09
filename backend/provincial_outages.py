@@ -32,6 +32,7 @@ EPE_LEGACY = 'https://www.epe.santafe.gov.ar/reclamosweb/cortes.php/cortes.php'
 EPE_LEGACY_ALT = 'https://epe.santafe.gov.ar/reclamosweb/cortes.php/cortes.php'
 EPEC_ALTERNATE = 'https://epec.com.ar/actualidad/trabajos-mejoras'
 EPEN_RSS = 'https://www.epen.gov.ar/index.php/feed/'
+EPEN_ARCHIVE = 'https://www.epen.gov.ar/index.php/cortes-programados/'
 
 
 def _clean(s, limit=700):
@@ -343,6 +344,61 @@ def _epen_feed_items(xml):
     return records
 
 
+class _EpenArchiveLinks(HTMLParser):
+    """Collect ONLY the visible, official publication links from EPEN's archive."""
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.current = None
+        self.records = []
+        self.ignore = 0
+
+    def handle_starttag(self, tag, attrs):
+        if tag in ('script', 'style', 'noscript'):
+            self.ignore += 1
+            return
+        if self.ignore:
+            return
+        if tag == 'a':
+            attributes = dict(attrs)
+            self.current = (attributes.get('href', ''), [])
+
+    def handle_endtag(self, tag):
+        if tag in ('script', 'style', 'noscript'):
+            self.ignore = max(0, self.ignore - 1)
+            return
+        if self.ignore:
+            return
+        if tag == 'a' and self.current:
+            href, parts = self.current
+            self.records.append((href, _clean(' '.join(parts), 260)))
+            self.current = None
+
+    def handle_data(self, data):
+        if not self.ignore and self.current is not None:
+            self.current[1].append(data[:500])
+
+
+def _epen_archive_items(html):
+    """Supplement RSS with the official archive; never trust headlines as outages.
+
+    Every returned link must have a matching dated article, checked separately
+    by _parse_epen_article before it can enter a location-aware notice.
+    """
+    if not isinstance(html, str) or not html.strip() or len(html.encode('utf-8')) > MAX_BYTES:
+        raise ValueError('Archivo EPEN inválido o demasiado grande')
+    dom = _EpenArchiveLinks()
+    dom.feed(html)
+    unique = {}
+    for href, title in dom.records:
+        link = urljoin(EPEN_ARCHIVE, unescape(href))
+        if ('corte' in title.casefold() and 'programad' in title.casefold()
+                and _EPEN_DATE_TITLE.search(title) and _epen_article_url(link)):
+            unique.setdefault(link, (title, link, ''))
+        if len(unique) >= 35:
+            break
+    return list(unique.values())
+
+
 def _epen_post_body(html):
     _, visible = _visible(html)
     # WordPress pages append unrelated 'Últimas noticias' titles after the post.
@@ -435,21 +491,36 @@ def _collect_epen(checked_at, now, fetch):
         'status': 'unverified', 'province': province, 'country': 'Argentina',
         'company': company, 'source_url': official, 'checked_at': checked_at,
         'coverage_kind': 'planned_outages_only', 'notices': [],
-        'parser_revision': 'EPEN-RSS-v5.22',
+        'parser_revision': 'EPEN-RSS-ARCHIVE-v5.22.1',
         'message': 'Sin publicaciones verificadas; no implica suministro normal.',
         'source_attempts': [],
     }
-    attempt = {'url': EPEN_RSS}
-    output['source_attempts'].append(attempt)
+    rss_attempt = {'url': EPEN_RSS}
+    output['source_attempts'].append(rss_attempt)
+    records = []
     try:
         records = _epen_feed_items(fetch(EPEN_RSS))
+        rss_attempt.update(candidate_posts=len(records),
+                           result='candidates_found' if records else 'no_relevant_posts')
     except Exception as exc:
-        attempt.update(result='fetch_or_parse_error', error_type=type(exc).__name__)
-        output['message'] = 'No se pudo verificar el boletín oficial de EPEN.'
-        return output
-    attempt['candidate_posts'] = len(records)
+        rss_attempt.update(result='fetch_or_parse_error', error_type=type(exc).__name__)
+
+    # EPEN's public RSS may only contain the newest posts, excluding still-future
+    # scheduled cuts published several days earlier. Fall back to its OFFICIAL
+    # WordPress category archive; never infer a verified schedule from its title.
     if not records:
-        attempt['result'] = 'no_relevant_posts'
+        archive_attempt = {'url': EPEN_ARCHIVE}
+        output['source_attempts'].append(archive_attempt)
+        try:
+            records = _epen_archive_items(fetch(EPEN_ARCHIVE))
+            archive_attempt.update(candidate_posts=len(records),
+                                   result='candidates_found' if records else 'no_relevant_posts')
+        except Exception as exc:
+            archive_attempt.update(result='fetch_or_parse_error',
+                                   error_type=type(exc).__name__)
+    if not records:
+        output['message'] = ('No se obtuvieron publicaciones oficiales verificables de EPEN. '
+                             'No implica suministro normal.')
         return output
 
     all_notices, accepted_posts, rejected_posts = [], 0, 0
@@ -470,7 +541,10 @@ def _collect_epen(checked_at, now, fetch):
         if published_day < (now - timedelta(days=3)).date() or \
                 published_day > (now + timedelta(days=MAX_DAYS)).date():
             continue
-        parsed = _parse_epen_article(title, link, content, now)
+        try:
+            parsed = _parse_epen_article(title, link, content, now) if content.strip() else []
+        except (ValueError, TypeError):
+            parsed = []
         if not parsed and extra_fetches < 8:
             extra_fetches += 1
             try:
@@ -485,9 +559,11 @@ def _collect_epen(checked_at, now, fetch):
             all_notices.extend(parsed)
         else:
             rejected_posts += 1
-    attempt.update(result=('verified' if accepted_posts else 'no_complete_records'),
-                   posts_verified=accepted_posts, posts_rejected=rejected_posts,
-                   extra_article_fetches=extra_fetches)
+    # The last nonempty source selected above is the one we actually parsed.
+    used_attempt = output['source_attempts'][-1]
+    used_attempt.update(result=('verified' if accepted_posts else 'no_complete_records'),
+                        posts_verified=accepted_posts, posts_rejected=rejected_posts,
+                        extra_article_fetches=extra_fetches)
     if not accepted_posts:
         output['message'] = ('No hay avisos completos con fecha, horario y zona '
                              'coincidentes entre titular y publicación. No se infiere estado normal.')

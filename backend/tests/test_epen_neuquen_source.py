@@ -6,7 +6,8 @@ long-form copyrighted text. No outbound request or user information is used.
 import unittest
 from html import escape
 from provincial_outages import (
-    PROVIDERS, EPEN_RSS, _epen_feed_items, _parse_epen_article,
+    PROVIDERS, EPEN_RSS, EPEN_ARCHIVE, _epen_feed_items, _epen_archive_items,
+    _parse_epen_article,
     _instant, collect_one, collect_provincial,
 )
 
@@ -114,6 +115,50 @@ class EPENTests(unittest.TestCase):
         self.assertEqual(len(got['notices']), 1)
         self.assertEqual(calls, [EPEN_RSS, SINGLE])
         self.assertEqual(got['source_attempts'][0]['extra_article_fetches'], 1)
+
+
+    def test_archive_fallback_when_rss_has_no_relevant_posts(self):
+        archive = ('<html><article><h2 class="entry-title"><a href="' + SINGLE +
+                   '">' + T_SINGLE + '</a></h2></article>'
+                   '<article><h2><a href="' + WRONG + '">' + T_WRONG +
+                   '</a></h2></article></html>')
+        calls = []
+        def fetch(url):
+            calls.append(url)
+            if url == EPEN_RSS:
+                return rss([])
+            if url == EPEN_ARCHIVE:
+                return archive
+            if url == SINGLE:
+                return BODY_SINGLE
+            if url == WRONG:
+                return BODY_WRONG
+            raise AssertionError('Unexpected URL ' + url)
+        got = collect_one('epen_neuquen', CHECKED, fetcher=fetch)
+        self.assertEqual(got['status'], 'ok')
+        self.assertEqual(got['records_checked'], 1)
+        self.assertEqual(got['rejected_article_count'], 1)
+        self.assertEqual(len(got['notices']), 1)
+        self.assertNotIn(WRONG, str(got['notices']))
+        self.assertEqual(calls, [EPEN_RSS, EPEN_ARCHIVE, SINGLE, WRONG])
+        self.assertEqual(got['source_attempts'][1]['posts_verified'], 1)
+        self.assertEqual(got['parser_revision'], 'EPEN-RSS-ARCHIVE-v5.22.1')
+
+    def test_archive_rejects_external_links_and_plaintext(self):
+        fake = ('<a href="https://malicious.invalid/index.php/2026/11/06/example/">'
+                + T_SINGLE + '</a>'
+                '<a href="/index.php/2026/11/06/corte-programado-en-sectores-de-villa-la-angostura-el-10-11-26/">'
+                + T_SINGLE + '</a>')
+        self.assertEqual(len(_epen_archive_items(fake)), 1)
+        self.assertEqual(_epen_archive_items('No hay avisos'), [])
+
+    def test_archive_fallback_rejects_title_body_date_mismatch(self):
+        archive = '<a href="' + WRONG + '">' + T_WRONG + '</a>'
+        got = collect_one('epen_neuquen', CHECKED, fetcher=lambda url:
+                          rss([]) if url == EPEN_RSS else
+                          archive if url == EPEN_ARCHIVE else BODY_WRONG)
+        self.assertEqual(got['status'], 'unverified')
+        self.assertEqual(got['notices'], [])
 
     def test_reject_external_url_rss_and_missing_data(self):
         spoof = rss([(T_SINGLE, 'https://hostile.example/2026/11/06/example/', BODY_SINGLE)])
