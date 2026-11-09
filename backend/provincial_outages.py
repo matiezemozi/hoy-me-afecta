@@ -1,4 +1,4 @@
-"""Conservative scheduled electricity work collectors for three Argentine provinces.
+"""Conservative scheduled electricity work collectors for Argentine provinces.
 
 The three sources are public web pages, not documented APIs. Record only
 published, date-verified future schedules; never infer an outage in progress.
@@ -27,6 +27,7 @@ PROVIDERS = {
     'edersa_rio_negro': ('EDERSA', 'Río Negro', 'https://www.edersa.com.ar/cortes-programados/'),
     'edese_santiago_del_estero': ('EDESE', 'Santiago del Estero', 'https://www.enrese.com.ar/CortesProgramados.html'),
     'epen_neuquen': ('EPEN', 'Neuquén', 'https://www.epen.gov.ar/index.php/cortes-programados/'),
+    'ejesa_jujuy': ('EJESA', 'Jujuy', 'https://www.ejesa.com.ar/gestion/pwa/tareasprogramadas/mejora-y-mantenimiento'),
 }
 EPE_LEGACY = 'https://www.epe.santafe.gov.ar/reclamosweb/cortes.php/cortes.php'
 EPE_LEGACY_ALT = 'https://epe.santafe.gov.ar/reclamosweb/cortes.php/cortes.php'
@@ -676,6 +677,99 @@ def _parse_epe(html, now, url):
     return _filter_window(items, now), seen, newest
 
 
+# EJESA publishes a readable public task timetable with date, named town,
+# exact hours, affected zone and task state. "Mapro sin afectar el servicio",
+# completed tasks, and notices missing zones are NOT planned outages.
+_EJESA_ISO_DAY = re.compile(r'(?<!\d)(20\d{2}-\d{2}-\d{2})(?!\d)')
+_EJESA_HOURS = re.compile(r'\bDesde\s+(\d{1,2}:\d{2})\s+hasta\s+'
+                          r'(\d{1,2}:\d{2})\b', re.I)
+_EJESA_BRIEF_HOURS = re.compile(r'(?<!\d)(\d{1,2}:\d{2})\s*(?:a|hasta)\s*'
+                                r'(\d{1,2}:\d{2})(?!\d)', re.I)
+
+
+def _parse_ejesa(html, now):
+    """Parse only official APROBADA electrical interruptions, not other tasks.
+
+    Each visible ISO date begins one task card. The card must explicitly
+    repeat zone, locality, schedule and status labels; nearby cards cannot
+    contribute missing fields. Date/time are used exactly as published.
+    """
+    _, visible = _visible(html)
+    if 'Tareas Programadas' not in visible and 'Estado de la tarea' not in visible:
+        return [], 0, None
+    days = list(_EJESA_ISO_DAY.finditer(visible))
+    notices, seen, newest = [], 0, None
+    for idx, match in enumerate(days):
+        try:
+            day = datetime.strptime(match.group(1), '%Y-%m-%d').date()
+        except ValueError:
+            continue
+        # A card is bounded by the next ISO date, never a free-text search
+        # over the whole official page. Avoid mixing neighboring schedules.
+        end_at = days[idx + 1].start() if idx + 1 < len(days) else len(visible)
+        card = visible[match.end():end_at]
+        if len(card) > 3500:
+            continue
+        # Official pages also repeat a dd/mm/yyyy date before the ISO date.
+        # A conflicting printed date makes this item untrustworthy.
+        pre = visible[max(0, match.start() - 120):match.start()]
+        date_printed = re.search(r'(\d{1,2}/\d{1,2}/20\d{2})\s*$', pre)
+        if date_printed:
+            try:
+                if datetime.strptime(date_printed.group(1), '%d/%m/%Y').date() != day:
+                    continue
+            except ValueError:
+                continue
+        status = re.search(r'\bEstado\s+de\s+la\s+tarea\s*:\s*'
+                           r'(APROBADA|EJECUTADA|CANCELADA|SUSPENDIDA|PENDIENTE|PROGRAMADA)\b',
+                           card, re.I)
+        if not status:
+            continue
+        seen += 1
+        newest = max(newest, day) if newest else day
+        if status.group(1).upper() != 'APROBADA':
+            continue
+        times = _EJESA_HOURS.search(card)
+        if not times:
+            continue
+        # The cards have a short hours label too. Reject contradictions.
+        briefs = _EJESA_BRIEF_HOURS.findall(card[:times.start()])
+        if briefs and any(pair != times.groups() for pair in briefs):
+            continue
+        locality_match = re.search(
+            r'\bLocalidad\s*:\s*(.*?)\s+(?:description\s+)?'
+            r'Descripci[oó]n\s*:', card, re.I | re.S)
+        zone_match = re.search(
+            r'\bZona\s*:\s*(.*?)\s+(?:flag\s+)?Localidad\s*:',
+            card, re.I | re.S)
+        if not locality_match or not zone_match:
+            continue
+        locality = _clean(locality_match.group(1), 100)
+        zone = _clean(zone_match.group(1), 700)
+        if not locality or not zone or len(zone) < 14:
+            continue
+        low_zone = zone.casefold()
+        if (re.search(r'\bsin\s+afect(?:ar|aci[oó]n)\s+(?:el\s+)?servicio\b', low_zone)
+                or re.search(r'\bno\s+(?:se\s+)?(?:afecta|interrumpe)\b', low_zone)
+                or not re.search(r'\b(?:interrupci[oó]n|corte)\s+'
+                                 r'(?:de\s+)?(?:suministro|programad[oa]|energ[ií]a)\b',
+                                 low_zone, re.I)):
+            continue
+        try:
+            start, end = _datetime(day, times.group(1)), _datetime(day, times.group(2))
+        except ValueError:
+            continue
+        if start >= end:
+            continue
+        task_match = re.search(r'\bDescripci[oó]n\s*:\s*(.*?)\s+'
+                               r'(?:beenhere\s+)?Estado\s+de\s+la\s+tarea\s*:',
+                               card, re.I | re.S)
+        task = _clean(task_match.group(1), 250) if task_match else 'Interrupción programada EJESA'
+        notices.append(_notice('EJESA', 'Jujuy', PROVIDERS['ejesa_jujuy'][2],
+                               locality, start, end, zone, task))
+    return _filter_window(notices, now), seen, newest
+
+
 _EPEC = re.compile(
     r'\bDe\s+(?P<start>\d{1,2}:\d\d)\s+a\s+(?P<end>\d{1,2}:\d\d)\s*'
     r'Motivo\s*:\s*(?P<task>.*?)\s*'
@@ -746,6 +840,7 @@ def _diagnose_html(html, page, key):
         'epec_cordoba': r'(?<!\d)\d{1,2}/\d{1,2}/20\d\d(?!\d)',
         'epe_santa_fe': r'(?<!\d)\d{1,2}-\d{1,2}-20\d\d(?!\d)',
         'edese_santiago_del_estero': r'(?<!\d)\d{1,2}/\d{1,2}/20\d\d(?!\d)',
+        'ejesa_jujuy': r'(?<!\d)20\d{2}-\d{2}-\d{2}(?!\d)',
     }
     expected = patterns.get(key, '')
     dates = len(re.findall(expected, visible)) if expected else 0
@@ -787,6 +882,8 @@ def collect_one(key, checked_at, fetcher=None, script_fetcher=None):
               'source_attempts': []}
     if key == 'edersa_rio_negro':
         output['parser_revision'] = 'EDERSA-v5.18.1'
+    if key == 'ejesa_jujuy':
+        output['parser_revision'] = 'EJESA-WEB-v5.23'
     if key == 'edese_santiago_del_estero':
         output['parser_revision'] = 'EDESE-ENRESE-v5.21'
         output['published_by'] = 'ENRESE (ente regulador provincial)'
@@ -812,6 +909,8 @@ def collect_one(key, checked_at, fetcher=None, script_fetcher=None):
                 notices, count, newest = _parse_epe(html, now, page)
             elif key == 'edese_santiago_del_estero':
                 notices, count, newest = _parse_edese(html, now)
+            elif key == 'ejesa_jujuy':
+                notices, count, newest = _parse_ejesa(html, now)
             else:
                 notices, count, newest = _parse_epec(html, now)
             attempt['records_checked'] = count

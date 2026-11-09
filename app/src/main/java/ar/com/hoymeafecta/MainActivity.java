@@ -265,7 +265,7 @@ public class MainActivity extends Activity {
 
         root.addView(text("HOY ME AFECTA", 26, INK, true));
         root.addView(text("Lo que te conviene saber antes de salir", 14, GREY, false));
-        root.addView(text("Piloto v5.22 · Neuquén (EPEN) y resumen navegable", 12, GREY, false));
+        root.addView(text("Piloto v5.23 · Nuevas fuentes provinciales y resumen navegable", 12, GREY, false));
         LinearLayout status = card();
         status.addView(text(connection, 14, BLUE, false));
         if (feed != null) {
@@ -950,13 +950,14 @@ public class MainActivity extends Activity {
                          sourceFresh(sources.optJSONObject("edesur")));
                 int enre = matchingElectricityCount();
                 int works = countBuenosAiresScheduledMatches() +
-                        countSantiagoScheduledMatches() + countNeuquenScheduledMatches();
+                        countSantiagoScheduledMatches() + countNeuquenScheduledMatches() +
+                        countAdditionalProvincialScheduledMatches();
                 detail = (connected ? enre + (enre == 1 ?
                         " aviso del ENRE coincidente" : " avisos del ENRE coincidentes") :
                         "ENRE sin consulta reciente verificable") +
                         "; " + works + (works == 1 ? " trabajo programado" :
                         " trabajos programados") +
-                        " coincidentes en Buenos Aires, Santiago del Estero y Neuquén. " +
+                        " coincidentes en las fuentes provinciales verificadas. " +
                         "Otras provincias: consultar el detalle. No confirma cortes actuales.";
             }
             reportLink(box, "electricidad", "Electricidad", detail);
@@ -1095,6 +1096,7 @@ public class MainActivity extends Activity {
         c.addView(text("Cobertura parcial: ENRE (Edenor/Edesur, AMBA). " +
                 "Trabajos programados: EDESA (Salta), EDERSA (Río Negro), " +
                 "EDESE (Santiago del Estero, ENRESE), EPEN (Neuquén), " +
+                "EJESA (Jujuy) y otras fuentes provinciales, además de " +
                 "EDEN, EDEA, EDES y EDELAP (Buenos Aires). " +
                 "Los trabajos no prueban cortes en curso ni hay cobertura nacional completa.",
                 12, GREY, false));
@@ -1169,6 +1171,7 @@ public class MainActivity extends Activity {
         showRioNegroScheduledWorks(c);
         showSantiagoScheduledWorks(c);
         showNeuquenScheduledWorks(c);
+        showAdditionalProvincialScheduledWorks(c);
         showBuenosAiresScheduledWorks(c);
     }
 
@@ -1191,6 +1194,22 @@ public class MainActivity extends Activity {
                      "sin verificación actual");
             notes.addView(text("• " + labels[i] + ": " + state +
                     ". No indica cortes en curso.", 12, GREY, false));
+        }
+        // Future backend-only provincial additions appear without another APK.
+        JSONArray extraKeys = group.names();
+        if (extraKeys != null) for (int i = 0; i < extraKeys.length(); i++) {
+            String key = extraKeys.optString(i, "");
+            if (isSpecificProvincialKey(key)) continue;
+            JSONObject item = group.optJSONObject(key);
+            if (item == null || !"Argentina".equals(usable(item, "country"))) continue;
+            String company = usable(item, "company");
+            String province = usable(item, "province");
+            if (company.isEmpty() || province.isEmpty()) continue;
+            String state = sourceFresh(item) ? "publicaciones verificadas" :
+                    ("stale".equals(usable(item, "status")) ?
+                    "publicaciones antiguas" : "sin verificación actual");
+            notes.addView(text("• " + company + " (" + province + "): " + state +
+                    ". Solo trabajos programados, no cortes actuales.", 12, GREY, false));
         }
         JSONObject ba = feed.optJSONObject("buenos_aires_work");
         if (ba != null) {
@@ -1468,6 +1487,112 @@ public class MainActivity extends Activity {
             c.addView(text("Para zonas amplias, la coincidencia es por localidad " +
                     "nombrada en el comunicado. Confirmá los sectores y posibles " +
                     "modificaciones en el enlace oficial.", 12, GREY, false));
+        }
+    }
+
+    /** New provincial feeds use the existing planned-work schema. Known older
+     *  providers retain their specific screens; newer verified providers are
+     *  shown generically. No automatic notifications are generated here.
+     */
+    private boolean isSpecificProvincialKey(String key) {
+        return "epec_cordoba".equals(key) || "epe_santa_fe".equals(key) ||
+                "edersa_rio_negro".equals(key) ||
+                "edese_santiago_del_estero".equals(key) ||
+                "epen_neuquen".equals(key);
+    }
+
+    private boolean validAdditionalProvincialNotice(JSONObject source, JSONObject n) {
+        if (source == null || n == null ||
+                !"Argentina".equals(usable(source, "country")) ||
+                !"Argentina".equals(usable(n, "country")) ||
+                !"planned_outages_only".equals(usable(source, "coverage_kind")) ||
+                !"scheduled_not_confirmed".equals(usable(n, "status")) ||
+                !"planned_electricity_work".equals(usable(n, "kind")) ||
+                !usable(source, "province").equals(usable(n, "province")) ||
+                !usable(source, "company").equals(usable(n, "company"))) return false;
+        String locality = usable(n, "locality_hint");
+        if (locality.isEmpty() || !selectedAreaMatches("", locality) ||
+                usable(n, "zone_detail").isEmpty()) return false;
+        // Open only the same official host as the collector, not arbitrary links.
+        try {
+            Uri official = Uri.parse(usable(source, "source_url"));
+            Uri item = Uri.parse(usable(n, "source_url"));
+            if (!"https".equals(official.getScheme()) ||
+                    !"https".equals(item.getScheme()) ||
+                    official.getHost() == null ||
+                    !official.getHost().equalsIgnoreCase(item.getHost()) ||
+                    official.getUserInfo() != null || item.getUserInfo() != null ||
+                    official.getFragment() != null || item.getFragment() != null) return false;
+        } catch (Exception ignored) {
+            return false;
+        }
+        return ScheduledWorkWindow.isPublishedWindowRelevant(
+                usable(n, "scheduled_start"), usable(n, "scheduled_end"),
+                System.currentTimeMillis());
+    }
+
+    private int countAdditionalProvincialScheduledMatches() {
+        if (feed == null || !isFresh() || !"Argentina".equals(selectedCountry())) return 0;
+        JSONObject group = feed.optJSONObject("provincial_electricity");
+        if (group == null) return 0;
+        JSONArray keys = group.names();
+        if (keys == null) return 0;
+        int count = 0;
+        for (int p = 0; p < keys.length() && p < 40; p++) {
+            String key = keys.optString(p, "");
+            if (isSpecificProvincialKey(key)) continue;
+            JSONObject source = group.optJSONObject(key);
+            if (!sourceFresh(source)) continue;
+            JSONArray notices = source.optJSONArray("notices");
+            if (notices == null) continue;
+            for (int i = 0; i < notices.length() && i < 150; i++) {
+                if (validAdditionalProvincialNotice(source, notices.optJSONObject(i))) count++;
+            }
+        }
+        return count;
+    }
+
+    private void showAdditionalProvincialScheduledWorks(LinearLayout c) {
+        if (feed == null || !isFresh() || !"Argentina".equals(selectedCountry())) return;
+        JSONObject group = feed.optJSONObject("provincial_electricity");
+        if (group == null) return;
+        JSONArray keys = group.names();
+        if (keys == null) return;
+        int total = 0;
+        for (int p = 0; p < keys.length() && p < 40 && total < 20; p++) {
+            String key = keys.optString(p, "");
+            if (isSpecificProvincialKey(key)) continue;
+            JSONObject source = group.optJSONObject(key);
+            if (!sourceFresh(source)) continue;
+            JSONArray notices = source.optJSONArray("notices");
+            if (notices == null) continue;
+            int shown = 0;
+            for (int i = 0; i < notices.length() && i < 150 && shown < 8 && total < 20; i++) {
+                JSONObject n = notices.optJSONObject(i);
+                if (!validAdditionalProvincialNotice(source, n)) continue;
+                if (shown == 0) {
+                    c.addView(text(usable(source, "company") + " · " +
+                            usable(source, "province") + " · trabajos programados",
+                            15, INK, true));
+                    c.addView(text("Avisos futuros publicados; no confirman cortes " +
+                            "en curso ni afectación de tu domicilio.", 12, GREY, false));
+                }
+                c.addView(text("• " + usable(n, "locality_hint") + " · " +
+                        simpleArgentinaDateTime(usable(n, "scheduled_start")) + " a " +
+                        simpleArgentinaDateTime(usable(n, "scheduled_end")) +
+                        " (hora argentina)", 14, INK, true));
+                c.addView(text("Zona publicada: " + usable(n, "zone_detail"),
+                        12, GREY, false));
+                String task = usable(n, "task");
+                if (!task.isEmpty()) c.addView(text("Trabajo: " + task, 12, GREY, false));
+                final String link = usable(n, "source_url");
+                c.addView(button("Consultar publicación oficial", () -> open(link)));
+                shown++;
+                total++;
+            }
+            if (shown > 0) c.addView(text("Coincidencia por localidad. Confirmá la " +
+                    "provincia, los sectores y posibles cambios con la distribuidora.",
+                    12, GREY, false));
         }
     }
 
