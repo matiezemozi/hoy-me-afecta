@@ -142,7 +142,46 @@ class EPENTests(unittest.TestCase):
         self.assertNotIn(WRONG, str(got['notices']))
         self.assertEqual(calls, [EPEN_RSS, EPEN_ARCHIVE, SINGLE, WRONG])
         self.assertEqual(got['source_attempts'][1]['posts_verified'], 1)
-        self.assertEqual(got['parser_revision'], 'EPEN-RSS-ARCHIVE-v5.22.1')
+        self.assertEqual(got['parser_revision'], 'EPEN-RSS-ARCHIVE-v5.22.2')
+
+    def test_archive_accepts_official_link_with_read_more_label(self):
+        # Real-world archive pages often put the headline outside <a> and link
+        # via a generic 'Leer más' control. v5.22.1 returned zero candidates.
+        page = ('<article><h2>' + T_SINGLE + '</h2>'
+                '<a href="' + SINGLE + '">Leer más</a></article>')
+        entries = _epen_archive_items(page)
+        self.assertEqual(len(entries), 1)
+        self.assertEqual(entries[0][1], SINGLE)
+        self.assertTrue(entries[0][0].endswith('el 10/11/26'))
+        self.assertNotIn('Leer más', entries[0][0])
+
+    def test_archive_can_use_data_url_on_card(self):
+        page = ('<article data-url="' + NORTH + '"><h2>' + T_NORTH
+                + '</h2></article>')
+        self.assertEqual(_epen_archive_items(page)[0][1], NORTH)
+
+    def test_archive_embedded_link_fallback_still_needs_article(self):
+        page = '<article><script>var next="' + SINGLE + '";</script></article>'
+        self.assertEqual(_epen_archive_items(page)[0][1], SINGLE)
+        calls = []
+        def fetch(url):
+            calls.append(url)
+            if url == EPEN_RSS:
+                return rss([])
+            if url == EPEN_ARCHIVE:
+                return page
+            if url == SINGLE:
+                return BODY_SINGLE
+            raise AssertionError('Unexpected URL: ' + url)
+        result = collect_one('epen_neuquen', CHECKED, fetcher=fetch)
+        self.assertEqual(result['status'], 'ok')
+        self.assertEqual(result['notices'][0]['locality_hint'].casefold(),
+                         'villa la angostura')
+        self.assertEqual(result['source_attempts'][1]['candidate_posts'], 1)
+
+    def test_official_slug_and_label_conflicting_dates_are_rejected(self):
+        page = '<a href="' + SINGLE + '">' + T_WRONG + '</a>'
+        self.assertEqual(_epen_archive_items(page), [])
 
     def test_archive_rejects_external_links_and_plaintext(self):
         fake = ('<a href="https://malicious.invalid/index.php/2026/11/06/example/">'

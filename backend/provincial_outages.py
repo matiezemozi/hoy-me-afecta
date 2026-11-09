@@ -345,11 +345,16 @@ def _epen_feed_items(xml):
 
 
 class _EpenArchiveLinks(HTMLParser):
-    """Collect ONLY the visible, official publication links from EPEN's archive."""
+    """Read links, not just their labels: EPEN often puts titles outside anchors.
+
+    Every link is later checked against the official host/path and the article's
+    own body. A "read more" label does not mean there is no linked bulletin.
+    """
     def __init__(self):
         super().__init__(convert_charrefs=True)
         self.current = None
         self.records = []
+        self.links = []
         self.ignore = 0
 
     def handle_starttag(self, tag, attrs):
@@ -358,8 +363,12 @@ class _EpenArchiveLinks(HTMLParser):
             return
         if self.ignore:
             return
+        attributes = dict(attrs)
+        for key in ('href', 'data-href', 'data-url', 'data-link'):
+            value = attributes.get(key, '')
+            if isinstance(value, str) and value and len(value) < 500:
+                self.links.append(value)
         if tag == 'a':
-            attributes = dict(attrs)
             self.current = (attributes.get('href', ''), [])
 
     def handle_endtag(self, tag):
@@ -378,24 +387,85 @@ class _EpenArchiveLinks(HTMLParser):
             self.current[1].append(data[:500])
 
 
-def _epen_archive_items(html):
-    """Supplement RSS with the official archive; never trust headlines as outages.
+def _epen_title_from_slug(link):
+    """Reconstruct only explicitly dated 'corte programado' titles from a URL.
 
-    Every returned link must have a matching dated article, checked separately
-    by _parse_epen_article before it can enter a location-aware notice.
+    The slug supplies a *candidate*, not verification: its article must agree
+    on the calendar day, hours and affected locality before an alert is created.
+    """
+    slug = urlsplit(link).path.rstrip('/').rsplit('/', 1)[-1]
+    match = re.fullmatch(r'(corte-programado-[a-z0-9-]+-el)-'
+                         r'(\d{1,2})-(\d{1,2})-(20\d{2}|\d{2})', slug, re.I)
+    if not match:
+        return ''
+    prefix, day, month, year = match.groups()
+    return prefix.replace('-', ' ') + f' {day}/{month}/{year}'
+
+
+def _epen_archive_items(html):
+    """Collect validated candidate links from the public EPEN archive.
+
+    The original v5.22.1 parser required anchor text to contain a perfect title;
+    the real archive returned 0 posts even though the other EPEN collector found
+    eight items. Read official permalinks and derive the candidate's title only
+    when its URL has an unambiguous full-day date. Never trust titles as proof.
     """
     if not isinstance(html, str) or not html.strip() or len(html.encode('utf-8')) > MAX_BYTES:
         raise ValueError('Archivo EPEN inválido o demasiado grande')
     dom = _EpenArchiveLinks()
     dom.feed(html)
     unique = {}
-    for href, title in dom.records:
+    # A misleading visible title is a source conflict, even if the same link
+    # appears again on a thumbnail or in an unrelated embedded card.
+    conflicts = set()
+    for href, label in dom.records:
         link = urljoin(EPEN_ARCHIVE, unescape(href))
-        if ('corte' in title.casefold() and 'programad' in title.casefold()
-                and _EPEN_DATE_TITLE.search(title) and _epen_article_url(link)):
-            unique.setdefault(link, (title, link, ''))
+        if not _epen_article_url(link):
+            continue
+        derived = _epen_title_from_slug(link)
+        if not derived:
+            continue
+        explicit = re.search(r'(?i)\bcorte\s+programado\b.{0,180}?'
+                             r'\bel\s+\d{1,2}/\d{1,2}/(?:20\d{2}|\d{2})\b',
+                             label)
+        if explicit and _EPEN_DATE_TITLE.search(explicit.group(0)).group(0).casefold() != \
+                _EPEN_DATE_TITLE.search(derived).group(0).casefold():
+            conflicts.add(link)
+    # Prefer visible linked titles, but also recognize anchors with generic
+    # labels and images/data-url cards. Only dated official permalinks qualify.
+    for href, label in dom.records + [(href, '') for href in dom.links]:
+        if not isinstance(href, str) or len(href) > 500:
+            continue
+        link = urljoin(EPEN_ARCHIVE, unescape(href))
+        if not _epen_article_url(link) or link in conflicts:
+            continue
+        derived = _epen_title_from_slug(link)
+        if not derived:
+            continue
+        dated_label = re.search(r'(?i)\bcorte\s+programado\b.{0,180}?'
+                                r'\bel\s+\d{1,2}/\d{1,2}/(?:20\d{2}|\d{2})\b',
+                                label)
+        title = dated_label.group(0) if dated_label else derived
+        # If the visible label and URL name different days, ignore it.
+        if _EPEN_DATE_TITLE.search(title).group(0).casefold() != \
+                _EPEN_DATE_TITLE.search(derived).group(0).casefold():
+            continue
+        unique.setdefault(link, (title, link, ''))
         if len(unique) >= 35:
             break
+    # Bounded fallback for EPEN links embedded in card markup instead of hrefs;
+    # these candidates must still pass strict full-article validation.
+    if not unique:
+        for match in re.finditer(
+                r'(?:https://(?:www\.)?epen\.gov\.ar)?'
+                r'/index\.php/20\d{2}/\d{2}/\d{2}/[a-z0-9-]+/', html, re.I):
+            link = urljoin(EPEN_ARCHIVE, match.group(0))
+            if _epen_article_url(link) and link not in conflicts:
+                title = _epen_title_from_slug(link)
+                if title:
+                    unique.setdefault(link, (title, link, ''))
+                if len(unique) >= 35:
+                    break
     return list(unique.values())
 
 
@@ -491,7 +561,7 @@ def _collect_epen(checked_at, now, fetch):
         'status': 'unverified', 'province': province, 'country': 'Argentina',
         'company': company, 'source_url': official, 'checked_at': checked_at,
         'coverage_kind': 'planned_outages_only', 'notices': [],
-        'parser_revision': 'EPEN-RSS-ARCHIVE-v5.22.1',
+        'parser_revision': 'EPEN-RSS-ARCHIVE-v5.22.2',
         'message': 'Sin publicaciones verificadas; no implica suministro normal.',
         'source_attempts': [],
     }
