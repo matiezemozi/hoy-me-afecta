@@ -28,12 +28,14 @@ PROVIDERS = {
     'edese_santiago_del_estero': ('EDESE', 'Santiago del Estero', 'https://www.enrese.com.ar/CortesProgramados.html'),
     'epen_neuquen': ('EPEN', 'Neuquén', 'https://www.epen.gov.ar/index.php/cortes-programados/'),
     'ejesa_jujuy': ('EJESA', 'Jujuy', 'https://www.ejesa.com.ar/gestion/pwa/tareasprogramadas/mejora-y-mantenimiento'),
+    'edet_tucuman': ('EDET', 'Tucumán', 'https://www.edetsa.com/gestion/pwa/tareasprogramadas/cortes-de-luz'),
 }
 EPE_LEGACY = 'https://www.epe.santafe.gov.ar/reclamosweb/cortes.php/cortes.php'
 EPE_LEGACY_ALT = 'https://epe.santafe.gov.ar/reclamosweb/cortes.php/cortes.php'
 EPEC_ALTERNATE = 'https://epec.com.ar/actualidad/trabajos-mejoras'
 EPEN_RSS = 'https://www.epen.gov.ar/index.php/feed/'
 EPEN_ARCHIVE = 'https://www.epen.gov.ar/index.php/cortes-programados/'
+EDESE_ALTERNATE = 'https://enrese.com.ar/CortesProgramados.html'
 
 
 def _clean(s, limit=700):
@@ -770,6 +772,79 @@ def _parse_ejesa(html, now):
     return _filter_window(notices, now), seen, newest
 
 
+# EDET (Tucumán) publishes the same per-card ISO dates and clock intervals as
+# EJESA, but labels its service area "Sucursal" and publishes the number of
+# affected services. "APROBADA" alone is insufficient: never infer that a
+# maintenance task interrupts power without an explicit affected-services count
+# or an unambiguous interruption statement. No automatic alert is generated.
+def _parse_edet(html, now):
+    _, visible = _visible(html)
+    if 'tareas programadas' not in visible.lower() and 'estado de la tarea' not in visible.lower():
+        return [], 0, None
+    days = list(_EJESA_ISO_DAY.finditer(visible))
+    notices, seen, newest = [], 0, None
+    for idx, match in enumerate(days):
+        try:
+            day = datetime.strptime(match.group(1), '%Y-%m-%d').date()
+        except ValueError:
+            continue
+        end_at = days[idx+1].start() if idx+1 < len(days) else len(visible)
+        card = visible[match.end():end_at]
+        if len(card) > 3500:
+            continue
+        printed = re.search(r'(\d{1,2}/\d{1,2}/20\d{2})\s*$',
+                            visible[max(0, match.start()-120):match.start()])
+        if printed:
+            try:
+                if datetime.strptime(printed.group(1), '%d/%m/%Y').date() != day:
+                    continue
+            except ValueError:
+                continue
+        state = re.search(r'\bEstado\s+de\s+la\s+tarea\s*:\s*'
+                          r'(APROBADA|EJECUTADA|CANCELADA|SUSPENDIDA|PENDIENTE|PROGRAMADA)\b',
+                          card, re.I)
+        if not state:
+            continue
+        seen += 1
+        newest = max(newest, day) if newest else day
+        if state.group(1).upper() != 'APROBADA':
+            continue
+        hours = _EJESA_HOURS.search(card)
+        if not hours:
+            continue
+        brief = _EJESA_BRIEF_HOURS.findall(card[:hours.start()])
+        if brief and any(pair != hours.groups() for pair in brief):
+            continue
+        area_m = re.search(r'\bSucursal\s*:\s*(.*?)\s+(?:description\s+)?'
+                           r'Descripci[oó]n\s*:', card, re.I | re.S)
+        zone_m = re.search(r'\bZona\s*:\s*(.*?)\s+(?:flag\s+)?'
+                           r'Sucursal\s*:', card, re.I | re.S)
+        count_m = re.search(r'\bCantidad\s+de\s+servicios\s+afectados\s*:\s*'
+                            r'([0-9]{1,7})\b', card, re.I)
+        if not area_m or not zone_m or not count_m:
+            continue
+        branch = _clean(area_m.group(1), 100)
+        zone = _clean(zone_m.group(1), 700)
+        if (not branch or len(zone) < 8 or int(count_m.group(1)) <= 0 or
+                re.search(r'\b(?:sin\s+afectar\s+(?:el\s+)?servicio|'
+                          r'no\s+(?:se\s+)?interrumpe|no\s+(?:se\s+)?afecta)\b',
+                          zone + ' ' + card, re.I)):
+            continue
+        try:
+            start, end = _datetime(day, hours.group(1)), _datetime(day, hours.group(2))
+        except ValueError:
+            continue
+        if start >= end:
+            continue
+        task_m = re.search(r'\bDescripci[oó]n\s*:\s*(.*?)\s+'
+                           r'(?:format_list_numbered\s+)?Cantidad\s+de\s+servicios\s+afectados\s*:',
+                           card, re.I | re.S)
+        task = _clean(task_m.group(1), 250) if task_m else 'Tarea programada EDET'
+        notices.append(_notice('EDET', 'Tucumán', PROVIDERS['edet_tucuman'][2],
+                               branch, start, end, zone, task))
+    return _filter_window(notices, now), seen, newest
+
+
 _EPEC = re.compile(
     r'\bDe\s+(?P<start>\d{1,2}:\d\d)\s+a\s+(?P<end>\d{1,2}:\d\d)\s*'
     r'Motivo\s*:\s*(?P<task>.*?)\s*'
@@ -841,6 +916,7 @@ def _diagnose_html(html, page, key):
         'epe_santa_fe': r'(?<!\d)\d{1,2}-\d{1,2}-20\d\d(?!\d)',
         'edese_santiago_del_estero': r'(?<!\d)\d{1,2}/\d{1,2}/20\d\d(?!\d)',
         'ejesa_jujuy': r'(?<!\d)20\d{2}-\d{2}-\d{2}(?!\d)',
+        'edet_tucuman': r'(?<!\d)20\d{2}-\d{2}-\d{2}(?!\d)',
     }
     expected = patterns.get(key, '')
     dates = len(re.findall(expected, visible)) if expected else 0
@@ -884,6 +960,8 @@ def collect_one(key, checked_at, fetcher=None, script_fetcher=None):
         output['parser_revision'] = 'EDERSA-v5.18.1'
     if key == 'ejesa_jujuy':
         output['parser_revision'] = 'EJESA-WEB-v5.23'
+    if key == 'edet_tucuman':
+        output['parser_revision'] = 'EDET-WEB-v5.24'
     if key == 'edese_santiago_del_estero':
         output['parser_revision'] = 'EDESE-ENRESE-v5.21'
         output['published_by'] = 'ENRESE (ente regulador provincial)'
@@ -892,6 +970,8 @@ def collect_one(key, checked_at, fetcher=None, script_fetcher=None):
         pages = [url, EPE_LEGACY, EPE_LEGACY_ALT]
     elif key == 'epec_cordoba':
         pages = [url, EPEC_ALTERNATE]
+    elif key == 'edese_santiago_del_estero':
+        pages = [url, EDESE_ALTERNATE]
     else:
         pages = [url]
     problems = []
@@ -911,6 +991,8 @@ def collect_one(key, checked_at, fetcher=None, script_fetcher=None):
                 notices, count, newest = _parse_edese(html, now)
             elif key == 'ejesa_jujuy':
                 notices, count, newest = _parse_ejesa(html, now)
+            elif key == 'edet_tucuman':
+                notices, count, newest = _parse_edet(html, now)
             else:
                 notices, count, newest = _parse_epec(html, now)
             attempt['records_checked'] = count
