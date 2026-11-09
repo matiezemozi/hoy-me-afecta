@@ -265,7 +265,7 @@ public class MainActivity extends Activity {
 
         root.addView(text("HOY ME AFECTA", 26, INK, true));
         root.addView(text("Lo que te conviene saber antes de salir", 14, GREY, false));
-        root.addView(text("Piloto v5.20 · Historial y resumen navegable", 12, GREY, false));
+        root.addView(text("Piloto v5.22 · Neuquén (EPEN) y resumen navegable", 12, GREY, false));
         LinearLayout status = card();
         status.addView(text(connection, 14, BLUE, false));
         if (feed != null) {
@@ -949,13 +949,15 @@ public class MainActivity extends Activity {
                         (sourceFresh(sources.optJSONObject("edenor")) ||
                          sourceFresh(sources.optJSONObject("edesur")));
                 int enre = matchingElectricityCount();
-                int works = countBuenosAiresScheduledMatches();
+                int works = countBuenosAiresScheduledMatches() +
+                        countSantiagoScheduledMatches() + countNeuquenScheduledMatches();
                 detail = (connected ? enre + (enre == 1 ?
                         " aviso del ENRE coincidente" : " avisos del ENRE coincidentes") :
                         "ENRE sin consulta reciente verificable") +
                         "; " + works + (works == 1 ? " trabajo programado" :
-                        " trabajos programados") + " en Buenos Aires. " +
-                        "No confirma cortes actuales.";
+                        " trabajos programados") +
+                        " coincidentes en Buenos Aires, Santiago del Estero y Neuquén. " +
+                        "Otras provincias: consultar el detalle. No confirma cortes actuales.";
             }
             reportLink(box, "electricidad", "Electricidad", detail);
         }
@@ -1092,6 +1094,7 @@ public class MainActivity extends Activity {
         }
         c.addView(text("Cobertura parcial: ENRE (Edenor/Edesur, AMBA). " +
                 "Trabajos programados: EDESA (Salta), EDERSA (Río Negro), " +
+                "EDESE (Santiago del Estero, ENRESE), EPEN (Neuquén), " +
                 "EDEN, EDEA, EDES y EDELAP (Buenos Aires). " +
                 "Los trabajos no prueban cortes en curso ni hay cobertura nacional completa.",
                 12, GREY, false));
@@ -1164,6 +1167,8 @@ public class MainActivity extends Activity {
         showRecentPublicationHighlights(c);
         showSaltaScheduledWorks(c);
         showRioNegroScheduledWorks(c);
+        showSantiagoScheduledWorks(c);
+        showNeuquenScheduledWorks(c);
         showBuenosAiresScheduledWorks(c);
     }
 
@@ -1173,8 +1178,10 @@ public class MainActivity extends Activity {
                 !"Argentina".equals(selectedCountry())) return;
         JSONObject group = feed.optJSONObject("provincial_electricity");
         if (group == null) return;
-        String[] keys = {"epec_cordoba", "epe_santa_fe", "edersa_rio_negro"};
-        String[] labels = {"EPEC (Córdoba)", "EPE (Santa Fe)", "EDERSA (Río Negro)"};
+        String[] keys = {"epec_cordoba", "epe_santa_fe", "edersa_rio_negro",
+                "edese_santiago_del_estero", "epen_neuquen"};
+        String[] labels = {"EPEC (Córdoba)", "EPE (Santa Fe)", "EDERSA (Río Negro)",
+                "EDESE (Santiago del Estero · ENRESE)", "EPEN (Neuquén)"};
         notes.addView(text("Fuentes eléctricas provinciales (solo trabajos programados):",
                 13, INK, true));
         for (int i = 0; i < keys.length; i++) {
@@ -1318,6 +1325,150 @@ public class MainActivity extends Activity {
                 "activo ni afectación de tu domicilio.", 12, GREY, false));
         c.addView(button("Consultar cortes programados de EDERSA", () ->
                 open("https://www.edersa.com.ar/cortes-programados/")));
+    }
+
+    /** ENRESE publishes EDESE work schedules, not verified live interruptions.
+     *  The underlying bulletin may list sensitive customer data in "Notas";
+     *  the collector does not carry that field into the feed.
+     */
+    private int countSantiagoScheduledMatches() {
+        if (feed == null || !isFresh() || !"Argentina".equals(selectedCountry())) return 0;
+        JSONObject group = feed.optJSONObject("provincial_electricity");
+        JSONObject provider = group == null ? null : group.optJSONObject("edese_santiago_del_estero");
+        if (!sourceFresh(provider)) return 0;
+        JSONArray notices = provider.optJSONArray("notices");
+        if (notices == null) return 0;
+        int count = 0;
+        for (int i = 0; i < notices.length(); i++) {
+            JSONObject n = notices.optJSONObject(i);
+            if (!validSantiagoNotice(n)) continue;
+            count++;
+        }
+        return count;
+    }
+
+    private boolean validSantiagoNotice(JSONObject n) {
+        if (n == null || !"EDESE".equals(usable(n, "company")) ||
+                !"Santiago del Estero".equals(usable(n, "province")) ||
+                !"scheduled_not_confirmed".equals(usable(n, "status")) ||
+                !"https://www.enrese.com.ar/CortesProgramados.html".equals(
+                        usable(n, "source_url"))) return false;
+        String locality = usable(n, "locality_hint");
+        return !locality.isEmpty() && selectedAreaMatches("", locality) &&
+                ScheduledWorkWindow.isPublishedWindowRelevant(
+                        usable(n, "scheduled_start"), usable(n, "scheduled_end"),
+                        System.currentTimeMillis());
+    }
+
+    private void showSantiagoScheduledWorks(LinearLayout c) {
+        if (feed == null || !isFresh() || !"Argentina".equals(selectedCountry())) return;
+        JSONObject group = feed.optJSONObject("provincial_electricity");
+        JSONObject provider = group == null ? null : group.optJSONObject("edese_santiago_del_estero");
+        if (!sourceFresh(provider)) return;
+        JSONArray notices = provider.optJSONArray("notices");
+        if (notices == null) return;
+        int displayed = 0;
+        for (int i = 0; i < notices.length() && displayed < 6; i++) {
+            JSONObject n = notices.optJSONObject(i);
+            if (!validSantiagoNotice(n)) continue;
+            if (displayed == 0) {
+                c.addView(text("EDESE · Santiago del Estero · publicación de ENRESE",
+                        15, INK, true));
+                c.addView(text("Trabajos previstos, no cortes confirmados. " +
+                        "La coincidencia por localidad no acredita afectación de tu domicilio.",
+                        12, GREY, false));
+            }
+            c.addView(text("• " + usable(n, "locality_hint") + " · " +
+                    simpleArgentinaDateTime(usable(n, "scheduled_start")) + " a " +
+                    simpleArgentinaDateTime(usable(n, "scheduled_end")) +
+                    " (hora argentina)", 14, INK, true));
+            c.addView(text("Zona publicada: " + usable(n, "zone_detail"),
+                    12, GREY, false));
+            c.addView(text("Trabajo: " + usable(n, "task"), 12, GREY, false));
+            displayed++;
+        }
+        if (displayed > 0) {
+            c.addView(text("Confirmá que la localidad corresponde a Santiago del Estero. " +
+                    "Los horarios pueden modificarse o suspenderse.", 12, GREY, false));
+            c.addView(button("Consultar programación oficial de ENRESE", () ->
+                    open("https://www.enrese.com.ar/CortesProgramados.html")));
+        }
+    }
+
+    /** Neuquén EPEN: source-backed future works only, never live outage alerts.
+     * Each official article and its date/hour are checked in the backend.
+     */
+    private boolean validNeuquenNotice(JSONObject n) {
+        if (n == null || !"EPEN".equals(usable(n, "company")) ||
+                !"Neuquén".equals(usable(n, "province")) ||
+                !"scheduled_not_confirmed".equals(usable(n, "status"))) return false;
+        String locality = usable(n, "locality_hint");
+        if (locality.isEmpty() || !selectedAreaMatches("", locality)) return false;
+        String url = usable(n, "source_url");
+        try {
+            Uri link = Uri.parse(url);
+            String host = link.getHost();
+            if (!"https".equals(link.getScheme()) ||
+                    !("www.epen.gov.ar".equals(host) || "epen.gov.ar".equals(host)) ||
+                    link.getQuery() != null || link.getFragment() != null ||
+                    link.getPath() == null || !link.getPath().matches(
+                            "/index\\.php/20\\d{2}/\\d{2}/\\d{2}/[a-z0-9-]+/")) return false;
+        } catch (Exception exc) {
+            return false;
+        }
+        return ScheduledWorkWindow.isPublishedWindowRelevant(
+                usable(n, "scheduled_start"), usable(n, "scheduled_end"),
+                System.currentTimeMillis());
+    }
+
+    private int countNeuquenScheduledMatches() {
+        if (feed == null || !isFresh() || !"Argentina".equals(selectedCountry())) return 0;
+        JSONObject group = feed.optJSONObject("provincial_electricity");
+        JSONObject provider = group == null ? null : group.optJSONObject("epen_neuquen");
+        if (!sourceFresh(provider)) return 0;
+        JSONArray notices = provider.optJSONArray("notices");
+        if (notices == null) return 0;
+        int count = 0;
+        for (int i = 0; i < notices.length(); i++) {
+            if (validNeuquenNotice(notices.optJSONObject(i))) count++;
+        }
+        return count;
+    }
+
+    private void showNeuquenScheduledWorks(LinearLayout c) {
+        if (feed == null || !isFresh() || !"Argentina".equals(selectedCountry())) return;
+        JSONObject group = feed.optJSONObject("provincial_electricity");
+        JSONObject provider = group == null ? null : group.optJSONObject("epen_neuquen");
+        if (!sourceFresh(provider)) return;
+        JSONArray notices = provider.optJSONArray("notices");
+        if (notices == null) return;
+        int shown = 0;
+        for (int i = 0; i < notices.length() && shown < 8; i++) {
+            JSONObject n = notices.optJSONObject(i);
+            if (!validNeuquenNotice(n)) continue;
+            if (shown == 0) {
+                c.addView(text("EPEN · Neuquén · trabajos programados", 15, INK, true));
+                c.addView(text("El organismo publica cortes previstos. No confirma " +
+                        "que el servicio esté interrumpido ahora ni que tu domicilio " +
+                        "esté afectado.", 12, GREY, false));
+            }
+            c.addView(text("• " + usable(n, "locality_hint") + " · " +
+                    simpleArgentinaDateTime(usable(n, "scheduled_start")) + " a " +
+                    simpleArgentinaDateTime(usable(n, "scheduled_end")) +
+                    " (hora argentina)", 14, INK, true));
+            c.addView(text("Zona publicada: " + usable(n, "zone_detail"),
+                    12, GREY, false));
+            String task = usable(n, "task");
+            if (!task.isEmpty()) c.addView(text("Trabajo: " + task, 12, GREY, false));
+            String officialLink = usable(n, "source_url");
+            c.addView(button("Ver publicación original de EPEN", () -> open(officialLink)));
+            shown++;
+        }
+        if (shown > 0) {
+            c.addView(text("Para zonas amplias, la coincidencia es por localidad " +
+                    "nombrada en el comunicado. Confirmá los sectores y posibles " +
+                    "modificaciones en el enlace oficial.", 12, GREY, false));
+        }
     }
 
     private static String simpleArgentinaDateTime(String value) {

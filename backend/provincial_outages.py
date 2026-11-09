@@ -9,6 +9,8 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from hashlib import sha256
 from html.parser import HTMLParser
+from html import unescape
+from xml.etree import ElementTree
 import re
 import os
 from urllib.request import Request, urlopen
@@ -23,10 +25,13 @@ PROVIDERS = {
     'epec_cordoba': ('EPEC', 'Córdoba', 'https://www.epec.com.ar/actualidad/trabajos-mejoras'),
     'epe_santa_fe': ('EPE', 'Santa Fe', 'https://www.epe.santafe.gov.ar/institucional/trabajos-programados'),
     'edersa_rio_negro': ('EDERSA', 'Río Negro', 'https://www.edersa.com.ar/cortes-programados/'),
+    'edese_santiago_del_estero': ('EDESE', 'Santiago del Estero', 'https://www.enrese.com.ar/CortesProgramados.html'),
+    'epen_neuquen': ('EPEN', 'Neuquén', 'https://www.epen.gov.ar/index.php/cortes-programados/'),
 }
 EPE_LEGACY = 'https://www.epe.santafe.gov.ar/reclamosweb/cortes.php/cortes.php'
 EPE_LEGACY_ALT = 'https://epe.santafe.gov.ar/reclamosweb/cortes.php/cortes.php'
 EPEC_ALTERNATE = 'https://epec.com.ar/actualidad/trabajos-mejoras'
+EPEN_RSS = 'https://www.epen.gov.ar/index.php/feed/'
 
 
 def _clean(s, limit=700):
@@ -211,6 +216,290 @@ def _flag_ambiguous_edersa_zones(notices):
     return notices
 
 
+def _edese_locality(zone):
+    """Conservative first locality, without fabricating a city from a street."""
+    text = _clean(zone, 700).split(',')[0].strip().strip('.;')
+    if not text:
+        return ''
+    if re.match(r'^(?:en\s+calle|entre\s+calles|ruta|camino|calle|barrio|b[°º]|zona\s+rural)\b',
+                text, re.IGNORECASE):
+        return ''
+    # Preserve articles belonging to town names ("La Florida", "La Banda").
+    if re.match(r'^parte\s+de\s+la\s+ciudad\s+de\s+', text, re.IGNORECASE):
+        text = re.sub(r'^parte\s+de\s+la\s+ciudad\s+de\s+', '', text, flags=re.IGNORECASE)
+    elif re.match(r'^parte\s+de\s+la\s+ciudad\s+capital\b', text, re.IGNORECASE):
+        text = re.sub(r'^parte\s+de\s+la\s+', '', text, flags=re.IGNORECASE)
+    else:
+        text = re.sub(r'^parte\s+de\s+|^parte\s+del\s+|^parte\s+de\s+los\s+',
+                      '', text, flags=re.IGNORECASE)
+    text = re.sub(r'^ciudad\s+de\s+|^ciudad\s+del\s+', '', text, flags=re.IGNORECASE).strip()
+    if re.fullmatch(r'ciudad\s+capital|capital', text, re.IGNORECASE):
+        # Explicit provincial capital in the ENRESE bulletin.
+        return 'Santiago del Estero'
+    if not text or len(text) > 100 or re.match(
+            r'^(?:barrio|b[°º]|ruta|zona|calle|sector|rural)\b', text, re.IGNORECASE):
+        return ''
+    return text
+
+
+def _parse_edese(html, now):
+    """Read only dated table columns (date, hours, work, zone) on ENRESE.
+
+    The sixth column contains consumers' names, meter IDs and, sometimes,
+    electrodependence information. Never retain or emit that column.
+    """
+    dom, visible = _visible(html)
+    low = visible.casefold()
+    if 'cortes de servicio programados' not in low or 'edese' not in low:
+        return [], 0, None
+    items, seen, newest = [], 0, None
+    for event, row in dom.events:
+        if event != 'row' or not isinstance(row, list) or len(row) < 5:
+            continue
+        date_raw, start_raw, end_raw, task, zone = row[:5]
+        if not re.fullmatch(r'\d{1,2}/\d{1,2}/20\d{2}', date_raw):
+            continue
+        try:
+            day = datetime.strptime(date_raw, '%d/%m/%Y').date()
+        except ValueError:
+            continue
+        seen += 1
+        newest = max(newest, day) if newest else day
+        if not (re.fullmatch(r'\d{1,2}:\d{2}', start_raw) and
+                re.fullmatch(r'\d{1,2}:\d{2}', end_raw)):
+            continue
+        try:
+            start, end = _datetime(day, start_raw), _datetime(day, end_raw)
+        except ValueError:
+            continue
+        if start >= end or not _clean(task) or not _clean(zone):
+            continue
+        locality = _edese_locality(zone)
+        if not locality:
+            continue
+        items.append(_notice('EDESE', 'Santiago del Estero',
+                             PROVIDERS['edese_santiago_del_estero'][2],
+                             locality, start, end, zone, task))
+    return _filter_window(items, now), seen, newest
+
+
+
+# EPEN publishes dated WordPress notices. RSS is an official publication index,
+# NOT proof of any outage. Each scheduled item must independently corroborate
+# the date and hours written in its body. This intentionally rejects occasional
+# EPEN posts where the headline dates disagree with the actual article.
+_EPEN_MONTHS = {'enero': 1, 'febrero': 2, 'marzo': 3, 'abril': 4,
+                'mayo': 5, 'junio': 6, 'julio': 7, 'agosto': 8,
+                'septiembre': 9, 'setiembre': 9, 'octubre': 10,
+                'noviembre': 11, 'diciembre': 12}
+_EPEN_TOWNS_NORTH = (
+    'Chos Malal', 'Taquimilán', 'Tricao Malal', 'Andacollo',
+    'Huinganco', 'Los Miches', 'Las Ovejas', 'Varvarco',
+    'Manzano Amargo', 'Los Guañacos', 'Villa del Nahueve',
+    'Buta Ranquil', 'Barrancas', 'Cerro Mayal', 'El Alamito',
+    'La Primavera', 'Villa Curi Leuvú',
+)
+_EPEN_DATE_TITLE = re.compile(r'\bel\s+(\d{1,2})/(\d{1,2})/(20\d{2}|\d{2})\s*$', re.I)
+_EPEN_BODY_DATE = re.compile(
+    r'\b(\d{1,2})\s+de\s+(' + '|'.join(_EPEN_MONTHS) + r')\b', re.I)
+_EPEN_HOURS = re.compile(
+    r'\b(?:de|desde)\s+(\d{1,2})(?::(\d{2}))?\s*'
+    r'(?:a|hasta|[-–])\s*(\d{1,2})(?::(\d{2}))?\s*'
+    r'(?:h(?:s|oras)?\.?|$|[,.;])', re.I)
+
+
+def _epen_article_url(link):
+    """Reject arbitrary RSS links, redirects and external domains."""
+    try:
+        parts = urlsplit(link)
+    except ValueError:
+        return False
+    return (parts.scheme == 'https' and parts.hostname in
+            ('www.epen.gov.ar', 'epen.gov.ar') and not parts.username and
+            not parts.password and not parts.query and not parts.fragment and
+            bool(re.fullmatch(r'/index\.php/20\d{2}/\d{2}/\d{2}/[a-z0-9-]+/',
+                              parts.path)))
+
+
+def _epen_feed_items(xml):
+    if not isinstance(xml, str) or len(xml.encode('utf-8')) > MAX_BYTES:
+        raise ValueError('Boletín inválido o demasiado grande')
+    root = ElementTree.fromstring(xml)
+    if root.tag != 'rss':
+        raise ValueError('La respuesta no es un RSS reconocible')
+    channel = root.find('channel')
+    if channel is None:
+        raise ValueError('RSS sin canal')
+    records = []
+    for item in channel.findall('item')[:35]:
+        title = _clean(unescape(item.findtext('title') or ''), 250)
+        link = _clean(item.findtext('link') or '', 380)
+        content = item.findtext('{http://purl.org/rss/1.0/modules/content/}encoded') or ''
+        if not content:
+            content = item.findtext('description') or ''
+        if ('corte' in title.casefold() and 'programad' in title.casefold()
+                and _EPEN_DATE_TITLE.search(title) and _epen_article_url(link)):
+            records.append((title, link, content[:30000]))
+    return records
+
+
+def _epen_post_body(html):
+    _, visible = _visible(html)
+    # WordPress pages append unrelated 'Últimas noticias' titles after the post.
+    # Extract ONLY the actual EPEN bulletin, not those unrelated dates.
+    m = re.search(r'\bEl Ente Provincial de Energ[ií]a del Neuqu[eé]n\b',
+                  visible, re.I)
+    if not m:
+        return ''
+    body = visible[m.start():m.start() + 3500]
+    cutoff = re.search(r'\b(?:Por Prensa EPEN|Published On|Compart[ií] la noticia|'
+                       r'[UÚ]ltimas Noticias)\b', body, re.I)
+    return _clean(body[:cutoff.start() if cutoff else None], 3000)
+
+
+def _epen_headline_locality(title):
+    # Explicit named town only. "zona Norte" and similar broad regions are
+    # expanded solely from towns stated explicitly in the official 'Afecta'.
+    m = re.search(r'\ben\s+(?:sectores?\s+de\s+|zona\s+rural\s+de\s+|'
+                  r'la\s+zona\s+rural\s+de\s+|la\s+zona\s+)'
+                  r'(.+?)\s+el\s+\d{1,2}/', title, re.I)
+    if not m:
+        return ''
+    town = _clean(m.group(1), 100)
+    if re.match(r'^(?:la\s+)?zona\b|^sectores\b|^norte\b', town, re.I):
+        return ''
+    return town
+
+
+def _parse_epen_article(title, link, html, now):
+    """Parse only *one-day* notices with corroborating body date and hours."""
+    m = _EPEN_DATE_TITLE.search(title)
+    if not m or not _epen_article_url(link):
+        return []
+    year = int(m.group(3))
+    if year < 100:
+        year += 2000
+    try:
+        day = datetime(year, int(m.group(2)), int(m.group(1))).date()
+    except ValueError:
+        return []
+    body = _epen_post_body(html)
+    if not body or 'EPEN' not in body or 'corte' not in body.casefold():
+        return []
+    dates = {(int(d), _EPEN_MONTHS[month.casefold()])
+             for d, month in _EPEN_BODY_DATE.findall(body)}
+    # A date in the title alone is never enough. Contradictions are rejected.
+    if dates != {(day.day, day.month)}:
+        return []
+    windows = set()
+    for a, amin, b, bmin in _EPEN_HOURS.findall(body):
+        try:
+            start = _datetime(day, f'{int(a):02d}:{int(amin or 0):02d}')
+            end = _datetime(day, f'{int(b):02d}:{int(bmin or 0):02d}')
+            if start < end:
+                windows.add((start, end))
+        except ValueError:
+            continue
+    if len(windows) != 1:
+        return []
+    start, end = next(iter(windows))
+    if not (now <= start <= now + timedelta(days=MAX_DAYS)):
+        return []
+    affected = re.search(r'\bAfecta\s*:\s*(.*?)(?=\b(?:A partir de|'
+                         r'Se solicita|Solicitamos|Por Prensa)\b|$)', body, re.I | re.S)
+    if not affected:
+        return []
+    zone = _clean(affected.group(1), 700).rstrip('. ')
+    if len(zone) < 8:
+        return []
+    town = _epen_headline_locality(title)
+    if town:
+        localities = [town]
+    elif re.search(r'\bzona\s+norte\b', title, re.I):
+        localities = [name for name in _EPEN_TOWNS_NORTH if re.search(
+            r'(?<!\w)' + re.escape(name) + r'(?!\w)', zone, re.I)]
+    else:
+        localities = []
+    if not localities:
+        return []
+    task_m = re.search(r'\bpara\s+(?:realizar|efectuar)\s+([^.;]{8,190})', body, re.I)
+    task = _clean(task_m.group(1), 180) if task_m else 'Corte programado anunciado por EPEN'
+    return [_notice('EPEN', 'Neuquén', link, locality, start, end, zone, task)
+            for locality in localities[:25]]
+
+
+def _collect_epen(checked_at, now, fetch):
+    key = 'epen_neuquen'
+    company, province, official = PROVIDERS[key]
+    output = {
+        'status': 'unverified', 'province': province, 'country': 'Argentina',
+        'company': company, 'source_url': official, 'checked_at': checked_at,
+        'coverage_kind': 'planned_outages_only', 'notices': [],
+        'parser_revision': 'EPEN-RSS-v5.22',
+        'message': 'Sin publicaciones verificadas; no implica suministro normal.',
+        'source_attempts': [],
+    }
+    attempt = {'url': EPEN_RSS}
+    output['source_attempts'].append(attempt)
+    try:
+        records = _epen_feed_items(fetch(EPEN_RSS))
+    except Exception as exc:
+        attempt.update(result='fetch_or_parse_error', error_type=type(exc).__name__)
+        output['message'] = 'No se pudo verificar el boletín oficial de EPEN.'
+        return output
+    attempt['candidate_posts'] = len(records)
+    if not records:
+        attempt['result'] = 'no_relevant_posts'
+        return output
+
+    all_notices, accepted_posts, rejected_posts = [], 0, 0
+    newest = None
+    # On a normal WordPress RSS, content:encoded contains the article body.
+    # Fetch full article only when that body is absent/incomplete, at most 8.
+    extra_fetches = 0
+    for title, link, content in records[:20]:
+        date_match = _EPEN_DATE_TITLE.search(title)
+        if not date_match:
+            continue
+        try:
+            year = int(date_match.group(3))
+            year = (year + 2000) if year < 100 else year
+            published_day = datetime(year, int(date_match.group(2)), int(date_match.group(1))).date()
+        except ValueError:
+            continue
+        if published_day < (now - timedelta(days=3)).date() or \
+                published_day > (now + timedelta(days=MAX_DAYS)).date():
+            continue
+        parsed = _parse_epen_article(title, link, content, now)
+        if not parsed and extra_fetches < 8:
+            extra_fetches += 1
+            try:
+                article = fetch(link)
+                parsed = _parse_epen_article(title, link, article, now)
+            except Exception:
+                # A failed article should not prevent verified other posts.
+                pass
+        if parsed:
+            accepted_posts += 1
+            newest = published_day if newest is None else max(newest, published_day)
+            all_notices.extend(parsed)
+        else:
+            rejected_posts += 1
+    attempt.update(result=('verified' if accepted_posts else 'no_complete_records'),
+                   posts_verified=accepted_posts, posts_rejected=rejected_posts,
+                   extra_article_fetches=extra_fetches)
+    if not accepted_posts:
+        output['message'] = ('No hay avisos completos con fecha, horario y zona '
+                             'coincidentes entre titular y publicación. No se infiere estado normal.')
+        return output
+    notices = _filter_window(all_notices, now)
+    output.update(status='ok', notices=notices, records_checked=accepted_posts,
+                  latest_published_date=newest.isoformat(),
+                  message='Cortes programados publicados por EPEN; NO confirman cortes en curso.',
+                  rejected_article_count=rejected_posts)
+    return output
+
+
 _EPE = re.compile(
     r'Localidad\s*:\s*(?P<locality>.*?)\s*'
     r'Inicio\s*:\s*(?P<date>\d{1,2}-\d{1,2}-20\d\d)\s*'
@@ -281,7 +570,7 @@ def fetch_html(url):
     # Official public HTTPS pages; no credentials, JS execution or bypasses.
     req = Request(url, headers={
         'User-Agent': 'HoyMeAfecta/0.5 (piloto fuentes provinciales; contacto en repositorio)',
-        'Accept': 'text/html,application/xhtml+xml',
+        'Accept': 'text/html,application/xhtml+xml,application/rss+xml,application/xml',
         'Accept-Language': 'es-AR,es;q=0.9',
     })
     with urlopen(req, timeout=14) as response:
@@ -310,6 +599,7 @@ def _diagnose_html(html, page, key):
     patterns = {
         'epec_cordoba': r'(?<!\d)\d{1,2}/\d{1,2}/20\d\d(?!\d)',
         'epe_santa_fe': r'(?<!\d)\d{1,2}-\d{1,2}-20\d\d(?!\d)',
+        'edese_santiago_del_estero': r'(?<!\d)\d{1,2}/\d{1,2}/20\d\d(?!\d)',
     }
     expected = patterns.get(key, '')
     dates = len(re.findall(expected, visible)) if expected else 0
@@ -342,6 +632,8 @@ def collect_one(key, checked_at, fetcher=None, script_fetcher=None):
         raise KeyError(key)
     company, province, url = PROVIDERS[key]
     now = _instant(checked_at)
+    if key == 'epen_neuquen':
+        return _collect_epen(checked_at, now, fetcher or fetch_html)
     output = {'status': 'unverified', 'province': province, 'country': 'Argentina',
               'company': company, 'source_url': url, 'checked_at': checked_at,
               'coverage_kind': 'planned_outages_only', 'notices': [],
@@ -349,6 +641,9 @@ def collect_one(key, checked_at, fetcher=None, script_fetcher=None):
               'source_attempts': []}
     if key == 'edersa_rio_negro':
         output['parser_revision'] = 'EDERSA-v5.18.1'
+    if key == 'edese_santiago_del_estero':
+        output['parser_revision'] = 'EDESE-ENRESE-v5.21'
+        output['published_by'] = 'ENRESE (ente regulador provincial)'
     fetch = fetcher or fetch_html
     if key == 'epe_santa_fe':
         pages = [url, EPE_LEGACY, EPE_LEGACY_ALT]
@@ -369,6 +664,8 @@ def collect_one(key, checked_at, fetcher=None, script_fetcher=None):
                 notices, count, newest = _parse_edersa(html, now)
             elif key == 'epe_santa_fe':
                 notices, count, newest = _parse_epe(html, now, page)
+            elif key == 'edese_santiago_del_estero':
+                notices, count, newest = _parse_edese(html, now)
             else:
                 notices, count, newest = _parse_epec(html, now)
             attempt['records_checked'] = count
