@@ -7,6 +7,7 @@ Remote failures, empty JavaScript shells and stale archives are NOT "no outages"
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
+from decimal import Decimal, InvalidOperation
 from hashlib import sha256
 from html.parser import HTMLParser
 from html import unescape
@@ -29,6 +30,7 @@ PROVIDERS = {
     'epen_neuquen': ('EPEN', 'Neuquén', 'https://www.epen.gov.ar/index.php/cortes-programados/'),
     'ejesa_jujuy': ('EJESA', 'Jujuy', 'https://www.ejesa.com.ar/gestion/pwa/tareasprogramadas/mejora-y-mantenimiento'),
     'edet_tucuman': ('EDET', 'Tucumán', 'https://www.edetsa.com/gestion/pwa/tareasprogramadas/cortes-de-luz'),
+    'edemsa_mendoza': ('EDEMSA', 'Mendoza', 'https://www.epremendoza.gob.ar/mantenimientos.php'),
 }
 EPE_LEGACY = 'https://www.epe.santafe.gov.ar/reclamosweb/cortes.php/cortes.php'
 EPE_LEGACY_ALT = 'https://epe.santafe.gov.ar/reclamosweb/cortes.php/cortes.php'
@@ -845,6 +847,57 @@ def _parse_edet(html, now):
     return _filter_window(notices, now), seen, newest
 
 
+# EPRE Mendoza (provincial regulator) publishes an HTML table with a
+# distribution company, start date/time, duration, district, department and
+# number of affected users. This connector ONLY accepts EDEMSA entries.
+# No real-time outage is inferred from a maintenance timetable. The EPRE
+# landing page embeds this public regulator-hosted table as an iframe.
+# Read the iframe directly, not the surrounding JavaScript page.
+def _parse_edemsa_epre(html, now):
+    dom, _ = _visible(html)
+    notices, seen, newest = [], 0, None
+    regulator = PROVIDERS['edemsa_mendoza'][2]
+    for kind, cells in dom.events:
+        if kind != 'row' or not isinstance(cells, list) or len(cells) < 8:
+            continue
+        company, start_raw, hours_raw, reason, task, district, department, affected = [
+            _clean(c, 600) for c in cells[:8]
+        ]
+        if company.upper() != 'EDEMSA':
+            continue
+        # EPRE uses dd-mm-yyyy HH:MM:SS for the scheduled start.
+        try:
+            start = datetime.strptime(start_raw, '%d-%m-%Y %H:%M:%S').replace(tzinfo=ART)
+        except ValueError:
+            continue
+        seen += 1
+        newest = max(newest, start.date()) if newest else start.date()
+        try:
+            duration = Decimal(hours_raw.replace(',', '.'))
+            minutes = duration * Decimal(60)
+            if not (Decimal(0) < duration <= Decimal(12)) or minutes != int(minutes):
+                continue
+            end = start + timedelta(minutes=int(minutes))
+        except (InvalidOperation, ValueError, OverflowError):
+            continue
+        # EPRE may include rows with N/A zones or zero users. Those are
+        # insufficient for a locally targeted interruption notice.
+        if (not affected.isdigit() or not 0 < int(affected) <= 10000000 or
+                not district or district.upper() in ('N/A', 'NA', '-') or
+                not department or department.upper() in ('N/A', 'NA', '-')):
+            continue
+        # Only district is used as the locality hint to reduce accidental
+        # matching of a department in an unrelated province. The province
+        # and department are always spelled out in the published zone.
+        locality = re.sub(r'^[A-Z]{2,3}-(?=[A-ZÁÉÍÓÚÑ])', '', district)
+        zone = f'Distrito {district}; departamento {department}; Mendoza'
+        detail = '; '.join(x for x in [reason, task] if x)
+        detail = f'{detail}. Usuarios publicados como afectados: {affected}'
+        notices.append(_notice('EDEMSA', 'Mendoza', regulator, locality,
+                               start, end, zone, detail))
+    return _filter_window(notices, now), seen, newest
+
+
 _EPEC = re.compile(
     r'\bDe\s+(?P<start>\d{1,2}:\d\d)\s+a\s+(?P<end>\d{1,2}:\d\d)\s*'
     r'Motivo\s*:\s*(?P<task>.*?)\s*'
@@ -917,6 +970,7 @@ def _diagnose_html(html, page, key):
         'edese_santiago_del_estero': r'(?<!\d)\d{1,2}/\d{1,2}/20\d\d(?!\d)',
         'ejesa_jujuy': r'(?<!\d)20\d{2}-\d{2}-\d{2}(?!\d)',
         'edet_tucuman': r'(?<!\d)20\d{2}-\d{2}-\d{2}(?!\d)',
+        'edemsa_mendoza': r'(?<!\d)\d{2}-\d{2}-20\d{2}\s+\d{2}:\d{2}:\d{2}(?!\d)',
     }
     expected = patterns.get(key, '')
     dates = len(re.findall(expected, visible)) if expected else 0
@@ -962,6 +1016,9 @@ def collect_one(key, checked_at, fetcher=None, script_fetcher=None):
         output['parser_revision'] = 'EJESA-WEB-v5.23'
     if key == 'edet_tucuman':
         output['parser_revision'] = 'EDET-WEB-v5.24'
+    if key == 'edemsa_mendoza':
+        output['parser_revision'] = 'EDEMSA-EPRE-v5.25'
+        output['published_by'] = 'EPRE Mendoza (regulador provincial)'
     if key == 'edese_santiago_del_estero':
         output['parser_revision'] = 'EDESE-ENRESE-v5.21'
         output['published_by'] = 'ENRESE (ente regulador provincial)'
@@ -993,6 +1050,8 @@ def collect_one(key, checked_at, fetcher=None, script_fetcher=None):
                 notices, count, newest = _parse_ejesa(html, now)
             elif key == 'edet_tucuman':
                 notices, count, newest = _parse_edet(html, now)
+            elif key == 'edemsa_mendoza':
+                notices, count, newest = _parse_edemsa_epre(html, now)
             else:
                 notices, count, newest = _parse_epec(html, now)
             attempt['records_checked'] = count
