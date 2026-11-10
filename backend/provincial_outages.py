@@ -34,6 +34,7 @@ PROVIDERS = {
     'copelco_neuquen': ('COPELCO', 'Neuquén', 'https://www.copelnet.com.ar/'),
     'cpe_la_pampa': ('CPE', 'La Pampa', 'https://cpe.coop.ar/estado-servicios'),
     'edelap_la_plata': ('EDELAP', 'Buenos Aires', 'https://www.edelap.com.ar/obras-en-tu-barrio/'),
+    'coopelec_concordia': ('COOPELEC', 'Entre Ríos', 'https://www.coopelec.com.ar/cortes-programados/'),
 }
 EPE_LEGACY = 'https://www.epe.santafe.gov.ar/reclamosweb/cortes.php/cortes.php'
 EPE_LEGACY_ALT = 'https://epe.santafe.gov.ar/reclamosweb/cortes.php/cortes.php'
@@ -1135,6 +1136,61 @@ def _parse_edelap(html, now):
     return _filter_window(records, now), seen, newest
 
 
+
+
+# Concordia's electric cooperative publishes a public four-column table:
+# Fecha | Horario | Zona afectada | Motivo del corte. This source is limited
+# to scheduled works in the cooperative's service area, NEVER live outages.
+# Missing rows are unverified, and pages with only old schedules are stale.
+_COOPELEC_DATE = re.compile(r'(?<!\d)(\d{1,2})/(\d{1,2})/(20\d{2})(?!\d)')
+_COOPELEC_WINDOW = re.compile(
+    r'(?<!\d)(\d{1,2}:\d{2})\s*(?:a|hasta|[-–])\s*(\d{1,2}:\d{2})(?!\d)',
+    re.I)
+
+
+def _parse_coopelec(html, now):
+    dom, visible = _visible(html)
+    if not (re.search(r'\bcortes\s+programados\b', visible, re.I)
+            and re.search(r'\bzona\s+afectada\b', visible, re.I)
+            and re.search(r'\bmotivo\s+del\s+corte\b', visible, re.I)):
+        return [], 0, None
+    notices, seen, newest = [], 0, None
+    for kind, cells in dom.events:
+        if kind != 'row' or not isinstance(cells, list) or len(cells) != 4:
+            continue
+        date_raw, period_raw, zone_raw, task_raw = [_clean(x, 900) for x in cells]
+        date_match = _COOPELEC_DATE.fullmatch(date_raw)
+        if not date_match:
+            continue
+        try:
+            day = datetime(int(date_match.group(3)), int(date_match.group(2)),
+                           int(date_match.group(1))).date()
+        except ValueError:
+            continue
+        # The date belongs to an actual schedule row, not a page footer.
+        # Track older schedules as stale instead of treating them as current.
+        seen += 1
+        newest = max(newest, day) if newest else day
+        hours = _COOPELEC_WINDOW.search(period_raw)
+        if not hours or len(re.findall(r'(?<!\d)\d{1,2}:\d{2}(?!\d)', period_raw)) != 2:
+            continue
+        try:
+            start, stop = _datetime(day, hours.group(1)), _datetime(day, hours.group(2))
+        except ValueError:
+            continue
+        if not start < stop <= start + timedelta(hours=16):
+            continue
+        zone, task = _clean(zone_raw), _clean(task_raw, 240)
+        if (len(zone) < 15 or not task or
+                re.search(r'\b(?:suspendid[oa]|cancelad[oa]|reprogramad[oa]|sin corte)\b',
+                          ' '.join([zone, task]), re.I)):
+            continue
+        notices.append(_notice('COOPELEC', 'Entre Ríos',
+                               PROVIDERS['coopelec_concordia'][2],
+                               'Concordia', start, stop, zone, task))
+    return _filter_window(notices, now), seen, newest
+
+
 _EPEC = re.compile(
     r'\bDe\s+(?P<start>\d{1,2}:\d\d)\s+a\s+(?P<end>\d{1,2}:\d\d)\s*'
     r'Motivo\s*:\s*(?P<task>.*?)\s*'
@@ -1211,6 +1267,7 @@ def _diagnose_html(html, page, key):
         'copelco_neuquen': r'\b\d{1,2}\s+(?:ENE|FEB|MAR|ABR|MAY|JUN|JUL|AGO|SEP|OCT|NOV|DIC)\b',
         'cpe_la_pampa': r'\b\d{1,2}\s+de\s+(?:enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\s+de\s+20\d{2}\b',
         'edelap_la_plata': r'\b(?:lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)\s+\d{1,2}\s+de\s+(?:enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\b',
+        'coopelec_concordia': r'(?<!\d)\d{1,2}/\d{1,2}/20\d{2}(?!\d)',
     }
     expected = patterns.get(key, '')
     dates = len(re.findall(expected, visible)) if expected else 0
@@ -1256,6 +1313,9 @@ def collect_one(key, checked_at, fetcher=None, script_fetcher=None):
         output['parser_revision'] = 'EJESA-WEB-v5.23'
     if key == 'edet_tucuman':
         output['parser_revision'] = 'EDET-WEB-v5.24'
+    if key == 'coopelec_concordia':
+        output['parser_revision'] = 'COOPELEC-WEB-v5.28'
+        output['coverage_area'] = 'Concordia y zona de concesión de la cooperativa'
     if key == 'edelap_la_plata':
         output['parser_revision'] = 'EDELAP-WEB-v5.27'
         output['coverage_kind'] = 'planned_network_work_may_interrupt_only'
@@ -1309,6 +1369,8 @@ def collect_one(key, checked_at, fetcher=None, script_fetcher=None):
                 notices, count, newest = _parse_edemsa_epre(html, now)
             elif key == 'copelco_neuquen':
                 notices, count, newest = _parse_copelco(html, now)
+            elif key == 'coopelec_concordia':
+                notices, count, newest = _parse_coopelec(html, now)
             elif key == 'edelap_la_plata':
                 notices, count, newest = _parse_edelap(html, now)
             elif key == 'cpe_la_pampa':
