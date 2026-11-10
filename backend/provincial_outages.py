@@ -35,6 +35,14 @@ PROVIDERS = {
     'cpe_la_pampa': ('CPE', 'La Pampa', 'https://cpe.coop.ar/estado-servicios'),
     'edelap_la_plata': ('EDELAP', 'Buenos Aires', 'https://www.edelap.com.ar/obras-en-tu-barrio/'),
     'coopelec_concordia': ('COOPELEC', 'Entre Ríos', 'https://www.coopelec.com.ar/cortes-programados/'),
+    # Public-source batch v5.29: a provider is NOT automatically verified just
+    # because its URL answers. Only complete, date/zone-checked records count.
+    'corpico_general_pico': ('CORPICO', 'La Pampa', 'https://www.corpico.com.ar/cortesprogramados'),
+    'calf_neuquen': ('CALF', 'Neuquén', 'https://www.cooperativacalf.com.ar/category/cortes-programados/'),
+    'energia_misiones': ('Energía de Misiones', 'Misiones', 'https://www.energiademisiones.com.ar/fuera-de-servicio/'),
+    'edelar_la_rioja': ('EDELAR', 'La Rioja', 'https://www.edelar.com.ar/cortes-programados'),
+    'scpl_comodoro': ('SCPL', 'Chubut', 'https://www.scpl.coop/'),
+    'ceb_bariloche': ('CEB', 'Río Negro', 'https://www.ceb.coop/category/cortes-programados/'),
 }
 EPE_LEGACY = 'https://www.epe.santafe.gov.ar/reclamosweb/cortes.php/cortes.php'
 EPE_LEGACY_ALT = 'https://epe.santafe.gov.ar/reclamosweb/cortes.php/cortes.php'
@@ -1191,6 +1199,365 @@ def _parse_coopelec(html, now):
     return _filter_window(notices, now), seen, newest
 
 
+
+# v5.29: Five public provincial/cooperative source candidates, intentionally
+# conservative. A page heading, social post or publication date alone cannot
+# establish a scheduled outage. The article collector reads only official HTTPS
+# hosts and never labels past, cancelled or image-only notices as current.
+_MONTHS_V529 = {'enero': 1, 'febrero': 2, 'marzo': 3, 'abril': 4,
+                'mayo': 5, 'junio': 6, 'julio': 7, 'agosto': 8,
+                'septiembre': 9, 'setiembre': 9, 'octubre': 10,
+                'noviembre': 11, 'diciembre': 12}
+_ABBR_MONTHS_V529 = {'ENE':1, 'FEB':2, 'MAR':3, 'ABR':4, 'MAY':5,
+                     'JUN':6, 'JUL':7, 'AGO':8, 'SEP':9, 'OCT':10,
+                     'NOV':11, 'DIC':12}
+_V529_DATE = re.compile(r'(?<!\d)(\d{1,2})\s+de\s+'
+                        r'(enero|febrero|marzo|abril|mayo|junio|julio|agosto|'
+                        r'septiembre|setiembre|octubre|noviembre|diciembre)'
+                        r'(?:\s+de\s+(20\d{2}))?', re.I)
+_V529_HOURS = re.compile(
+    r'(?:desde\s+las?\s+|de\s+|entre\s+las?\s+)?'
+    r'(\d{1,2}[:.]\d{2})\s*(?:hs?\.?)?\s*'
+    r'(?:y\s+hasta\s+las?\s+|hasta\s+las?\s+|a\s+las?\s+|[-–]|a\s+|y\s+las?\s+)'
+    r'(\d{1,2}[:.]\d{2})\s*(?:hs?\.?)?', re.I)
+
+
+def _parse_corpico_v529(html, now):
+    _, visible = _visible(html)
+    if not re.search(r'\bcortes?\s+programad', visible, re.I):
+        return [], 0, None
+    # The provider can explicitly state no planned outages; handled separately
+    # by collect_one, not forged into a published date.
+    notices, seen, newest = [], 0, None
+    pattern = re.compile(r'(?<!\d)(\d{1,2})\s+'
+                         r'(ENE|FEB|MAR|ABR|MAY|JUN|JUL|AGO|SEP|OCT|NOV|DIC)'
+                         r'\.?\s+(20\d{2})', re.I)
+    matches = list(pattern.finditer(visible))
+    for i, m in enumerate(matches[:80]):
+        section = visible[m.end():matches[i + 1].start() if i + 1 < len(matches) else len(visible)]
+        try:
+            day = datetime(int(m.group(3)), _ABBR_MONTHS_V529[m.group(2).upper()], int(m.group(1))).date()
+        except (ValueError, KeyError):
+            continue
+        times = _V529_HOURS.search(section)
+        # A map/image is not a sufficiently detailed affected zone. Explicit
+        # street or neighborhood text is required for each independent entry.
+        zone_m = re.search(r'Zona\s+Afectada\s*:?\s*(.{18,220}?)'
+                           r'(?=\s+(?:Ver\s+Mapa|Mantenimiento|Te\s+Comunicamos|$))',
+                           section, re.I)
+        if not times or not zone_m:
+            continue
+        zone = _clean(zone_m.group(1))
+        if re.fullmatch(r'(?:Ver\s+Mapa|Imagen|Image|Zona\s+Afectada|\s|\W)+', zone, re.I):
+            continue
+        try:
+            start = _datetime(day, times.group(1).replace('.', ':'))
+            end = _datetime(day, times.group(2).replace('.', ':'))
+        except ValueError:
+            continue
+        if not start < end <= start + timedelta(hours=16):
+            continue
+        seen += 1
+        newest = max(newest, day) if newest else day
+        notices.append(_notice('CORPICO', 'La Pampa', PROVIDERS['corpico_general_pico'][2],
+                               'General Pico', start, end, zone, 'Corte programado publicado por CORPICO'))
+    return _filter_window(notices, now), seen, newest
+
+
+def _parse_edelar_v529(html, now):
+    # A maintenance plan listing REGIONS is not an outage schedule. EDELAR's
+    # public interface normally requests an NIS; do not submit identifiers.
+    _, visible = _visible(html)
+    if not re.search(r'cortes?\s+programados?', visible, re.I):
+        return [], 0, None
+    notices, seen, newest = [], 0, None
+    # Require rows containing explicit date, time range and affected street
+    # or neighborhood in the SAME row; no global page-date association.
+    dom, _ = _visible(html)
+    for kind, cells in dom.events:
+        if kind != 'row' or len(cells) < 3:
+            continue
+        line = ' | '.join(cells)
+        dm = re.search(r'(?<!\d)(\d{1,2})/(\d{1,2})/(20\d{2})(?!\d)', line)
+        hours = _V529_HOURS.search(line)
+        zone_cell = next((c for c in cells if re.search(r'\b(?:barrio|calle|sector|localidad|zona)\b', c, re.I)
+                          and len(c) > 18 and c != cells[0]), None)
+        if not (dm and hours and zone_cell):
+            continue
+        try:
+            day = datetime(int(dm.group(3)), int(dm.group(2)), int(dm.group(1))).date()
+            start = _datetime(day, hours.group(1).replace('.', ':'))
+            end = _datetime(day, hours.group(2).replace('.', ':'))
+        except ValueError:
+            continue
+        if not start < end <= start + timedelta(hours=16):
+            continue
+        seen += 1
+        newest = max(newest, day) if newest else day
+        notices.append(_notice('EDELAR', 'La Rioja', PROVIDERS['edelar_la_rioja'][2],
+                               'Zona informada por EDELAR', start, end,
+                               zone_cell, 'Trabajo programado publicado'))
+    return _filter_window(notices, now), seen, newest
+
+
+def _parse_misiones_v529(html, now):
+    # The province's public filter form may load schedules through JS. Only
+    # actual HTML table rows with complete date/hours/zone may pass.
+    dom, visible = _visible(html)
+    if not re.search(r'cortes?\s*programados?', visible, re.I):
+        return [], 0, None
+    notices, seen, newest = [], 0, None
+    for kind, cells in dom.events:
+        if kind != 'row' or len(cells) < 3:
+            continue
+        line = ' | '.join(cells)
+        dm = re.search(r'(?<!\d)(\d{1,2})/(\d{1,2})/(20\d{2})(?!\d)', line)
+        hours = _V529_HOURS.search(line)
+        zone = next((c for c in cells if re.search(r'\b(?:localidad|barrio|zona|sector)\b', c, re.I)
+                     and len(c) > 18), '')
+        if not (dm and hours and zone):
+            continue
+        try:
+            day = datetime(int(dm.group(3)), int(dm.group(2)), int(dm.group(1))).date()
+            start = _datetime(day, hours.group(1).replace('.', ':'))
+            end = _datetime(day, hours.group(2).replace('.', ':'))
+        except ValueError:
+            continue
+        if not start < end <= start + timedelta(hours=16):
+            continue
+        seen += 1
+        newest = max(newest, day) if newest else day
+        notices.append(_notice('Energía de Misiones', 'Misiones',
+                               PROVIDERS['energia_misiones'][2], 'Zona indicada en fuente',
+                               start, end, zone, 'Trabajo programado publicado'))
+    return _filter_window(notices, now), seen, newest
+
+
+class _ArticleLinksV529(HTMLParser):
+    def __init__(self, base):
+        super().__init__(convert_charrefs=True)
+        self.base = base
+        self.active = None
+        self.links = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag == 'a':
+            self.active = (dict(attrs).get('href', ''), [])
+
+    def handle_data(self, value):
+        if self.active is not None:
+            self.active[1].append(value)
+
+    def handle_endtag(self, tag):
+        if tag == 'a' and self.active is not None:
+            raw, pieces = self.active
+            self.active = None
+            link = urljoin(self.base, raw)
+            if not link.startswith('https://') or len(link) > 250:
+                return
+            host = urlsplit(link).hostname or ''
+            root = urlsplit(self.base).hostname or ''
+            if host != root:
+                return
+            if not re.search(r'\b(?:corte|trabajo|programad|interrupci[oó]n)\b|(?<!\d)\d{1,2}/\d{1,2}/20\d{2}(?!\d)',
+                             _clean(' '.join(pieces)), re.I):
+                return
+            if link not in [u for u, _ in self.links]:
+                self.links.append((link, _clean(' '.join(pieces))))
+
+
+def _parse_official_article_v529(html, now, company, province, url):
+    # Must be an announced future work, NOT a historic incident, a news-only
+    # headline, a scheduled-water story, or an image with unreadable details.
+    _, visible = _visible(html)
+    if re.search(r'\b(?:suspendid[oa]s?|cancelad[oa]s?|se\s+suspende|reprogramad[oa]s?)\b',
+                 visible, re.I):
+        return [], 0, None
+    if not re.search(r'\b(?:programad[oa]s?|previst[oa]s?|mantenimiento)\b', visible, re.I):
+        return [], 0, None
+    if company == 'SCPL':
+        # A water bulletin may happen to mention electricity in a footer or
+        # maintenance explanation. It must never enter the electric feed.
+        if re.search(r'\b(?:corte|interrupci[oó]n)\s+(?:programad[oa]\s+)?de\s+agua\b', visible, re.I):
+            return [], 0, None
+        if not re.search(r'\b(?:corte|interrupci[oó]n)\s+(?:programad[oa]\s+)?de\s+energ[ií]a\b|'
+                         r'\bsuministro\s+el[eé]ctrico\b', visible, re.I):
+            return [], 0, None
+    # Publication date supplies the year ONLY when the body names a precise
+    # day/month and the year is close to that date. Publication alone is not
+    # an event and cannot be used as the scheduled day.
+    pub = re.search(r'(?<!\d)(\d{2})-(\d{2})-(20\d{2})(?!\d)', visible)
+    if company == 'CALF' and not pub:
+        pub_alt = re.search(r'\b(?:enero|febrero|marzo|abril|mayo|junio|julio|agosto|'
+                            r'septiembre|octubre|noviembre|diciembre)\s+\d{1,2},\s*20\d{2}', visible, re.I)
+        if pub_alt:
+            pub = None  # there is still no safely parsed event date from this marker
+    daymatch = _V529_DATE.search(visible)
+    hours = _V529_HOURS.search(visible)
+    zone_m = re.search(r'\b(?:en\s+los\s+siguientes\s+barrios|zonas?\s+afectadas?|'
+                       r'sectores?\s+afectados?)\s*:\s*(.{20,500}?)'
+                       r'(?=\s+(?:con\s+el\s+objetivo|su\s+realizaci[oó]n|'
+                       r'Depto\.|se\s+solicita|fin\s+del\s+comunicado|$))',
+                       visible, re.I)
+    if not (daymatch and hours and zone_m):
+        return [], 0, None
+    year_text = daymatch.group(3)
+    if year_text:
+        year = int(year_text)
+    elif pub:
+        year = int(pub.group(3))
+    else:
+        return [], 0, None
+    try:
+        day = datetime(year, _MONTHS_V529[daymatch.group(2).lower()], int(daymatch.group(1))).date()
+        start = _datetime(day, hours.group(1).replace('.', ':'))
+        end = _datetime(day, hours.group(2).replace('.', ':'))
+    except (ValueError, KeyError):
+        return [], 0, None
+    if not start < end <= start + timedelta(hours=16):
+        return [], 0, None
+    zone = _clean(zone_m.group(1))
+    if not zone or re.search(r'\b(?:imagen|image|ver\s+mapa|sin\s+datos)\b', zone, re.I):
+        return [], 0, None
+    item = _notice(company, province, url,
+                   'Comodoro Rivadavia' if company == 'SCPL' else 'Neuquén capital',
+                   start, end, zone, 'Interrupción programada publicada por la cooperativa')
+    return _filter_window([item], now), 1, day
+
+
+
+def _parse_ceb_article_v529(html, now, url):
+    """CEB Bariloche: verify date in article heading/URL against body date.
+
+    An anomalous archive title like 23/11/2026 for an article saying 23 de
+    enero MUST NOT become a fictitious November notice.
+    """
+    _, visible = _visible(html)
+    if re.search(r'\b(?:suspendid[oa]|cancelad[oa]|reprogramad[oa])\b', visible, re.I):
+        return [], 0, None
+    if not re.search(r'\b(?:corte programado|interrupci[oó]n programada|'
+                     r'corte de energ[ií]a el[eé]ctrica)\b', visible, re.I):
+        return [], 0, None
+    # The official archive uses dd/mm/yyyy article titles and dated slugs.
+    # Require exactly one distinct announced date, and verify it in the body.
+    dates = re.findall(r'(?<!\d)(\d{1,2})/(\d{1,2})/(20\d{2})(?!\d)', visible[:1100])
+    if not dates:
+        dates = re.findall(r'(?<!\d)(\d{1,2})-(\d{1,2})-(20\d{2})(?!\d)',
+                           urlsplit(url).path)
+    if len(set(dates)) != 1:
+        return [], 0, None
+    d, m, y = dates[0]
+    try:
+        title_day = datetime(int(y), int(m), int(d)).date()
+    except ValueError:
+        return [], 0, None
+    event_dates = list(_V529_DATE.finditer(visible))
+    # The date in prose must agree with the article's day/month, rather than
+    # treating a misleading archive title as a second actual cut.
+    matching_dates = [x for x in event_dates
+                      if int(x.group(1)) == title_day.day
+                      and _MONTHS_V529[x.group(2).lower()] == title_day.month
+                      and (not x.group(3) or int(x.group(3)) == title_day.year)]
+    if not matching_dates:
+        return [], 0, None
+    # If the text offers another specific day/month in the same announced-work
+    # paragraph, it may be a multi-event publication: reject until disambiguated.
+    for other in event_dates:
+        if other.start() > matching_dates[0].start() and other.start() - matching_dates[0].start() < 250:
+            if int(other.group(1)) != title_day.day or _MONTHS_V529[other.group(2).lower()] != title_day.month:
+                return [], 0, None
+    times = _V529_HOURS.search(visible)
+    zone = re.search(r'\bZona\s+afectada\s*:?\s*(.{20,500}?)'
+                     r'(?=\s+(?:Una\s+red|Las\s+tareas|Este\s+tipo|'
+                     r'RED\s+CONFIABLE|\bPublicado\b|$))', visible, re.I)
+    if not times or not zone:
+        return [], 0, None
+    detail = _clean(zone.group(1))
+    if len(detail) < 20 or re.search(r'\b(?:imagen|ver mapa|sin datos)\b', detail, re.I):
+        return [], 0, None
+    try:
+        start = _datetime(title_day, times.group(1).replace('.', ':'))
+        end = _datetime(title_day, times.group(2).replace('.', ':'))
+    except ValueError:
+        return [], 0, None
+    if not start < end <= start + timedelta(hours=16):
+        return [], 0, None
+    notice = _notice('CEB', 'Río Negro', url, 'San Carlos de Bariloche',
+                     start, end, detail, 'Mantenimiento programado anunciado por CEB')
+    return _filter_window([notice], now), 1, title_day
+
+
+def _collect_article_source_v529(key, checked_at, now, fetch):
+    company, province, url = PROVIDERS[key]
+    result = {'status': 'unverified', 'province': province, 'country': 'Argentina',
+              'company': company, 'source_url': url, 'checked_at': checked_at,
+              'coverage_kind': 'planned_outages_only', 'notices': [],
+              'parser_revision': 'ARTICLES-SAFE-v5.29', 'source_attempts': [],
+              'message': 'No se verificaron trabajos futuros con zona y horario.'}
+    try:
+        page = fetch(url)
+        attempt = {'url': url, **_diagnose_html(page, url, key)}
+        result['source_attempts'].append(attempt)
+        links = _ArticleLinksV529(url)
+        links.feed(page)
+        # SCPL articles may also reference water or old incidents. Each article
+        # is validated against full content; homepage alone never makes a notice.
+        candidates = [(u, t) for (u, t) in links.links if (
+            key == 'ceb_bariloche'
+            and not urlsplit(u).path.startswith('/category/')
+            and u != url
+            and re.search(r'(?:corte|programad|(?<!\d)\d{1,2}/\d{1,2}/20\d{2}(?!\d))', t, re.I)
+            or key == 'calf_neuquen'
+            and not urlsplit(u).path.startswith('/category/')
+            and u != url
+            and re.search(r'\b(?:corte|trabajos?)\b', t, re.I)
+            or key == 'scpl_comodoro'
+            and '/site/ver-nota' in urlsplit(u).path
+            and re.search(r'\b(?:corte|trabajos?)\b', t, re.I)
+        )]
+        result['article_links_seen'] = len(candidates)
+        seen, newest, notices = 0, None, []
+        for article_url, title in candidates[:8]:
+            if key == 'scpl_comodoro' and not re.search(r'\b(?:programad[oa]s?|mantenimiento)\b', title, re.I):
+                continue
+            try:
+                article = fetch(article_url)
+                if key == 'ceb_bariloche':
+                    parsed, count, date = _parse_ceb_article_v529(article, now, article_url)
+                else:
+                    parsed, count, date = _parse_official_article_v529(
+                        article, now, company, province, article_url)
+                result['source_attempts'].append({'url': article_url, 'result': 'parsed' if count else 'no_complete_records'})
+                seen += count
+                if date:
+                    newest = max(newest, date) if newest else date
+                notices.extend(parsed)
+            except Exception as exc:
+                result['source_attempts'].append({'url': article_url, 'result': 'fetch_or_parse_error',
+                                                  'error_type': type(exc).__name__})
+        result['articles_checked'] = sum(1 for a in result['source_attempts'][1:] if a['result'] != 'fetch_or_parse_error')
+        result['records_checked'] = seen
+        if newest is not None:
+            result['latest_published_date'] = newest.isoformat()
+            if newest < (now - timedelta(days=2)).date():
+                result['status'] = 'stale'
+                result['message'] = 'Solo se verificaron trabajos antiguos; no hay avisos futuros completos.'
+            else:
+                result['status'] = 'ok'
+                result['notices'] = _filter_window(notices, now)
+                result['message'] = ('Trabajos previstos verificados; no confirman corte actual.' if result['notices']
+                                     else 'No hay trabajos futuros completos reconocidos; no confirma servicio normal.')
+        elif not candidates:
+            result['message'] = 'No hay comunicados públicos con datos completos de cortes programados.'
+        else:
+            result['message'] = 'Comunicados revisados sin fecha, horario y zona verificables (pueden ser imágenes).'
+    except Exception as exc:
+        result['source_attempts'].append({'url': url, 'result': 'fetch_or_parse_error',
+                                          'error_type': type(exc).__name__})
+        result['message'] = 'No se pudo consultar la fuente oficial: ' + type(exc).__name__
+    return result
+
+
 _EPEC = re.compile(
     r'\bDe\s+(?P<start>\d{1,2}:\d\d)\s+a\s+(?P<end>\d{1,2}:\d\d)\s*'
     r'Motivo\s*:\s*(?P<task>.*?)\s*'
@@ -1268,6 +1635,12 @@ def _diagnose_html(html, page, key):
         'cpe_la_pampa': r'\b\d{1,2}\s+de\s+(?:enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\s+de\s+20\d{2}\b',
         'edelap_la_plata': r'\b(?:lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)\s+\d{1,2}\s+de\s+(?:enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\b',
         'coopelec_concordia': r'(?<!\d)\d{1,2}/\d{1,2}/20\d{2}(?!\d)',
+        'corpico_general_pico': r'(?<!\d)\d{1,2}\s+(?:ENE|FEB|MAR|ABR|MAY|JUN|JUL|AGO|SEP|OCT|NOV|DIC)\.?\s+20\d{2}',
+        'calf_neuquen': r'\b\d{1,2}\s+noviembre,?\s+20\d{2}',
+        'energia_misiones': r'(?<!\d)\d{1,2}/\d{1,2}/20\d{2}(?!\d)',
+        'edelar_la_rioja': r'(?<!\d)\d{1,2}/\d{1,2}/20\d{2}(?!\d)',
+        'scpl_comodoro': r'(?<!\d)\d{2}-\d{2}-20\d{2}(?!\d)',
+        'ceb_bariloche': r'(?<!\d)\d{1,2}/\d{1,2}/20\d{2}(?!\d)',
     }
     expected = patterns.get(key, '')
     dates = len(re.findall(expected, visible)) if expected else 0
@@ -1302,11 +1675,18 @@ def collect_one(key, checked_at, fetcher=None, script_fetcher=None):
     now = _instant(checked_at)
     if key == 'epen_neuquen':
         return _collect_epen(checked_at, now, fetcher or fetch_html)
+    if key in ('calf_neuquen', 'scpl_comodoro', 'ceb_bariloche'):
+        return _collect_article_source_v529(key, checked_at, now, fetcher or fetch_html)
     output = {'status': 'unverified', 'province': province, 'country': 'Argentina',
               'company': company, 'source_url': url, 'checked_at': checked_at,
               'coverage_kind': 'planned_outages_only', 'notices': [],
               'message': 'Sin verificación de publicaciones; no implica suministro normal.',
               'source_attempts': []}
+    if key in ('corpico_general_pico', 'energia_misiones', 'edelar_la_rioja'):
+        output['parser_revision'] = 'PUBLIC-WEB-v5.29'
+        output['coverage_area'] = {'corpico_general_pico': 'General Pico',
+                                   'energia_misiones': 'Zonas publicadas de Misiones',
+                                   'edelar_la_rioja': 'Solo cronogramas públicos de La Rioja'}[key]
     if key == 'edersa_rio_negro':
         output['parser_revision'] = 'EDERSA-v5.18.1'
     if key == 'ejesa_jujuy':
@@ -1371,6 +1751,20 @@ def collect_one(key, checked_at, fetcher=None, script_fetcher=None):
                 notices, count, newest = _parse_copelco(html, now)
             elif key == 'coopelec_concordia':
                 notices, count, newest = _parse_coopelec(html, now)
+            elif key == 'corpico_general_pico':
+                _, corpo_visible = _visible(html)
+                if re.search(r'\bno\s+hay\s+cortes?\s+programad', corpo_visible, re.I):
+                    attempt.update(records_checked=0, result='explicit_no_planned_cuts')
+                    output.update(status='ok', source_url=page, notices=[],
+                                  records_checked=0, coverage_kind='planned_outages_only',
+                                  message=('El sitio declara que no hay cortes PROGRAMADOS vigentes; '
+                                           'NO confirma servicio eléctrico normal ni cortes imprevistos.'))
+                    return output
+                notices, count, newest = _parse_corpico_v529(html, now)
+            elif key == 'energia_misiones':
+                notices, count, newest = _parse_misiones_v529(html, now)
+            elif key == 'edelar_la_rioja':
+                notices, count, newest = _parse_edelar_v529(html, now)
             elif key == 'edelap_la_plata':
                 notices, count, newest = _parse_edelap(html, now)
             elif key == 'cpe_la_pampa':
