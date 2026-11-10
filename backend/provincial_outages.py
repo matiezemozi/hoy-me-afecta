@@ -43,6 +43,11 @@ PROVIDERS = {
     'edelar_la_rioja': ('EDELAR', 'La Rioja', 'https://www.edelar.com.ar/cortes-programados'),
     'scpl_comodoro': ('SCPL', 'Chubut', 'https://www.scpl.coop/'),
     'ceb_bariloche': ('CEB', 'Río Negro', 'https://www.ceb.coop/category/cortes-programados/'),
+    # v5.30: public official portals, not outage-confirmation services.
+    'cepa_punta_alta': ('CEPA', 'Buenos Aires', 'https://www.cepa.com.ar/cortes/Cortes.aspx'),
+    'spse_santa_cruz': ('SPSE', 'Santa Cruz', 'https://spse.ar/suspension-servicios'),
+    'servicoop_puerto_madryn': ('Servicoop', 'Chubut', 'https://web.servicoop.com/category/cortes-programados/'),
+    'usina_tandil': ('Usina de Tandil', 'Buenos Aires', 'https://www.usinatandil.com.ar/'),
 }
 EPE_LEGACY = 'https://www.epe.santafe.gov.ar/reclamosweb/cortes.php/cortes.php'
 EPE_LEGACY_ALT = 'https://epe.santafe.gov.ar/reclamosweb/cortes.php/cortes.php'
@@ -51,6 +56,7 @@ EPEN_RSS = 'https://www.epen.gov.ar/index.php/feed/'
 EPEN_ARCHIVE = 'https://www.epen.gov.ar/index.php/cortes-programados/'
 EDESE_ALTERNATE = 'https://enrese.com.ar/CortesProgramados.html'
 CPE_ALTERNATE = 'https://sitionuevo.cpe.coop.ar/estado-servicios'
+SCPL_ALTERNATE = 'https://scpl.coop/'
 
 
 def _clean(s, limit=700):
@@ -1467,9 +1473,16 @@ def _parse_ceb_article_v529(html, now, url):
             if int(other.group(1)) != title_day.day or _MONTHS_V529[other.group(2).lower()] != title_day.month:
                 return [], 0, None
     times = _V529_HOURS.search(visible)
-    zone = re.search(r'\bZona\s+afectada\s*:?\s*(.{20,500}?)'
-                     r'(?=\s+(?:Una\s+red|Las\s+tareas|Este\s+tipo|'
-                     r'RED\s+CONFIABLE|\bPublicado\b|$))', visible, re.I)
+    # The 11/11 official note puts a short affected zone directly before the
+    # 'Invertir en mantenimiento' subsection. The old parser skipped it.
+    # Stop before the next independent editorial heading, never swallow a
+    # second notice or the site footer as if it were an affected street.
+    zone = re.search(r'\bZona\s+afectada\s*:?\s*(.{12,500}?)'
+                     r'(?=\s+(?:Invertir\s+en\s+mantenimiento|'
+                     r'Mantenimiento\s+peri[oó]dico|'
+                     r'Una\s+red|Las\s+tareas|Este\s+tipo|'
+                     r'La\s+CEB\s+contin[uú]a|RED\s+CONFIABLE|'
+                     r'\bPublicado\b|\bMotivo\b|$))', visible, re.I)
     if not times or not zone:
         return [], 0, None
     detail = _clean(zone.group(1))
@@ -1492,13 +1505,28 @@ def _collect_article_source_v529(key, checked_at, now, fetch):
     result = {'status': 'unverified', 'province': province, 'country': 'Argentina',
               'company': company, 'source_url': url, 'checked_at': checked_at,
               'coverage_kind': 'planned_outages_only', 'notices': [],
-              'parser_revision': 'ARTICLES-SAFE-v5.29', 'source_attempts': [],
+              'parser_revision': ('SCPL-ARTICLES-v5.30' if key == 'scpl_comodoro' else
+                                  'CEB-ARTICLES-v5.30' if key == 'ceb_bariloche' else
+                                  'ARTICLES-SAFE-v5.29'), 'source_attempts': [],
               'message': 'No se verificaron trabajos futuros con zona y horario.'}
     try:
-        page = fetch(url)
-        attempt = {'url': url, **_diagnose_html(page, url, key)}
+        page, chosen = None, None
+        for candidate in ([url, SCPL_ALTERNATE] if key == 'scpl_comodoro' else [url]):
+            try:
+                page = fetch(candidate)
+                chosen = candidate
+                break
+            except Exception as exc:
+                result['source_attempts'].append({'url': candidate,
+                                                  'result': 'fetch_or_parse_error',
+                                                  'error_type': type(exc).__name__})
+        if chosen is None:
+            result['message'] = 'No se pudo consultar ninguna dirección pública oficial.'
+            return result
+        result['source_url'] = chosen
+        attempt = {'url': chosen, **_diagnose_html(page, chosen, key)}
         result['source_attempts'].append(attempt)
-        links = _ArticleLinksV529(url)
+        links = _ArticleLinksV529(chosen)
         links.feed(page)
         # SCPL articles may also reference water or old incidents. Each article
         # is validated against full content; homepage alone never makes a notice.
@@ -1668,6 +1696,375 @@ def _diagnose_html(html, page, key):
     return diag
 
 
+
+# v5.30: official public notices. No inference from a landing page, a generic
+# service status, a publication without a specific scheduled day, or news of
+# completed works.  A site can answer without giving verifiable future work.
+_V530_MES = _MONTHS_V529
+_V530_DMY = re.compile(r'(?<!\d)(\d{1,2})/(\d{1,2})/(20\d{2})(?!\d)')
+_V530_PUB = re.compile(r'\b(enero|febrero|marzo|abril|mayo|junio|julio|agosto|'
+                        r'septiembre|octubre|noviembre|diciembre)\s+(\d{1,2}),\s*(20\d{2})\b', re.I)
+
+
+def _future_row_v530(html, now, company, province, url, locality):
+    """Only truly independent table rows with date, two times, and zone.
+
+    Generic page banners never become a scheduled outage. Deliberately do not
+    parse broad prose here: rows provide structure needed for attribution.
+    """
+    parser, visible = _visible(html)
+    found, newest, count = [], None, 0
+    for kind, cells in parser.events:
+        if kind != 'row' or not isinstance(cells, list):
+            continue
+        joined = ' '.join(cells)
+        if company == 'SPSE' and not re.search(
+                r'\b(?:energ[ií]a|el[eé]ctrico|electricidad)\b', joined, re.I):
+            # SPSE also operates the public WATER service; never mislabel it.
+            continue
+        day_m = _V530_DMY.search(joined)
+        hours = _V529_HOURS.search(joined)
+        if not day_m or not hours or len(cells) < 3:
+            continue
+        try:
+            day = datetime(int(day_m.group(3)), int(day_m.group(2)), int(day_m.group(1))).date()
+            start = _datetime(day, hours.group(1).replace('.', ':'))
+            end = _datetime(day, hours.group(2).replace('.', ':'))
+        except ValueError:
+            continue
+        if not start < end <= start + timedelta(hours=16):
+            continue
+        # Require a standalone free-text affected zone, never use the date or
+        # a generic 'ver mapa' image in place of locality-specific information.
+        zones = [z for z in cells if len(z) >= 16 and not _V530_DMY.search(z)
+                 and not _V529_HOURS.search(z)
+                 and not re.search(r'^(?:fecha|hora|zona|ver mapa|sin datos)', z, re.I)]
+        if not zones:
+            continue
+        zone = max(zones, key=len)
+        if company == 'SPSE':
+            # Santa Cruz distributes across several independent municipalities.
+            # A province-wide alert may NOT use a generic locality as a match.
+            localities = ('Río Gallegos', 'Rio Gallegos', 'Caleta Olivia',
+                          'Puerto San Julián', 'San Julián', 'El Calafate',
+                          'Río Turbio', 'Rio Turbio', 'Puerto Santa Cruz',
+                          'Piedra Buena', 'Puerto Deseado', 'Los Antiguos',
+                          'Perito Moreno', 'Las Heras', '28 de Noviembre',
+                          'Pico Truncado', 'Gobernador Gregores')
+            matches = [place for place in localities if re.search(
+                r'(?<!\w)' + re.escape(place) + r'(?!\w)', zone, re.I)]
+            if len(matches) != 1:
+                continue
+            locality = matches[0]
+        if re.search(r'\b(?:imagen|image|ver\s+mapa|sin datos)\b', zone, re.I):
+            continue
+        if re.search(r'\b(?:cancelad[oa]|suspendid[oa]|reprogramad[oa])\b', joined, re.I):
+            continue
+        count += 1
+        newest = max(newest, day) if newest else day
+        found.append(_notice(company, province, url, locality, start, end, zone,
+                             'Trabajo programado según tabla oficial'))
+    return _filter_window(found, now), count, newest
+
+
+def _pub_date_v530(text):
+    match = _V530_PUB.search(text)
+    if match:
+        try:
+            return datetime(int(match.group(3)), _V530_MES[match.group(1).lower()],
+                            int(match.group(2))).date()
+        except (ValueError, KeyError):
+            return None
+    match = re.search(r'(?<!\d)(\d{1,2})\s+de\s+'
+                      r'(enero|febrero|marzo|abril|mayo|junio|julio|agosto|'
+                      r'septiembre|octubre|noviembre|diciembre)\s+de\s+(20\d{2})(?!\d)', text, re.I)
+    if match:
+        try:
+            return datetime(int(match.group(3)), _V530_MES[match.group(2).lower()],
+                            int(match.group(1))).date()
+        except (ValueError, KeyError):
+            return None
+    return None
+
+
+
+
+def _scope_official_article_v530(html):
+    # WordPress themes include a navigation menu listing both energy and
+    # water. Check the article body only; do not reject an electric work
+    # merely because the site's navbar says 'Agua potable'.
+    for tag in ('article', 'main'):
+        match = re.search(r'(?is)<' + tag + r'\b[^>]*>.*?</' + tag + r'\s*>', html)
+        if match:
+            return match.group(0)
+    return html
+
+def _parse_servicoop_article_v530(html, now, url):
+    """Future *electricity* interruption only, not water nor incident reports."""
+    _, text = _visible(_scope_official_article_v530(html))
+    _, whole = _visible(html)
+    if re.search(r'\b(?:cancelad[oa]|suspendid[oa]|finalizaron|normaliz[oó]|restableci[oó]|'
+                 r'reprogramad[oa])\b', text, re.I):
+        return [], 0, None
+    # Reject any article that discusses water interruption; never classify a
+    # desalination or aqueduct maintenance note as an electricity outage.
+    if re.search(r'\b(?:agua potable|acueductos?|saneamiento|bombeo presurizadora)\b', text, re.I):
+        return [], 0, None
+    if not re.search(r'\b(?:suministro\s+(?:el[eé]ctrico|de\s+energ[ií]a)|'
+                     r'corte\s+de\s+energ[ií]a|interrumpir\s+el\s+servicio\s+de\s+energ[ií]a|'
+                     r'personal\s+de\s+energ[ií]a)\b', text, re.I):
+        return [], 0, None
+    if not re.search(r'\b(?:corte|interrupci[oó]n|desafectar|interrumpir|'
+                     r'falta\s+de\s+(?:servicio|suministro))\b', text, re.I):
+        return [], 0, None
+    published = _pub_date_v530(text[:1500]) or _pub_date_v530(whole[:2500])
+    # body dates are explicit day+month; year may come ONLY from a specific
+    # publication date within 7 calendar days of the announced event.
+    # A street such as '25 de Mayo' is not a second event date. Read the
+    # announced day only before the affected-zone description begins.
+    zone_start = re.search(r'\b(?:falta\s+de\s+(?:servicio|suministro|energ[ií]a)\s+'
+                           r'(?:afectar[aá]|afecta)|zonas?\s+afectad[oa]s?)\b', text, re.I)
+    date_scope = text[:zone_start.start()] if zone_start else text
+    dates = list(_V529_DATE.finditer(date_scope))
+    if len({(m.group(1), m.group(2).lower(), m.group(3)) for m in dates}) != 1:
+        return [], 0, None
+    m = dates[0]
+    year = int(m.group(3)) if m.group(3) else (published.year if published else None)
+    if not year:
+        return [], 0, None
+    try:
+        day = datetime(year, _V530_MES[m.group(2).lower()], int(m.group(1))).date()
+    except (ValueError, KeyError):
+        return [], 0, None
+    if published and not timedelta(0) <= day - published <= timedelta(days=7):
+        return [], 0, None
+    hours = _V529_HOURS.search(text)
+    # Mark a named or bounded service area, not a general network claim.
+    zone = re.search(r'\b(?:falta\s+de\s+(?:servicio|suministro|energ[ií]a)\s+'
+                     r'(?:afectar[aá]|afecta)\s+(?:a\s+)?(?:los\s+)?(?:usuarios\s+)?|'
+                     r'(?:zonas?|barrios|sectores?)\s+afectad[oa]s?\s*:?\s*)'
+                     r'(.{16,340}?)(?=\s+(?:Desconecte\s+los|'
+                     r'este\s+corte\s+queda|Depto\.|Se\s+solicita|Compartir|$))', text, re.I)
+    if not (hours and zone):
+        return [], 0, None
+    area = _clean(zone.group(1), 340)
+    if re.search(r'\b(?:imagen|image|ver\s+mapa|sin\s+datos)\b', area, re.I):
+        return [], 0, None
+    try:
+        start = _datetime(day, hours.group(1).replace('.', ':'))
+        end = _datetime(day, hours.group(2).replace('.', ':'))
+    except ValueError:
+        return [], 0, None
+    if not start < end <= start + timedelta(hours=16):
+        return [], 0, None
+    item = _notice('Servicoop', 'Chubut', url, 'Puerto Madryn', start, end,
+                   area, 'Mantenimiento eléctrico programado informado por Servicoop')
+    return _filter_window([item], now), 1, day
+
+
+def _collect_servicoop_v530(key, checked_at, now, fetch):
+    company, province, url = PROVIDERS[key]
+    result = {'status': 'unverified', 'province': province, 'country': 'Argentina',
+              'company': company, 'source_url': url, 'checked_at': checked_at,
+              'coverage_kind': 'planned_outages_only', 'notices': [],
+              'parser_revision': 'SERVICOOP-ARTICLES-v5.30', 'source_attempts': [],
+              'coverage_area': 'Puerto Madryn y área servida, electricidad solamente',
+              'message': 'Sin trabajos eléctricos futuros completos verificados.'}
+    try:
+        page = fetch(url)
+        result['source_attempts'].append({'url': url, 'result': 'page_read'})
+        links = _ArticleLinksV529(url)
+        links.feed(page)
+        # WordPress archive titles often say 'mantenimiento' rather than 'corte'.
+        # A link still must have the exact official Servicoop hostname.
+        class PostLinks(HTMLParser):
+            def __init__(self):
+                super().__init__(); self.u=None; self.t=[]; self.found=[]
+            def handle_starttag(self, tag, attrs):
+                if tag == 'a': self.u = dict(attrs).get('href',''); self.t=[]
+            def handle_data(self, data):
+                if self.u is not None: self.t.append(data)
+            def handle_endtag(self, tag):
+                if tag == 'a' and self.u is not None:
+                    link = urljoin(url,self.u); title = _clean(' '.join(self.t))
+                    if (urlsplit(link).scheme == 'https' and urlsplit(link).hostname ==
+                            urlsplit(url).hostname and link not in self.found and
+                            re.search(r'\b(?:corte|mantenimiento|subestaci[oó]n|'
+                                      r'reconfiguraci[oó]n|modernizaci[oó]n)\b', title, re.I) and
+                            not re.search(r'\b(?:agua|acueducto|finaliz|normaliz|restablec|'
+                                          r'reprogramad|suspendid|cancelad)\b', title, re.I) and
+                            '/category/' not in urlsplit(link).path and
+                            '/page/' not in urlsplit(link).path):
+                        self.found.append(link)
+                    self.u = None
+        finder=PostLinks(); finder.feed(page)
+        # Do not fetch hundreds of archived articles; only top most recent.
+        found, seen, newest=[], 0, None
+        for link in finder.found[:8]:
+            try:
+                html=fetch(link)
+                items,count,day=_parse_servicoop_article_v530(html,now,link)
+                result['source_attempts'].append({'url':link,'result':'parsed' if count else 'no_complete_records'})
+                seen+=count; found.extend(items)
+                if day: newest=max(newest,day) if newest else day
+            except Exception as exc:
+                result['source_attempts'].append({'url':link,'result':'fetch_or_parse_error',
+                                                  'error_type':type(exc).__name__})
+        result['article_links_seen']=len(finder.found)
+        result['articles_checked']=min(len(finder.found),8)
+        result['records_checked']=seen
+        if newest is not None:
+            result['latest_published_date']=newest.isoformat()
+            result['status']='stale' if newest < (now-timedelta(days=2)).date() else 'ok'
+            result['notices']=_filter_window(found,now) if result['status']=='ok' else []
+            result['message']=('Trabajos eléctricos publicados; NO son cortes confirmados.' if found
+                               else 'Solo trabajos eléctricos antiguos; no significa suministro normal.')
+    except Exception as exc:
+        result['source_attempts'].append({'url':url,'result':'fetch_or_parse_error',
+                                          'error_type':type(exc).__name__})
+    return result
+
+
+def _parse_usina_article_v530(html, now, url):
+    """Full public official news item, not private office-virtual notices."""
+    _,v=_visible(html)
+    if re.search(r'\b(?:cancelad[oa]|suspendid[oa]|reprogramad[oa]|'
+                 r'finaliz[oó]|restableci[oó]|se\s+normaliz[oó])\b',v,re.I):
+        return [],0,None
+    if not re.search(r'\bcorte\s+programado\b.*\bservicio\s+el[eé]ctrico\b',v,re.I):
+        return [],0,None
+    dated = re.search(r'/((?:20\d{2}))/(\d{2})/(\d{2})/',urlsplit(url).path)
+    if not dated:
+        return [],0,None
+    try:
+        pub=datetime(int(dated.group(1)),int(dated.group(2)),int(dated.group(3))).date()
+    except ValueError:
+        return [],0,None
+    # Do not mistake a street called '4 de Abril' for an event date.
+    boundary=re.search(r'Zona\s+comprendida\s*:',v,re.I)
+    dates=list(_V529_DATE.finditer(v[:boundary.start()] if boundary else v))
+    if len({(x.group(1),x.group(2).lower(),x.group(3)) for x in dates})!=1:
+        return [],0,None
+    m=dates[0]
+    try:
+        day=datetime(int(m.group(3)) if m.group(3) else pub.year,
+                     _V530_MES[m.group(2).lower()],int(m.group(1))).date()
+    except (ValueError,KeyError):
+        return [],0,None
+    if not timedelta(0) <= day-pub <= timedelta(days=7):
+        return [],0,None
+    times=re.search(r'\bentre\s+las?\s+(\d{1,2})(?::(\d{2}))?\s*(?:hs?)?\s+'
+                    r'y\s+las?\s+(\d{1,2})(?::(\d{2}))?\s*hs?\b',v,re.I)
+    if not times:
+        return [],0,None
+    try:
+        start=_datetime(day,f'{int(times.group(1)):02d}:{times.group(2) or "00"}')
+        end=_datetime(day,f'{int(times.group(3)):02d}:{times.group(4) or "00"}')
+    except ValueError:
+        return [],0,None
+    if not start < end <= start+timedelta(hours=16):
+        return [],0,None
+    zone=re.search(r'Zona\s+comprendida\s*:\s*(.{18,350}?)'
+                   r'(?=\s+(?:©|Solicit[aá]|$))',v,re.I)
+    if not zone:
+        return [],0,None
+    detail=_clean(zone.group(1),350)
+    if not re.search(r'\b(?:calle|avenida|av\.|barrio|poligonal|sector)\b',detail,re.I):
+        return [],0,None
+    n=_notice('Usina de Tandil','Buenos Aires',url,'Tandil',start,end,detail,
+              'Corte programado publicado en noticias oficiales de la Usina')
+    return _filter_window([n],now),1,day
+
+
+def _collect_usina_v530(key, checked_at, now, fetch):
+    company,province,url=PROVIDERS[key]
+    out={'status':'unverified','province':province,'country':'Argentina',
+         'company':company,'source_url':url,'checked_at':checked_at,
+         'coverage_kind':'planned_outages_only','notices':[],
+         'parser_revision':'USINA-PUBLIC-v5.30','source_attempts':[],
+         'coverage_area':'Tandil (solamente noticias públicas)',
+         'message':'No se verificaron comunicados recientes con horario y zona.'}
+    try:
+        html=fetch(url)
+        out['source_attempts'].append({'url':url,'result':'page_read'})
+        class Links(HTMLParser):
+            def __init__(self): super().__init__();self.link=None;self.title=[];self.urls=[]
+            def handle_starttag(self,tag,attrs):
+                if tag=='a': self.link=dict(attrs).get('href','');self.title=[]
+            def handle_data(self,x):
+                if self.link is not None:self.title.append(x)
+            def handle_endtag(self,tag):
+                if tag=='a' and self.link is not None:
+                    u=urljoin(url,self.link)
+                    if (urlsplit(u).scheme=='https' and
+                            urlsplit(u).hostname==urlsplit(url).hostname and
+                            re.search(r'/20\d{2}/\d{2}/\d{2}/',urlsplit(u).path) and
+                            re.search(r'\bcorte\s+programado\b',_clean(' '.join(self.title)),re.I) and
+                            u not in self.urls):self.urls.append(u)
+                    self.link=None
+        finder=Links();finder.feed(html)
+        out['article_links_seen']=len(finder.urls)
+        seen, newest, notices=0,None,[]
+        for u in finder.urls[:6]:
+            try:
+                items,n,date=_parse_usina_article_v530(fetch(u),now,u)
+                out['source_attempts'].append({'url':u,'result':'parsed' if n else 'no_complete_records'})
+                seen+=n;notices.extend(items)
+                if date:newest=max(newest,date) if newest else date
+            except Exception as exc:
+                out['source_attempts'].append({'url':u,'result':'fetch_or_parse_error',
+                                               'error_type':type(exc).__name__})
+        out['records_checked']=seen
+        if newest:
+            out.update(status='stale' if newest<(now-timedelta(days=2)).date() else 'ok',
+                       latest_published_date=newest.isoformat())
+            out['notices']=_filter_window(notices,now) if out['status']=='ok' else []
+            out['message']=('Comunicados públicos verificables; no son cortes confirmados.' if notices
+                            else 'Solo comunicados antiguos; no implica suministro normal.')
+    except Exception as exc:
+        out['source_attempts'].append({'url':url,'result':'fetch_or_parse_error',
+                                      'error_type':type(exc).__name__})
+    return out
+
+
+def _collect_today_only_v530(key, checked_at, now, fetch):
+    company, province, url=PROVIDERS[key]
+    out={'status':'unverified','province':province,'country':'Argentina',
+         'company':company,'source_url':url,'checked_at':checked_at,
+         'coverage_kind':'planned_outages_only','notices':[],
+         'parser_revision':'OFFICIAL-STATUS-v5.30','coverage_horizon':'today_only' if key=='cepa_punta_alta' else 'current_public_calendar',
+         'source_attempts':[], 'message':'No se ha verificado un cronograma público completo.'}
+    try:
+        html=fetch(url)
+        _,v=_visible(html)
+        out['source_attempts'].append({'url':url,'html_bytes':len(html.encode('utf-8')),
+                                       'result':'page_read'})
+        if key=='cepa_punta_alta':
+            explicit=bool(re.search(r'No\s+hay\s+trabajos\s+o\s+cortes\s+programados\s+en\s+el\s+d[ií]a\s+de\s+la\s+fecha',v,re.I))
+        else:
+            explicit=bool(re.search(r'Por\s+el\s+momento\s+no\s+se\s+encuentran\s+cortes?\s*/\s*interrupciones?\s+programad[oa]s?',v,re.I))
+        if explicit:
+            out.update(status='ok', records_checked=0,
+                       message=('La fuente no publica trabajos programados HOY; '
+                                'no confirma suministro normal ni ausencia de trabajos futuros.'
+                                if key=='cepa_punta_alta' else
+                                'La fuente declara no tener interrupciones programadas; '
+                                'NO confirma servicio normal ni eventos imprevistos.'))
+            out['source_attempts'][-1]['result']='explicit_no_planned_work'
+            return out
+        items,n,newest=_future_row_v530(html,now,company,province,url,
+                     'Punta Alta' if key=='cepa_punta_alta' else 'Localidad indicada por SPSE')
+        if n and newest:
+            out.update(status='ok' if newest >= (now-timedelta(days=2)).date() else 'stale',
+                       notices=items,records_checked=n,latest_published_date=newest.isoformat(),
+                       message='Trabajos programados publicados, NO cortes confirmados.')
+            out['source_attempts'][-1]['result']='verified_schedule'
+    except Exception as exc:
+        out['source_attempts'].append({'url':url,'result':'fetch_or_parse_error',
+                                       'error_type':type(exc).__name__})
+    return out
+
+
 def collect_one(key, checked_at, fetcher=None, script_fetcher=None):
     if key not in PROVIDERS:
         raise KeyError(key)
@@ -1675,6 +2072,12 @@ def collect_one(key, checked_at, fetcher=None, script_fetcher=None):
     now = _instant(checked_at)
     if key == 'epen_neuquen':
         return _collect_epen(checked_at, now, fetcher or fetch_html)
+    if key in ('cepa_punta_alta','spse_santa_cruz'):
+        return _collect_today_only_v530(key, checked_at, now, fetcher or fetch_html)
+    if key == 'servicoop_puerto_madryn':
+        return _collect_servicoop_v530(key, checked_at, now, fetcher or fetch_html)
+    if key == 'usina_tandil':
+        return _collect_usina_v530(key, checked_at, now, fetcher or fetch_html)
     if key in ('calf_neuquen', 'scpl_comodoro', 'ceb_bariloche'):
         return _collect_article_source_v529(key, checked_at, now, fetcher or fetch_html)
     output = {'status': 'unverified', 'province': province, 'country': 'Argentina',
