@@ -48,6 +48,13 @@ PROVIDERS = {
     'spse_santa_cruz': ('SPSE', 'Santa Cruz', 'https://spse.ar/suspension-servicios'),
     'servicoop_puerto_madryn': ('Servicoop', 'Chubut', 'https://web.servicoop.com/category/cortes-programados/'),
     'usina_tandil': ('Usina de Tandil', 'Buenos Aires', 'https://www.usinatandil.com.ar/'),
+    # v5.31: official OCEBA reports are diagnostic/current-outage data,
+    # NOT planned notices. Android v5.23 deliberately does not display them.
+    'oceba_eden_outages': ('EDEN', 'Buenos Aires', 'https://oceba.gba.gov.ar/nueva_web/s.php?distribuidora=3&i=123'),
+    'oceba_edea_outages': ('EDEA', 'Buenos Aires', 'https://oceba.gba.gov.ar/nueva_web/s.php?distribuidora=2&i=123'),
+    'oceba_edes_outages': ('EDES', 'Buenos Aires', 'https://oceba.gba.gov.ar/nueva_web/s.php?distribuidora=4&i=123'),
+    'oceba_edelap_outages': ('EDELAP', 'Buenos Aires', 'https://oceba.gba.gov.ar/nueva_web/s.php?distribuidora=1&i=123'),
+    'upc_necochea': ('UPC Necochea', 'Buenos Aires', 'https://www.upcnecochea.com.ar/cortes-y-avisos/'),
 }
 EPE_LEGACY = 'https://www.epe.santafe.gov.ar/reclamosweb/cortes.php/cortes.php'
 EPE_LEGACY_ALT = 'https://epe.santafe.gov.ar/reclamosweb/cortes.php/cortes.php'
@@ -1505,7 +1512,7 @@ def _collect_article_source_v529(key, checked_at, now, fetch):
     result = {'status': 'unverified', 'province': province, 'country': 'Argentina',
               'company': company, 'source_url': url, 'checked_at': checked_at,
               'coverage_kind': 'planned_outages_only', 'notices': [],
-              'parser_revision': ('SCPL-ARTICLES-v5.30' if key == 'scpl_comodoro' else
+              'parser_revision': ('SCPL-ARTICLES-v5.31' if key == 'scpl_comodoro' else
                                   'CEB-ARTICLES-v5.30' if key == 'ceb_bariloche' else
                                   'ARTICLES-SAFE-v5.29'), 'source_attempts': [],
               'message': 'No se verificaron trabajos futuros con zona y horario.'}
@@ -1563,7 +1570,7 @@ def _collect_article_source_v529(key, checked_at, now, fetch):
             except Exception as exc:
                 result['source_attempts'].append({'url': article_url, 'result': 'fetch_or_parse_error',
                                                   'error_type': type(exc).__name__})
-        result['articles_checked'] = sum(1 for a in result['source_attempts'][1:] if a['result'] != 'fetch_or_parse_error')
+        result['articles_checked'] = sum(1 for a in result['source_attempts'] if a.get('result') in ('parsed', 'no_complete_records'))
         result['records_checked'] = seen
         if newest is not None:
             result['latest_published_date'] = newest.isoformat()
@@ -2065,6 +2072,225 @@ def _collect_today_only_v530(key, checked_at, now, fetch):
     return out
 
 
+
+
+# v5.31: Official OCEBA public service-interruption bulletins, intentionally
+# NOT cast as planned works. Mobile v5.23 consumes only planned works; enabling
+# these as live alerts requires a separately tested Android update. Old page
+# caches and time-only headers are NOT proof of a currently active outage.
+_OCEBA_GROUP = {
+    'oceba_eden_outages', 'oceba_edea_outages',
+    'oceba_edes_outages', 'oceba_edelap_outages',
+}
+_OCEBA_RESTORATION = re.compile(r'(?<!\d)(20\d{2})-(\d{2})-(\d{2})\s+'
+                                r'(\d{1,2}):(\d{2})(?::\d{2})?(?!\d)')
+
+
+def _parse_oceba_v531(html, now, provider, url, checked_at):
+    dom, visible = _visible(html)
+    # Page may be served from cache. Require the named official distributor,
+    # a timestamp *clock* reasonably close to the requested check, and a
+    # row-specific expected restoration date close to the check date.
+    if not re.search(r'Informaci[oó]n\s+brindada\s+por\s+' + re.escape(provider) + r'\b', visible, re.I):
+        return [], 0, None, 'wrong_provider'
+    if not re.search(r'Interrupciones\s+del\s+servicio', visible, re.I):
+        return [], 0, None, 'no_report_heading'
+    hm = re.search(r'[uú]ltima\s+actualizaci[oó]n\s*:?\s*(\d{1,2}):(\d{2})',visible,re.I)
+    if not hm:
+        return [], 0, None, 'no_dated_refresh'
+    hour, minute = int(hm.group(1)), int(hm.group(2))
+    if hour>23 or minute>59:
+        return [], 0, None, 'invalid_refresh_clock'
+    local_mins = now.hour * 60 + now.minute
+    source_mins = hour * 60 + minute
+    clock_difference = min(abs(local_mins-source_mins),
+                           1440-abs(local_mins-source_mins))
+    if clock_difference > 180:
+        return [], 0, None, 'stale_refresh_clock'
+    section = ''
+    rows_checked = 0
+    newest = None
+    accepted = []
+    for kind, content in dom.events:
+        if kind == 'heading':
+            normalized = _plain_fold(content).lower()
+            if 'media tension' in normalized and 'interrupcion' in normalized:
+                section='media'
+            elif 'baja tension' in normalized and 'interrupcion' in normalized:
+                section='baja'
+            else:
+                section=''
+        elif kind == 'row' and section in ('media','baja'):
+            cells = content
+            if len(cells)<5:
+                continue
+            date_m=_OCEBA_RESTORATION.search(cells[-2])
+            user_str=re.sub(r'[.\s]','',cells[-1])
+            if not date_m or not user_str.isdigit():
+                continue
+            affected=int(user_str)
+            if not (1<=affected<=500000):
+                continue
+            partido=_clean(cells[0],110)
+            area=_clean(cells[1],110)
+            if (not partido or not area or
+                    re.search(r'^\s*(?:sin\s+datos|partido|total)\s*$',partido,re.I)):
+                continue
+            try:
+                restoration=datetime(*[int(x) for x in date_m.groups()],tzinfo=ART)
+            except ValueError:
+                continue
+            rows_checked+=1
+            newest=max(newest,restoration) if newest else restoration
+            if not (now <= restoration <= now+timedelta(hours=36)):
+                continue
+            substation = _clean(cells[2],180)
+            event_key = '|'.join((provider,section,partido,area,substation,
+                                  restoration.isoformat(),str(affected)))
+            accepted.append({
+                'id':'oceba-'+sha256(event_key.encode('utf-8')).hexdigest()[:18],
+                'country':'Argentina','province':'Buenos Aires',
+                'company':provider,'kind':'reported_electricity_interruption',
+                'status':'published_by_distributor_not_independently_verified',
+                'locality_hint': area, 'partido':partido,
+                'voltage_level':section, 'users_affected':affected,
+                'zone_detail':substation or area,
+                'expected_restoration':restoration.isoformat(timespec='minutes'),
+                'observed_at':checked_at, 'source_url':url,
+                'message':('Interrupción informada por la distribuidora a OCEBA; '
+                           'el horario de normalización es estimado, no confirmado.'),
+            })
+    unique={n['id']:n for n in accepted}
+    notices=sorted(unique.values(),key=lambda n:n['expected_restoration'])
+    return notices, rows_checked, newest, ('verified_rows' if notices else
+            'old_rows_only' if rows_checked else 'no_complete_rows')
+
+
+def _collect_oceba_v531(key, checked_at, now, fetch):
+    provider, province, url = PROVIDERS[key]
+    out={'status':'unverified','province':province,'country':'Argentina',
+         'company':provider,'source_url':url,'checked_at':checked_at,
+         'coverage_kind':'reported_outages_only','notices':[],
+         'parser_revision':'OCEBA-REPORT-v5.31','source_attempts':[],
+         'notifications_enabled':False,
+         'message':('Monitor oficial experimental. Requiere verificación de vigencia; '
+                    'Android v5.23 no muestra estos registros.')}
+    try:
+        html=fetch(url)
+        notices,n,newest,state=_parse_oceba_v531(html,now,provider,url,checked_at)
+        out['source_attempts'].append({'url':url,'html_bytes':len(html.encode('utf-8')),
+                                       'records_checked':n,'result':state})
+        out['records_checked']=n
+        if newest:
+            out['latest_restoration_estimate']=newest.isoformat(timespec='minutes')
+        if state=='verified_rows':
+            out.update(status='ok',notices=notices,
+                       message=('Filas oficiales recientes verificadas; son interrupciones '
+                                'informadas, no trabajos programados. '
+                                'Sin notificaciones en Android v5.23.'))
+        elif state in ('old_rows_only','stale_refresh_clock'):
+            out.update(status='stale',message=('La información del reporte no '
+                               'acredita interrupciones actuales.'))
+    except Exception as exc:
+        out['source_attempts'].append({'url':url,'result':'fetch_or_parse_error',
+                                       'error_type':type(exc).__name__})
+    return out
+
+
+def _parse_upc_necochea_v531(html, now, url):
+    # Only public, explicitly dated advance schedules. Never treat the article
+    # publication date, website calendar, or an historical power failure as a
+    # prospective cut. Two dates in the body must agree on the actual event.
+    _,v=_visible(_scope_official_article_v530(html))
+    if re.search(r'\b(?:cancelad[oa]|suspendid[oa]|finaliz[oó]|restableci[oó]|'
+                 r'reprogramad[oa])\b',v,re.I):
+        return [],0,None
+    if not re.search(r'corte\s+programado\s+de\s+servicio\s+el[eé]ctrico|'
+                     r'corte\s+programado\b.*?\bsuministro\s+de\s+energ[ií]a\s+el[eé]ctrica',v,re.I):
+        return [],0,None
+    slug=re.search(r'/(\d{1,2})-(\d{1,2})-(\d{2})-corte-programado',urlsplit(url).path,re.I)
+    if not slug:
+        return [],0,None
+    try:
+        pub=datetime(2000+int(slug.group(3)),int(slug.group(2)),int(slug.group(1))).date()
+    except ValueError:
+        return [],0,None
+    explicit=re.search(r'\b(?:el\s+d[ií]a|el\s+pr[oó]ximo|para\s+el)\s+'
+                       r'(\d{1,2})/(\d{1,2})/(20\d{2})\b',v,re.I)
+    if not explicit:
+        return [],0,None
+    try:
+        day=datetime(int(explicit.group(3)),int(explicit.group(2)),int(explicit.group(1))).date()
+    except ValueError:
+        return [],0,None
+    if not timedelta(0)<=day-pub<=timedelta(days=14):
+        return [],0,None
+    hours=re.search(r'\b(?:horario\s+de|entre\s+las?|desde\s+las?)\s+'
+                    r'(\d{1,2})(?::(\d{2}))?\s*(?:hs?)?\s+'
+                    r'(?:a|y|hasta)\s+(?:las?\s+)?'
+                    r'(\d{1,2})(?::(\d{2}))?\s*hs?\b',v,re.I)
+    if not hours:
+        return [],0,None
+    try:
+        start=_datetime(day,f'{int(hours.group(1)):02d}:{hours.group(2) or "00"}')
+        end=_datetime(day,f'{int(hours.group(3)):02d}:{hours.group(4) or "00"}')
+    except ValueError:
+        return [],0,None
+    if not start<end<=start+timedelta(hours=16):
+        return [],0,None
+    zone_m=re.search(r'\bzona\s+comprendida\s+(?:(?:entre|desde)\s+)?(.{30,650}?)'
+                     r'(?=\s*(?:;|El\s+mismo\s+tiene|Durante\s+el\s+corte|$))',v,re.I)
+    if not zone_m:
+        return [],0,None
+    zone=_clean(zone_m.group(0),450)
+    if not re.search(r'\b(?:avenida|av\.|calle|ruta|barrio|sector)\b',zone,re.I):
+        return [],0,None
+    item=_notice('UPC Necochea','Buenos Aires',url,'Necochea',start,end,zone,
+                 'Corte programado publicado por la Usina Popular Cooperativa')
+    return _filter_window([item],now),1,day
+
+
+def _collect_upc_necochea_v531(key,checked_at,now,fetch):
+    company,province,url=PROVIDERS[key]
+    out={'status':'unverified','province':province,'country':'Argentina',
+         'company':company,'source_url':url,'checked_at':checked_at,
+         'coverage_kind':'planned_outages_only','notices':[],
+         'parser_revision':'UPC-NECOCHEA-v5.31','source_attempts':[],
+         'coverage_area':'Necochea (solo noticias públicas fechadas)',
+         'message':'No se verificaron cortes programados futuros completos.'}
+    try:
+        listing=fetch(url)
+        out['source_attempts'].append({'url':url,'result':'page_read'})
+        finder=_ArticleLinksV529(url)
+        finder.feed(listing)
+        links=[u for u,t in finder.links if u!=url and
+               re.search(r'/\d{1,2}-\d{1,2}-\d{2}-corte-programado',urlsplit(u).path,re.I) and
+               re.search(r'corte\s+programado',t,re.I)]
+        out['article_links_seen']=len(links)
+        checked,found,newest=0,[],None
+        for article_url in links[:8]:
+            try:
+                items,count,date=_parse_upc_necochea_v531(fetch(article_url),now,article_url)
+                out['source_attempts'].append({'url':article_url,'result':'parsed' if count else 'no_complete_records'})
+                checked+=count
+                found.extend(items)
+                if date:newest=max(newest,date) if newest else date
+            except Exception as exc:
+                out['source_attempts'].append({'url':article_url,'result':'fetch_or_parse_error',
+                                               'error_type':type(exc).__name__})
+        out['records_checked']=checked
+        if newest:
+            out['status']='ok' if newest>=(now-timedelta(days=2)).date() else 'stale'
+            out['notices']=_filter_window(found,now) if out['status']=='ok' else []
+            out['latest_published_date']=newest.isoformat()
+            out['message']=('Avisos programados públicos con zona y horario.' if found else
+                            'Solo avisos antiguos: NO confirma servicio normal.')
+    except Exception as exc:
+        out['source_attempts'].append({'url':url,'result':'fetch_or_parse_error',
+                                       'error_type':type(exc).__name__})
+    return out
+
+
 def collect_one(key, checked_at, fetcher=None, script_fetcher=None):
     if key not in PROVIDERS:
         raise KeyError(key)
@@ -2072,6 +2298,10 @@ def collect_one(key, checked_at, fetcher=None, script_fetcher=None):
     now = _instant(checked_at)
     if key == 'epen_neuquen':
         return _collect_epen(checked_at, now, fetcher or fetch_html)
+    if key in _OCEBA_GROUP:
+        return _collect_oceba_v531(key, checked_at, now, fetcher or fetch_html)
+    if key == 'upc_necochea':
+        return _collect_upc_necochea_v531(key, checked_at, now, fetcher or fetch_html)
     if key in ('cepa_punta_alta','spse_santa_cruz'):
         return _collect_today_only_v530(key, checked_at, now, fetcher or fetch_html)
     if key == 'servicoop_puerto_madryn':
