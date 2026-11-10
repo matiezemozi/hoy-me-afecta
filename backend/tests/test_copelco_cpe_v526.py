@@ -85,7 +85,7 @@ class CooperativeTests(unittest.TestCase):
     def test_cpe_valid_dated_corte(self):
         out = collect_one('cpe_la_pampa', WHEN, fetcher=lambda _:cpe_html())
         self.assertEqual(out['status'], 'ok')
-        self.assertEqual(out['parser_revision'], 'CPE-WEB-v5.26')
+        self.assertEqual(out['parser_revision'], 'CPE-WEB-v5.26.1')
         self.assertEqual(len(out['notices']), 1)
         n=out['notices'][0]
         self.assertEqual(n['scheduled_start'], '2026-11-10T08:00-03:00')

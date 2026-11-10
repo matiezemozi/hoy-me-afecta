@@ -32,7 +32,7 @@ PROVIDERS = {
     'edet_tucuman': ('EDET', 'Tucumán', 'https://www.edetsa.com/gestion/pwa/tareasprogramadas/cortes-de-luz'),
     'edemsa_mendoza': ('EDEMSA', 'Mendoza', 'https://www.epremendoza.gob.ar/mantenimientos.php'),
     'copelco_neuquen': ('COPELCO', 'Neuquén', 'https://www.copelnet.com.ar/'),
-    'cpe_la_pampa': ('CPE', 'La Pampa', 'https://sitionuevo.cpe.coop.ar/estado-servicios'),
+    'cpe_la_pampa': ('CPE', 'La Pampa', 'https://cpe.coop.ar/estado-servicios'),
 }
 EPE_LEGACY = 'https://www.epe.santafe.gov.ar/reclamosweb/cortes.php/cortes.php'
 EPE_LEGACY_ALT = 'https://epe.santafe.gov.ar/reclamosweb/cortes.php/cortes.php'
@@ -40,6 +40,7 @@ EPEC_ALTERNATE = 'https://epec.com.ar/actualidad/trabajos-mejoras'
 EPEN_RSS = 'https://www.epen.gov.ar/index.php/feed/'
 EPEN_ARCHIVE = 'https://www.epen.gov.ar/index.php/cortes-programados/'
 EDESE_ALTERNATE = 'https://enrese.com.ar/CortesProgramados.html'
+CPE_ALTERNATE = 'https://sitionuevo.cpe.coop.ar/estado-servicios'
 
 
 def _clean(s, limit=700):
@@ -1171,7 +1172,7 @@ def collect_one(key, checked_at, fetcher=None, script_fetcher=None):
         output['parser_revision'] = 'COPELCO-WEB-v5.26'
         output['coverage_area'] = 'Cutral Có y Plaza Huincul'
     if key == 'cpe_la_pampa':
-        output['parser_revision'] = 'CPE-WEB-v5.26'
+        output['parser_revision'] = 'CPE-WEB-v5.26.1'
         output['coverage_area'] = 'Zona atendida por CPE, Santa Rosa'
     if key == 'edemsa_mendoza':
         output['parser_revision'] = 'EDEMSA-EPRE-v5.25'
@@ -1186,6 +1187,11 @@ def collect_one(key, checked_at, fetcher=None, script_fetcher=None):
         pages = [url, EPEC_ALTERNATE]
     elif key == 'edese_santiago_del_estero':
         pages = [url, EDESE_ALTERNATE]
+    elif key == 'cpe_la_pampa':
+        # The old sitionuevo host returned HTTPError from GitHub Actions.
+        # The official CPE service page is also published at cpe.coop.ar.
+        # Both URLs are public CPE pages, and failures stay visible.
+        pages = [url, CPE_ALTERNATE]
     else:
         pages = [url]
     problems = []
@@ -1213,6 +1219,9 @@ def collect_one(key, checked_at, fetcher=None, script_fetcher=None):
                 notices, count, newest = _parse_copelco(html, now)
             elif key == 'cpe_la_pampa':
                 notices, count, newest = _parse_cpe(html, now)
+                # Keep each bulletin linked to the page actually read.
+                for notice in notices:
+                    notice['source_url'] = page
             else:
                 notices, count, newest = _parse_epec(html, now)
             attempt['records_checked'] = count
