@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-10T20:00:22Z",
+  "generated_at": "2026-11-10T20:14:33Z",
   "alerts": [
     {
       "category": "electricidad",
@@ -12,7 +12,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
-      "observed_at": "2026-11-10T20:00:22Z",
+      "observed_at": "2026-11-10T20:14:33Z",
       "confirmation": "Publicado por ENRE",
       "id": "b81a6cfc637ab6f1"
     },
@@ -26,7 +26,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
-      "observed_at": "2026-11-10T20:00:22Z",
+      "observed_at": "2026-11-10T20:14:33Z",
       "confirmation": "Publicado por ENRE",
       "id": "88400f759d4b25d4"
     },
@@ -40,7 +40,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
-      "observed_at": "2026-11-10T20:00:22Z",
+      "observed_at": "2026-11-10T20:14:33Z",
       "confirmation": "Publicado por ENRE",
       "id": "7557d873c0b509be"
     },
@@ -54,7 +54,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-10T20:00:22Z",
+      "observed_at": "2026-11-10T20:14:33Z",
       "confirmation": "Publicado por ENRE",
       "id": "ab895e8648a0359e"
     },
@@ -68,7 +68,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-10T20:00:22Z",
+      "observed_at": "2026-11-10T20:14:33Z",
       "confirmation": "Publicado por ENRE",
       "id": "7a1c582de151af2a"
     },
@@ -82,7 +82,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-10T20:00:22Z",
+      "observed_at": "2026-11-10T20:14:33Z",
       "confirmation": "Publicado por ENRE",
       "id": "9aa0e6c9aa291eb5"
     },
@@ -96,7 +96,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-10T20:00:22Z",
+      "observed_at": "2026-11-10T20:14:33Z",
       "confirmation": "Publicado por ENRE",
       "id": "eec80c256cd05a89"
     },
@@ -110,7 +110,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-10T20:00:22Z",
+      "observed_at": "2026-11-10T20:14:33Z",
       "confirmation": "Publicado por ENRE",
       "id": "4b5b50d5cd7eca5e"
     },
@@ -124,7 +124,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-10T20:00:22Z",
+      "observed_at": "2026-11-10T20:14:33Z",
       "confirmation": "Publicado por ENRE",
       "id": "e6c7bc06b3d056ab"
     },
@@ -138,7 +138,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-10T20:00:22Z",
+      "observed_at": "2026-11-10T20:14:33Z",
       "confirmation": "Publicado por ENRE",
       "id": "9e7b98e9050bf75d"
     },
@@ -152,7 +152,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-10T20:00:22Z",
+      "observed_at": "2026-11-10T20:14:33Z",
       "confirmation": "Publicado por ENRE",
       "id": "28bb62792184dbcb"
     },
@@ -166,7 +166,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-10T20:00:22Z",
+      "observed_at": "2026-11-10T20:14:33Z",
       "confirmation": "Publicado por ENRE",
       "id": "f9874743b5b01989"
     },
@@ -180,7 +180,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-10T20:00:22Z",
+      "observed_at": "2026-11-10T20:14:33Z",
       "confirmation": "Publicado por ENRE",
       "id": "267d4463953e5916"
     },
@@ -194,7 +194,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-10T20:00:22Z",
+      "observed_at": "2026-11-10T20:14:33Z",
       "confirmation": "Publicado por ENRE",
       "id": "84da7ba9d6441e8f"
     },
@@ -204,13 +204,13 @@
       "company": "Edesur",
       "partido": "ESTEBAN ECHEVERRIA",
       "localidad": "MONTE GRANDE",
-      "users_affected": "28",
+      "users_affected": "34",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-10T20:00:22Z",
+      "observed_at": "2026-11-10T20:14:33Z",
       "confirmation": "Publicado por ENRE",
-      "id": "675c45447d3af9e7"
+      "id": "01f9959dafe39a6c"
     },
     {
       "category": "electricidad",
@@ -222,7 +222,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-10T20:00:22Z",
+      "observed_at": "2026-11-10T20:14:33Z",
       "confirmation": "Publicado por ENRE",
       "id": "2c69f59db54b9cc9"
     },
@@ -236,7 +236,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-10T20:00:22Z",
+      "observed_at": "2026-11-10T20:14:33Z",
       "confirmation": "Publicado por ENRE",
       "id": "7282dbba7eb465a0"
     },
@@ -250,7 +250,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-10T20:00:22Z",
+      "observed_at": "2026-11-10T20:14:33Z",
       "confirmation": "Publicado por ENRE",
       "id": "ba0bd559d8484a2f"
     },
@@ -260,26 +260,26 @@
       "company": "Edesur",
       "partido": "QUILMES",
       "localidad": "BERNAL",
-      "users_affected": "33",
+      "users_affected": "34",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-10T20:00:22Z",
+      "observed_at": "2026-11-10T20:14:33Z",
       "confirmation": "Publicado por ENRE",
-      "id": "7b38a98086d5f0fd"
+      "id": "d1fece26a1d0b4f4"
     }
   ],
   "sources": {
     "edenor": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDN.js",
-      "checked_at": "2026-11-10T20:00:22Z",
+      "checked_at": "2026-11-10T20:14:33Z",
       "event_count": 3
     },
     "edesur": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDS.js",
-      "checked_at": "2026-11-10T20:00:22Z",
+      "checked_at": "2026-11-10T20:14:33Z",
       "event_count": 16
     }
   },
@@ -313,7 +313,7 @@
       }
     ],
     "source_retrieval": "ok",
-    "checked_at": "2026-11-10T20:00:22Z"
+    "checked_at": "2026-11-10T20:14:33Z"
   },
   "coverage": {
     "trains": "manual_notices_only",
@@ -329,7 +329,7 @@
       "status": "not_connected",
       "message": "No hay conexión verificada con una fuente automática de estado de la línea 57.",
       "reference_url": "https://www.argentina.gob.ar/sube/cuandosubo",
-      "checked_at": "2026-11-10T20:00:22Z"
+      "checked_at": "2026-11-10T20:14:33Z"
     }
   },
   "edesa_salta": {
@@ -338,7 +338,7 @@
     "country": "Argentina",
     "company": "EDESA",
     "source_url": "https://www.edesa.com.ar/widgets/cortes.php",
-    "checked_at": "2026-11-10T20:00:22Z",
+    "checked_at": "2026-11-10T20:14:33Z",
     "coverage_kind": "planned_outages_only",
     "notices": [
       {
@@ -599,7 +599,7 @@
       "country": "Argentina",
       "company": "EPEC",
       "source_url": "https://www.epec.com.ar/actualidad/trabajos-mejoras",
-      "checked_at": "2026-11-10T20:00:22Z",
+      "checked_at": "2026-11-10T20:14:33Z",
       "coverage_kind": "planned_outages_only",
       "notices": [],
       "message": "No se pudo verificar la fuente: no_complete_records, no_complete_records",
@@ -618,6 +618,14 @@
             "/actualidad/main.7408cd4426f1ac179abd.js"
           ],
           "records_checked": 0,
+          "javascript_diagnostics": [
+            {
+              "script_path": "/actualidad/main.7408cd4426f1ac179abd.js",
+              "status": "fetch_or_scan_error",
+              "error_type": "ScriptProbeError",
+              "error_code": "returned_html_instead_of_js"
+            }
+          ],
           "result": "no_complete_records"
         },
         {
@@ -644,7 +652,7 @@
       "country": "Argentina",
       "company": "EPE",
       "source_url": "https://www.epe.santafe.gov.ar/institucional/trabajos-programados",
-      "checked_at": "2026-11-10T20:00:22Z",
+      "checked_at": "2026-11-10T20:14:33Z",
       "coverage_kind": "planned_outages_only",
       "notices": [],
       "message": "No se pudo verificar la fuente: dynamic_shell, HTTPError, URLError",
@@ -662,6 +670,28 @@
             "/institucional/js/epe.js"
           ],
           "records_checked": 0,
+          "javascript_diagnostics": [
+            {
+              "script_path": "/institucional/_astro/TrabajosProgramados.astro_astro_type_script_index_0_lang.C1JoA2Kk.js",
+              "status": "scanned",
+              "asset_bytes_sampled": 27720,
+              "javascript_requests_found": {
+                "fetch": 0,
+                "axios_mentions": 0,
+                "httpclient_mentions": 1,
+                "httpclient_method_calls": 0
+              },
+              "keyword_counts": {
+                "corte": 5,
+                "trabajo": 0,
+                "api": 0
+              },
+              "official_hosts_seen": [],
+              "candidate_public_paths": [],
+              "note": "Pistas estáticas, NO API verificadas; no se consultaron las rutas inferidas.",
+              "asset_sample_truncated": false
+            }
+          ],
           "result": "dynamic_shell"
         },
         {
@@ -682,7 +712,7 @@
       "country": "Argentina",
       "company": "EDERSA",
       "source_url": "https://www.edersa.com.ar/cortes-programados/",
-      "checked_at": "2026-11-10T20:00:22Z",
+      "checked_at": "2026-11-10T20:14:33Z",
       "coverage_kind": "planned_outages_only",
       "notices": [
         {
@@ -752,7 +782,7 @@
       "country": "Argentina",
       "company": "EDESE",
       "source_url": "https://www.enrese.com.ar/CortesProgramados.html",
-      "checked_at": "2026-11-10T20:00:22Z",
+      "checked_at": "2026-11-10T20:14:33Z",
       "coverage_kind": "planned_outages_only",
       "notices": [
         {
@@ -857,7 +887,7 @@
       "country": "Argentina",
       "company": "EPEN",
       "source_url": "https://www.epen.gov.ar/index.php/cortes-programados/",
-      "checked_at": "2026-11-10T20:00:22Z",
+      "checked_at": "2026-11-10T20:14:33Z",
       "coverage_kind": "planned_outages_only",
       "notices": [
         {
@@ -1323,7 +1353,7 @@
       "country": "Argentina",
       "company": "EJESA",
       "source_url": "https://www.ejesa.com.ar/gestion/pwa/tareasprogramadas/mejora-y-mantenimiento",
-      "checked_at": "2026-11-10T20:00:22Z",
+      "checked_at": "2026-11-10T20:14:33Z",
       "coverage_kind": "planned_outages_only",
       "notices": [
         {
@@ -1481,7 +1511,7 @@
       "source_attempts": [
         {
           "url": "https://www.ejesa.com.ar/gestion/pwa/tareasprogramadas/mejora-y-mantenimiento",
-          "html_bytes": 527636,
+          "html_bytes": 527633,
           "date_markers": 64,
           "has_locality": true,
           "has_zone": true,
@@ -1496,13 +1526,13 @@
             "/gestion/pwa/Scripts/LayoutScript",
             "/gestion/pwa/Scripts/amp-analytics-0.1.js"
           ],
-          "records_checked": 63,
+          "records_checked": 64,
           "latest_published_date": "2026-11-26",
           "result": "verified"
         }
       ],
       "parser_revision": "EJESA-WEB-v5.23",
-      "records_checked": 63,
+      "records_checked": 64,
       "latest_published_date": "2026-11-26"
     },
     "edet_tucuman": {
@@ -1511,7 +1541,7 @@
       "country": "Argentina",
       "company": "EDET",
       "source_url": "https://www.edetsa.com/gestion/pwa/tareasprogramadas/cortes-de-luz",
-      "checked_at": "2026-11-10T20:00:22Z",
+      "checked_at": "2026-11-10T20:14:33Z",
       "coverage_kind": "planned_outages_only",
       "notices": [],
       "message": "No se pudo verificar la fuente: no_complete_records",
@@ -1544,7 +1574,7 @@
       "country": "Argentina",
       "company": "EDEMSA",
       "source_url": "https://www.epremendoza.gob.ar/mantenimientos.php",
-      "checked_at": "2026-11-10T20:00:22Z",
+      "checked_at": "2026-11-10T20:14:33Z",
       "coverage_kind": "planned_outages_only",
       "notices": [],
       "message": "Sin trabajos futuros reconocidos en la consulta; NO confirma servicio normal.",
@@ -1573,7 +1603,7 @@
       "country": "Argentina",
       "company": "COPELCO",
       "source_url": "https://www.copelnet.com.ar/",
-      "checked_at": "2026-11-10T20:00:22Z",
+      "checked_at": "2026-11-10T20:14:33Z",
       "coverage_kind": "planned_outages_only",
       "notices": [
         {
@@ -1623,14 +1653,14 @@
       "country": "Argentina",
       "company": "CPE",
       "source_url": "https://cpe.coop.ar/estado-servicios",
-      "checked_at": "2026-11-10T20:00:22Z",
+      "checked_at": "2026-11-10T20:14:33Z",
       "coverage_kind": "planned_outages_only",
       "notices": [],
       "message": "Sin trabajos futuros reconocidos en la consulta; NO confirma servicio normal.",
       "source_attempts": [
         {
           "url": "https://cpe.coop.ar/estado-servicios",
-          "html_bytes": 34781,
+          "html_bytes": 34791,
           "date_markers": 0,
           "has_locality": false,
           "has_zone": true,
@@ -1661,7 +1691,7 @@
       "country": "Argentina",
       "company": "EDELAP",
       "source_url": "https://www.edelap.com.ar/obras-en-tu-barrio/",
-      "checked_at": "2026-11-10T20:00:22Z",
+      "checked_at": "2026-11-10T20:14:33Z",
       "coverage_kind": "planned_network_work_may_interrupt_only",
       "notices": [],
       "message": "Sin trabajos futuros reconocidos en la consulta; NO confirma servicio normal.",
@@ -1699,7 +1729,7 @@
       "country": "Argentina",
       "company": "COOPELEC",
       "source_url": "https://www.coopelec.com.ar/cortes-programados/",
-      "checked_at": "2026-11-10T20:00:22Z",
+      "checked_at": "2026-11-10T20:14:33Z",
       "coverage_kind": "planned_outages_only",
       "notices": [],
       "message": "Solo se reconocieron publicaciones antiguas; no hay datos futuros verificables.",
@@ -1730,6 +1760,250 @@
       "coverage_area": "Concordia y zona de concesión de la cooperativa",
       "records_checked": 1,
       "latest_published_date": "2026-11-06"
+    },
+    "corpico_general_pico": {
+      "status": "ok",
+      "province": "La Pampa",
+      "country": "Argentina",
+      "company": "CORPICO",
+      "source_url": "https://www.corpico.com.ar/cortesprogramados",
+      "checked_at": "2026-11-10T20:14:33Z",
+      "coverage_kind": "planned_outages_only",
+      "notices": [],
+      "message": "El sitio declara que no hay cortes PROGRAMADOS vigentes; NO confirma servicio eléctrico normal ni cortes imprevistos.",
+      "source_attempts": [
+        {
+          "url": "https://www.corpico.com.ar/cortesprogramados",
+          "html_bytes": 62089,
+          "date_markers": 0,
+          "has_locality": false,
+          "has_zone": false,
+          "dynamic_shell": false,
+          "same_origin_script_paths": [
+            "/static/js/bootstrap.js",
+            "/static/js/owl.carousel.js",
+            "/static/js/smooth-scroll.js",
+            "/static/js/script.js"
+          ],
+          "records_checked": 0,
+          "result": "explicit_no_planned_cuts"
+        }
+      ],
+      "parser_revision": "PUBLIC-WEB-v5.29",
+      "coverage_area": "General Pico",
+      "records_checked": 0
+    },
+    "calf_neuquen": {
+      "status": "unverified",
+      "province": "Neuquén",
+      "country": "Argentina",
+      "company": "CALF",
+      "source_url": "https://www.cooperativacalf.com.ar/category/cortes-programados/",
+      "checked_at": "2026-11-10T20:14:33Z",
+      "coverage_kind": "planned_outages_only",
+      "notices": [],
+      "parser_revision": "ARTICLES-SAFE-v5.29",
+      "source_attempts": [
+        {
+          "url": "https://www.cooperativacalf.com.ar/category/cortes-programados/",
+          "html_bytes": 109584,
+          "date_markers": 6,
+          "has_locality": false,
+          "has_zone": false,
+          "dynamic_shell": false,
+          "same_origin_script_paths": [
+            "/wp-includes/js/jquery/jquery.min.js",
+            "/wp-includes/js/jquery/jquery-migrate.min.js",
+            "/wp-content/plugins/elementor-pro/assets/js/page-transitions.min.js",
+            "/wp-content/plugins/make-section-column-clickable-elementor/assets/js/ra-clickable.js",
+            "/wp-includes/js/imagesloaded.min.js",
+            "/wp-content/themes/oceanwp/assets/js/theme.min.js",
+            "/wp-content/themes/oceanwp/assets/js/drop-down-mobile-menu.min.js",
+            "/wp-content/themes/oceanwp/assets/js/drop-down-search.min.js"
+          ]
+        },
+        {
+          "url": "https://www.cooperativacalf.com.ar/corte-programado-suspendido-2/",
+          "result": "no_complete_records"
+        },
+        {
+          "url": "https://www.cooperativacalf.com.ar/corte-programado-suspendido-lunes-9-de-noviembre/",
+          "result": "no_complete_records"
+        },
+        {
+          "url": "https://www.cooperativacalf.com.ar/corte-programado-29-10/",
+          "result": "no_complete_records"
+        },
+        {
+          "url": "https://www.cooperativacalf.com.ar/corte-programado-28-10/",
+          "result": "no_complete_records"
+        },
+        {
+          "url": "https://www.cooperativacalf.com.ar/corte-programado-27-10/",
+          "result": "no_complete_records"
+        }
+      ],
+      "message": "Comunicados revisados sin fecha, horario y zona verificables (pueden ser imágenes).",
+      "article_links_seen": 5,
+      "articles_checked": 5,
+      "records_checked": 0
+    },
+    "energia_misiones": {
+      "status": "unverified",
+      "province": "Misiones",
+      "country": "Argentina",
+      "company": "Energía de Misiones",
+      "source_url": "https://www.energiademisiones.com.ar/fuera-de-servicio/",
+      "checked_at": "2026-11-10T20:14:33Z",
+      "coverage_kind": "planned_outages_only",
+      "notices": [],
+      "message": "No se pudo verificar la fuente: no_complete_records",
+      "source_attempts": [
+        {
+          "url": "https://www.energiademisiones.com.ar/fuera-de-servicio/",
+          "html_bytes": 40426,
+          "date_markers": 0,
+          "has_locality": true,
+          "has_zone": false,
+          "dynamic_shell": false,
+          "same_origin_script_paths": [
+            "/wp-includes/js/jquery/jquery.min.js",
+            "/wp-includes/js/jquery/jquery-migrate.min.js",
+            "/wp-content/plugins/add-to-any/addtoany.min.js",
+            "/wp-content/themes/emsa/jsSHA/sha3.js",
+            "/wp-includes/js/dist/hooks.min.js",
+            "/wp-includes/js/dist/i18n.min.js",
+            "/wp-content/plugins/contact-form-7/includes/swv/js/index.js",
+            "/wp-content/plugins/contact-form-7/includes/js/index.js"
+          ],
+          "records_checked": 0,
+          "result": "no_complete_records"
+        }
+      ],
+      "parser_revision": "PUBLIC-WEB-v5.29",
+      "coverage_area": "Zonas publicadas de Misiones"
+    },
+    "edelar_la_rioja": {
+      "status": "unverified",
+      "province": "La Rioja",
+      "country": "Argentina",
+      "company": "EDELAR",
+      "source_url": "https://www.edelar.com.ar/cortes-programados",
+      "checked_at": "2026-11-10T20:14:33Z",
+      "coverage_kind": "planned_outages_only",
+      "notices": [],
+      "message": "No se pudo verificar la fuente: no_complete_records",
+      "source_attempts": [
+        {
+          "url": "https://www.edelar.com.ar/cortes-programados",
+          "html_bytes": 131272,
+          "date_markers": 0,
+          "has_locality": false,
+          "has_zone": true,
+          "dynamic_shell": false,
+          "same_origin_script_paths": [
+            "/_next/static/chunks/19mx3mg6lkumu.js",
+            "/_next/static/chunks/11pxbv08d7b0-.js",
+            "/_next/static/chunks/2-rtuqsgzmno4.js",
+            "/_next/static/chunks/turbopack-3pex5iqcgnby2.js",
+            "/_next/static/chunks/0_zd61-t9z98-.js",
+            "/_next/static/chunks/275dg2n3msuf2.js",
+            "/_next/static/chunks/3mqkinv6xcft3.js",
+            "/_next/static/chunks/0ihsq-3ftikl9.js"
+          ],
+          "records_checked": 0,
+          "result": "no_complete_records"
+        }
+      ],
+      "parser_revision": "PUBLIC-WEB-v5.29",
+      "coverage_area": "Solo cronogramas públicos de La Rioja"
+    },
+    "scpl_comodoro": {
+      "status": "unverified",
+      "province": "Chubut",
+      "country": "Argentina",
+      "company": "SCPL",
+      "source_url": "https://www.scpl.coop/",
+      "checked_at": "2026-11-10T20:14:33Z",
+      "coverage_kind": "planned_outages_only",
+      "notices": [],
+      "parser_revision": "ARTICLES-SAFE-v5.29",
+      "source_attempts": [
+        {
+          "url": "https://www.scpl.coop/",
+          "result": "fetch_or_parse_error",
+          "error_type": "URLError"
+        }
+      ],
+      "message": "No se pudo consultar la fuente oficial: URLError"
+    },
+    "ceb_bariloche": {
+      "status": "stale",
+      "province": "Río Negro",
+      "country": "Argentina",
+      "company": "CEB",
+      "source_url": "https://www.ceb.coop/category/cortes-programados/",
+      "checked_at": "2026-11-10T20:14:33Z",
+      "coverage_kind": "planned_outages_only",
+      "notices": [],
+      "parser_revision": "ARTICLES-SAFE-v5.29",
+      "source_attempts": [
+        {
+          "url": "https://www.ceb.coop/category/cortes-programados/",
+          "html_bytes": 105043,
+          "date_markers": 11,
+          "has_locality": false,
+          "has_zone": true,
+          "dynamic_shell": false,
+          "same_origin_script_paths": [
+            "/wp-includes/js/jquery/jquery.min.js",
+            "/wp-includes/js/jquery/jquery-migrate.min.js",
+            "/wp-content/plugins/LayerSlider/assets/static/layerslider/js/layerslider.utils.js",
+            "/wp-content/plugins/LayerSlider/assets/static/layerslider/js/layerslider.kreaturamedia.jquery.js",
+            "/wp-content/plugins/LayerSlider/assets/static/layerslider/js/layerslider.transitions.js",
+            "/wp-content/themes/dt-the7/js/above-the-fold.min.js",
+            "/wp-content/plugins/Ultimate_VC_Addons/assets/min-js/modernizr-custom.min.js",
+            "/wp-content/plugins/Ultimate_VC_Addons/assets/min-js/jquery-ui.min.js"
+          ]
+        },
+        {
+          "url": "https://www.ceb.coop/corte-programado-11-11-2026/",
+          "result": "no_complete_records"
+        },
+        {
+          "url": "https://www.ceb.coop/06-11-2026/",
+          "result": "parsed"
+        },
+        {
+          "url": "https://www.ceb.coop/corte-programado-29-10-2026/",
+          "result": "no_complete_records"
+        },
+        {
+          "url": "https://www.ceb.coop/corte-programado-28-10-2026/",
+          "result": "no_complete_records"
+        },
+        {
+          "url": "https://www.ceb.coop/corte-programado-27-10-2026/",
+          "result": "parsed"
+        },
+        {
+          "url": "https://www.ceb.coop/cortes-programados-17-10-2026-y-18-10-2026/",
+          "result": "no_complete_records"
+        },
+        {
+          "url": "https://www.ceb.coop/corte-programado-02-10-2026/",
+          "result": "parsed"
+        },
+        {
+          "url": "https://www.ceb.coop/cortes-programados-sabado-26-09-y-domingo-27-09-2026/",
+          "result": "no_complete_records"
+        }
+      ],
+      "message": "Solo se verificaron trabajos antiguos; no hay avisos futuros completos.",
+      "article_links_seen": 10,
+      "articles_checked": 8,
+      "records_checked": 3,
+      "latest_published_date": "2026-11-06"
     }
   },
   "epen_neuquen": {
@@ -1738,7 +2012,7 @@
     "province": "Neuquén",
     "company": "EPEN",
     "source_url": "https://www.epen.gov.ar/index.php/cortes-programados/",
-    "checked_at": "2026-11-10T20:00:22Z",
+    "checked_at": "2026-11-10T20:14:33Z",
     "coverage_kind": "dated_planned_work_bulletins_only",
     "notices": [
       {
@@ -1818,7 +2092,7 @@
     "province": "Corrientes",
     "company": "DPEC",
     "source_url": "https://www.dpec.com.ar/comercial/cortes-programados/",
-    "checked_at": "2026-11-10T20:00:22Z",
+    "checked_at": "2026-11-10T20:14:33Z",
     "coverage_kind": "dated_planned_work_bulletins_only",
     "notices": [],
     "message": "La pagina consultada no proporciono comunicados completos con enlace, fecha y horario.",
@@ -1831,7 +2105,7 @@
     "province": "Entre Rios",
     "company": "ENERSA",
     "source_url": "https://www.enersa.com.ar/tag/cortes/",
-    "checked_at": "2026-11-10T20:00:22Z",
+    "checked_at": "2026-11-10T20:14:33Z",
     "coverage_kind": "dated_planned_work_bulletins_only",
     "notices": [],
     "message": "Sin comunicados futuros verificables. No significa servicio normal.",
@@ -1856,7 +2130,7 @@
       "province": "Buenos Aires",
       "country": "Argentina",
       "source_url": "https://www.edensa.com.ar/obras-en-tu-barrio/",
-      "checked_at": "2026-11-10T20:00:22Z",
+      "checked_at": "2026-11-10T20:14:33Z",
       "coverage_kind": "planned_network_work_may_interrupt_only",
       "notices": [],
       "parser_revision": "BA-v5.18",
@@ -1873,7 +2147,7 @@
       "province": "Buenos Aires",
       "country": "Argentina",
       "source_url": "https://www.edeaweb.com.ar/obras-en-tu-barrio/",
-      "checked_at": "2026-11-10T20:00:22Z",
+      "checked_at": "2026-11-10T20:14:33Z",
       "coverage_kind": "planned_network_work_may_interrupt_only",
       "notices": [],
       "parser_revision": "BA-v5.18",
@@ -1890,7 +2164,7 @@
       "province": "Buenos Aires",
       "country": "Argentina",
       "source_url": "https://www.infoedes.com/obras-en-tu-barrio/",
-      "checked_at": "2026-11-10T20:00:22Z",
+      "checked_at": "2026-11-10T20:14:33Z",
       "coverage_kind": "planned_network_work_may_interrupt_only",
       "notices": [],
       "parser_revision": "BA-v5.18",
@@ -1907,7 +2181,7 @@
       "province": "Buenos Aires",
       "country": "Argentina",
       "source_url": "https://www.edelap.com.ar/obras-en-tu-barrio/",
-      "checked_at": "2026-11-10T20:00:22Z",
+      "checked_at": "2026-11-10T20:14:33Z",
       "coverage_kind": "planned_network_work_may_interrupt_only",
       "notices": [],
       "parser_revision": "BA-v5.18",
@@ -2051,13 +2325,49 @@
         "area": "Provincia de Entre Ríos",
         "kind": "scheduled_only_if_verified",
         "source_status": "stale"
+      },
+      {
+        "provider": "CORPICO",
+        "area": "Provincia de La Pampa",
+        "kind": "scheduled_only_if_verified",
+        "source_status": "ok"
+      },
+      {
+        "provider": "CALF",
+        "area": "Provincia de Neuquén",
+        "kind": "scheduled_only_if_verified",
+        "source_status": "unverified"
+      },
+      {
+        "provider": "Energía de Misiones",
+        "area": "Provincia de Misiones",
+        "kind": "scheduled_only_if_verified",
+        "source_status": "unverified"
+      },
+      {
+        "provider": "EDELAR",
+        "area": "Provincia de La Rioja",
+        "kind": "scheduled_only_if_verified",
+        "source_status": "unverified"
+      },
+      {
+        "provider": "SCPL",
+        "area": "Provincia de Chubut",
+        "kind": "scheduled_only_if_verified",
+        "source_status": "unverified"
+      },
+      {
+        "provider": "CEB",
+        "area": "Provincia de Río Negro",
+        "kind": "scheduled_only_if_verified",
+        "source_status": "stale"
       }
     ],
     "message": "Fuera de las zonas y tipos indicados no hay cobertura eléctrica verificada."
   },
   "rail_official": {
     "status": "ok",
-    "checked_at": "2026-11-10T20:00:22Z",
+    "checked_at": "2026-11-10T20:14:33Z",
     "source_url": "https://www.argentina.gob.ar/transporte/trenes-argentinos",
     "message": "Comunicados fechados, NO estado en tiempo real. Confirmá antes de viajar.",
     "notices": [
@@ -2077,7 +2387,7 @@
   "subte": {
     "status": "unverified",
     "message": "La página no publica una fecha de actualización verificable.",
-    "checked_at": "2026-11-10T20:00:22Z",
+    "checked_at": "2026-11-10T20:14:33Z",
     "url": "https://buenosaires.gob.ar/inicio/mis-documentos",
     "lines": []
   },
@@ -2085,31 +2395,10 @@
   "change_tracking": {
     "status": "ok",
     "meaning": "Las novedades indican cambios respecto del informe anterior; no prueban cuándo comenzó un corte ni que uno ausente esté resuelto.",
-    "compared_to": "2026-11-10T19:54:58Z",
-    "new_in_publication_count": 2,
-    "new_in_publication": [
-      {
-        "id": "b81a6cfc637ab6f1",
-        "company": "Edenor",
-        "title": "Corte programado",
-        "partido": "LA MATANZA",
-        "localidad": "SAN JUSTO",
-        "observed_at": "2026-11-10T20:00:22Z",
-        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
-        "meaning": "No figuraba en el informe anterior; inicio real desconocido."
-      },
-      {
-        "id": "88400f759d4b25d4",
-        "company": "Edenor",
-        "title": "Corte programado",
-        "partido": "SAN MIGUEL",
-        "localidad": "SAN MIGUEL",
-        "observed_at": "2026-11-10T20:00:22Z",
-        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
-        "meaning": "No figuraba en el informe anterior; inicio real desconocido."
-      }
-    ],
-    "no_longer_listed_count": 1,
+    "compared_to": "2026-11-10T20:00:22Z",
+    "new_in_publication_count": 0,
+    "new_in_publication": [],
+    "no_longer_listed_count": 0,
     "providers_compared": [
       "edenor",
       "edesur"
@@ -2231,50 +2520,6 @@
         "partido": "CAPITAL",
         "localidad": "LINIERS",
         "first_seen_at": "2026-11-10T19:06:11Z",
-        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html"
-      },
-      {
-        "event_id": "e722df217e46cc83e43337ee",
-        "kind": "electricity_publication_added",
-        "country": "Argentina",
-        "company": "Edenor",
-        "title": "Interrupción de baja tensión",
-        "partido": "GRAL RODRIGUEZ",
-        "localidad": "GRAL RODRIGUEZ",
-        "first_seen_at": "2026-11-10T17:01:51Z",
-        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html"
-      },
-      {
-        "event_id": "6e5323751b79956dcadeccd2",
-        "kind": "electricity_publication_added",
-        "country": "Argentina",
-        "company": "Edesur",
-        "title": "Interrupción de baja tensión",
-        "partido": "EZEIZA",
-        "localidad": "CARLOS SPEGAZZINNI",
-        "first_seen_at": "2026-11-10T17:01:51Z",
-        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html"
-      },
-      {
-        "event_id": "2e4286e19e4389ecf8beeea4",
-        "kind": "electricity_publication_added",
-        "country": "Argentina",
-        "company": "Edesur",
-        "title": "Interrupción de baja tensión",
-        "partido": "EZEIZA",
-        "localidad": "JOSE MARIA EZEIZA",
-        "first_seen_at": "2026-11-10T17:01:51Z",
-        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html"
-      },
-      {
-        "event_id": "177957e37d1eafb008ad2d89",
-        "kind": "electricity_publication_added",
-        "country": "Argentina",
-        "company": "Edesur",
-        "title": "Interrupción de baja tensión",
-        "partido": "QUILMES",
-        "localidad": "BERNAL",
-        "first_seen_at": "2026-11-10T17:01:51Z",
         "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html"
       }
     ]
