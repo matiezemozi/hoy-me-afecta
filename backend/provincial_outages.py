@@ -31,6 +31,8 @@ PROVIDERS = {
     'ejesa_jujuy': ('EJESA', 'Jujuy', 'https://www.ejesa.com.ar/gestion/pwa/tareasprogramadas/mejora-y-mantenimiento'),
     'edet_tucuman': ('EDET', 'Tucumán', 'https://www.edetsa.com/gestion/pwa/tareasprogramadas/cortes-de-luz'),
     'edemsa_mendoza': ('EDEMSA', 'Mendoza', 'https://www.epremendoza.gob.ar/mantenimientos.php'),
+    'copelco_neuquen': ('COPELCO', 'Neuquén', 'https://www.copelnet.com.ar/'),
+    'cpe_la_pampa': ('CPE', 'La Pampa', 'https://sitionuevo.cpe.coop.ar/estado-servicios'),
 }
 EPE_LEGACY = 'https://www.epe.santafe.gov.ar/reclamosweb/cortes.php/cortes.php'
 EPE_LEGACY_ALT = 'https://epe.santafe.gov.ar/reclamosweb/cortes.php/cortes.php'
@@ -898,6 +900,153 @@ def _parse_edemsa_epre(html, now):
     return _filter_window(notices, now), seen, newest
 
 
+# COPELCO is an electric cooperative with a public programme for Cutral Co
+# and Plaza Huincul, distinct from EPEN's distribution area. Its home page
+# prints dates without a year. A date is accepted only when the printed
+# weekday matches this year's calendar and the work starts in the next 14 days.
+_COP_MONTHS = {'ENE': 1, 'FEB': 2, 'MAR': 3, 'ABR': 4, 'MAY': 5,
+               'JUN': 6, 'JUL': 7, 'AGO': 8, 'SEP': 9, 'OCT': 10,
+               'NOV': 11, 'DIC': 12}
+_COP_WEEKDAYS = ('lunes', 'martes', 'miercoles', 'jueves', 'viernes',
+                 'sabado', 'domingo')
+_COP_CARD = re.compile(
+    r'(?<!\w)(?P<day>\d{1,2})\s+'
+    r'(?P<month>ENE|FEB|MAR|ABR|MAY|JUN|JUL|AGO|SEP|OCT|NOV|DIC)\s+'
+    r'(?P<weekday>lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)\s+'
+    r'(?P<start>\d{1,2}:\d{2})\s+a\s+'
+    r'(?P<end>\d{1,2}:\d{2})\s+hs\b', re.I)
+
+
+def _plain_fold(value):
+    return (value.lower().replace('á', 'a').replace('é', 'e')
+            .replace('í', 'i').replace('ó', 'o').replace('ú', 'u'))
+
+
+def _parse_copelco(html, now):
+    _, visible = _visible(html)
+    header = re.search(r'\bCortes programados\b', visible, re.I)
+    if not header:
+        return [], 0, None
+    region = visible[header.end():]
+    footer = re.search(r'\bLos horarios son estimados\b|\bNuestros servicios\b',
+                       region, re.I)
+    if footer:
+        region = region[:footer.start()]
+    cards = list(_COP_CARD.finditer(region))
+    records, seen, newest = [], 0, None
+    for i, marker in enumerate(cards[:80]):
+        mon = _COP_MONTHS[marker.group('month').upper()]
+        date = None
+        for year in (now.year, now.year + 1):
+            try:
+                candidate = datetime(year, mon, int(marker.group('day'))).date()
+            except ValueError:
+                continue
+            if (candidate >= now.date() - timedelta(days=2) and
+                    candidate <= now.date() + timedelta(days=MAX_DAYS) and
+                    _COP_WEEKDAYS[candidate.weekday()] ==
+                    _plain_fold(marker.group('weekday'))):
+                date = candidate
+                break
+        if date is None:
+            continue
+        end_pos = cards[i + 1].start() if i + 1 < len(cards) else len(region)
+        body = region[marker.end():end_pos]
+        body = re.split(r'\bUsuarios singulares\s*:', body, maxsplit=1, flags=re.I)[0]
+        locality_zone = re.search(r'\b(PLAZA\s+HUINCUL|CUTRAL[-\s]+CO)\s*[-–]?\s*[•]?\s*(.+)',
+                                  body, re.I | re.S)
+        if not locality_zone:
+            continue
+        locality = locality_zone.group(1).upper().replace('-', ' ')
+        zone = _clean(locality_zone.group(2), 700).strip('-–• ')
+        if len(zone) < 12:
+            continue
+        try:
+            start, end = (_datetime(date, marker.group('start')),
+                          _datetime(date, marker.group('end')))
+        except ValueError:
+            continue
+        if start >= end:
+            continue
+        seen += 1
+        newest = max(newest, date) if newest else date
+        ref = re.match(r'\s*(SET\s+[\d-]{1,30})\b', body, re.I)
+        task = ('Corte programado anunciado por COPELCO' +
+                ('; ' + ref.group(1) if ref else ''))
+        records.append(_notice('COPELCO', 'Neuquén', PROVIDERS['copelco_neuquen'][2],
+                               locality, start, end, zone, task))
+    return _filter_window(records, now), seen, newest
+
+
+# CPE, the Santa Rosa electricity cooperative, explicitly separates its
+# current programme from past bulletins. Dates must include a full year.
+# The source may keep old posts under its "vigentes" heading; those remain
+# stale, never a reason to announce that the electricity is normal.
+_CPE_MONTHS = {'enero': 1, 'febrero': 2, 'marzo': 3, 'abril': 4,
+               'mayo': 5, 'junio': 6, 'julio': 7, 'agosto': 8,
+               'septiembre': 9, 'setiembre': 9, 'octubre': 10,
+               'noviembre': 11, 'diciembre': 12}
+_CPE_DAY = re.compile(
+    r'\b(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)\s+'
+    r'(\d{1,2})\s+de\s+'
+    r'(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|'
+    r'setiembre|octubre|noviembre|diciembre)\s+de\s+(20\d\d)\b', re.I)
+
+
+def _parse_cpe(html, now):
+    _, visible = _visible(html)
+    marker = re.search(r'\bCortes programados vigentes\b', visible, re.I)
+    if not marker:
+        return [], 0, None
+    region = visible[marker.end():]
+    end = re.search(r'\bCortes programados pasados\b', region, re.I)
+    if end:
+        region = region[:end.start()]
+    # This means the official source is reachable and says its current
+    # scheduled-work list is empty; it does NOT confirm normal supply.
+    dates = list(_CPE_DAY.finditer(region))
+    if not dates and re.search(r'\bNo hay cortes programados vigentes\b', region, re.I):
+        return [], 1, now.date()
+    records, seen, newest = [], 0, None
+    for i, marker in enumerate(dates[:70]):
+        _, number, month, year = marker.groups()
+        try:
+            date = datetime(int(year), _CPE_MONTHS[month.lower()], int(number)).date()
+        except ValueError:
+            continue
+        if _COP_WEEKDAYS[date.weekday()] != _plain_fold(marker.group(1)):
+            continue
+        end_pos = dates[i+1].start() if i+1 < len(dates) else len(region)
+        block = region[marker.end():end_pos]
+        if not re.search(r'\bCORTE PROGRAMADO\b', block, re.I):
+            continue
+        hours = re.search(r'desde\s+las?\s+(\d{1,2}:\d{2})\s+'
+                          r'hasta\s+las?\s+(\d{1,2}:\d{2})\b', block, re.I)
+        zone_match = re.search(r'\bzona comprendida por\s+(.+?)'
+                               r'(?=\.\s*Personal de la CPE|'
+                               r'\.\s*Los trabajos|$)', block, re.I | re.S)
+        if not hours or not zone_match:
+            continue
+        zone = _clean(zone_match.group(1), 700).strip(' .,;')
+        if len(zone) < 15:
+            continue
+        try:
+            start, stop = _datetime(date, hours.group(1)), _datetime(date, hours.group(2))
+        except ValueError:
+            continue
+        if start >= stop:
+            continue
+        seen += 1
+        newest = max(newest, date) if newest else date
+        locality = ('TOAY' if re.search(r'\bToay\b', block, re.I) else
+                    'LONQUIMAY' if re.search(r'\bLonquimay\b', block, re.I) else
+                    'SANTA ROSA')
+        records.append(_notice('CPE', 'La Pampa', PROVIDERS['cpe_la_pampa'][2],
+                               locality, start, stop, zone,
+                               'Corte programado comunicado por la cooperativa CPE'))
+    return _filter_window(records, now), seen, newest
+
+
 _EPEC = re.compile(
     r'\bDe\s+(?P<start>\d{1,2}:\d\d)\s+a\s+(?P<end>\d{1,2}:\d\d)\s*'
     r'Motivo\s*:\s*(?P<task>.*?)\s*'
@@ -971,6 +1120,8 @@ def _diagnose_html(html, page, key):
         'ejesa_jujuy': r'(?<!\d)20\d{2}-\d{2}-\d{2}(?!\d)',
         'edet_tucuman': r'(?<!\d)20\d{2}-\d{2}-\d{2}(?!\d)',
         'edemsa_mendoza': r'(?<!\d)\d{2}-\d{2}-20\d{2}\s+\d{2}:\d{2}:\d{2}(?!\d)',
+        'copelco_neuquen': r'\b\d{1,2}\s+(?:ENE|FEB|MAR|ABR|MAY|JUN|JUL|AGO|SEP|OCT|NOV|DIC)\b',
+        'cpe_la_pampa': r'\b\d{1,2}\s+de\s+(?:enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\s+de\s+20\d{2}\b',
     }
     expected = patterns.get(key, '')
     dates = len(re.findall(expected, visible)) if expected else 0
@@ -1016,6 +1167,12 @@ def collect_one(key, checked_at, fetcher=None, script_fetcher=None):
         output['parser_revision'] = 'EJESA-WEB-v5.23'
     if key == 'edet_tucuman':
         output['parser_revision'] = 'EDET-WEB-v5.24'
+    if key == 'copelco_neuquen':
+        output['parser_revision'] = 'COPELCO-WEB-v5.26'
+        output['coverage_area'] = 'Cutral Có y Plaza Huincul'
+    if key == 'cpe_la_pampa':
+        output['parser_revision'] = 'CPE-WEB-v5.26'
+        output['coverage_area'] = 'Zona atendida por CPE, Santa Rosa'
     if key == 'edemsa_mendoza':
         output['parser_revision'] = 'EDEMSA-EPRE-v5.25'
         output['published_by'] = 'EPRE Mendoza (regulador provincial)'
@@ -1052,6 +1209,10 @@ def collect_one(key, checked_at, fetcher=None, script_fetcher=None):
                 notices, count, newest = _parse_edet(html, now)
             elif key == 'edemsa_mendoza':
                 notices, count, newest = _parse_edemsa_epre(html, now)
+            elif key == 'copelco_neuquen':
+                notices, count, newest = _parse_copelco(html, now)
+            elif key == 'cpe_la_pampa':
+                notices, count, newest = _parse_cpe(html, now)
             else:
                 notices, count, newest = _parse_epec(html, now)
             attempt['records_checked'] = count
