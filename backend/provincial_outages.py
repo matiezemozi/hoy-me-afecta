@@ -2255,7 +2255,7 @@ def _collect_upc_necochea_v531(key,checked_at,now,fetch):
     out={'status':'unverified','province':province,'country':'Argentina',
          'company':company,'source_url':url,'checked_at':checked_at,
          'coverage_kind':'planned_outages_only','notices':[],
-         'parser_revision':'UPC-NECOCHEA-v5.31','source_attempts':[],
+         'parser_revision':'UPC-NECOCHEA-v5.31.1','source_attempts':[],
          'coverage_area':'Necochea (solo noticias públicas fechadas)',
          'message':'No se verificaron cortes programados futuros completos.'}
     try:
@@ -2267,6 +2267,19 @@ def _collect_upc_necochea_v531(key,checked_at,now,fetch):
                re.search(r'/\d{1,2}-\d{1,2}-\d{2}-corte-programado',urlsplit(u).path,re.I) and
                re.search(r'corte\s+programado',t,re.I)]
         out['article_links_seen']=len(links)
+        # The official public listing explicitly distinguishes an empty feed
+        # from a failed page extraction. No listed schedules does NOT mean
+        # there are no unscheduled/real-time interruptions.
+        if not links:
+            _, listing_text = _visible(listing)
+            if re.search(r'\bno\s+se\s+encontraron\s+cortes?\s+programados?\s+ni\s+avisos?\b',
+                         listing_text, re.I):
+                out.update(status='ok', records_checked=0, coverage_horizon='current_listings_only',
+                           message=('El listado oficial indica que no hay cortes programados ni avisos '
+                                    'PUBLICADOS en esta sección. No acredita suministro normal '
+                                    'ni ausencia de interrupciones imprevistas.'))
+                out['source_attempts'][-1]['result']='explicit_no_listed_notices'
+                return out
         checked,found,newest=0,[],None
         for article_url in links[:8]:
             try:
@@ -2467,11 +2480,36 @@ def collect_one(key, checked_at, fetcher=None, script_fetcher=None):
 
 
 def collect_provincial(checked_at, fetcher=None):
-    # One failure never blocks another distributor.
+    # One failure never blocks another distributor. But when a whole official
+    # host stops responding, four identical sequential timeouts waste a large
+    # part of the GitHub scheduled job. Only the OCEBA diagnostic group shares
+    # a temporary within-run circuit breaker; all other sources still run.
     result = {}
+    shared_oceba_host_failure = None
     for key in PROVIDERS:
+        if key in _OCEBA_GROUP and shared_oceba_host_failure is not None and fetcher is None:
+            company, province, url = PROVIDERS[key]
+            result[key] = {
+                'status':'unverified', 'province':province,'country':'Argentina',
+                'company':company,'source_url':url,'checked_at':checked_at,
+                'coverage_kind':'reported_outages_only', 'notices':[],
+                'parser_revision':'OCEBA-REPORT-v5.31',
+                'notifications_enabled':False,
+                'source_attempts':[{'url':url, 'result':'skipped_shared_host_failure',
+                                    'error_type':shared_oceba_host_failure}],
+                'message':('Sin consulta individual: el servidor oficial compartido '
+                           'falló en esta ejecución. No hay datos actuales verificables; '
+                           'no significa suministro normal.'),
+            }
+            continue
         try:
             result[key] = collect_one(key, checked_at, fetcher=fetcher)
+            if key in _OCEBA_GROUP and fetcher is None:
+                attempts=result[key].get('source_attempts') or []
+                if (attempts and attempts[-1].get('result')=='fetch_or_parse_error'
+                        and attempts[-1].get('error_type') in
+                            ('TimeoutError', 'URLError', 'ConnectionError')):
+                    shared_oceba_host_failure=attempts[-1]['error_type']
         except Exception as exc:
             company, province, url = PROVIDERS[key]
             result[key] = {'status':'unverified', 'province':province, 'company':company,
