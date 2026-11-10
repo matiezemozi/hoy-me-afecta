@@ -33,6 +33,7 @@ PROVIDERS = {
     'edemsa_mendoza': ('EDEMSA', 'Mendoza', 'https://www.epremendoza.gob.ar/mantenimientos.php'),
     'copelco_neuquen': ('COPELCO', 'Neuquén', 'https://www.copelnet.com.ar/'),
     'cpe_la_pampa': ('CPE', 'La Pampa', 'https://cpe.coop.ar/estado-servicios'),
+    'edelap_la_plata': ('EDELAP', 'Buenos Aires', 'https://www.edelap.com.ar/obras-en-tu-barrio/'),
 }
 EPE_LEGACY = 'https://www.epe.santafe.gov.ar/reclamosweb/cortes.php/cortes.php'
 EPE_LEGACY_ALT = 'https://epe.santafe.gov.ar/reclamosweb/cortes.php/cortes.php'
@@ -1048,6 +1049,92 @@ def _parse_cpe(html, now):
     return _filter_window(records, now), seen, newest
 
 
+# EDELAP publishes an open schedule for La Plata and nearby towns. Entries
+# are works which MAY interrupt supply, not verified live outages. The site
+# prints a day and month (no year), so require agreement with the local
+# calendar weekday and a +/-2 to +14-day publication window. Do not infer
+# an affected locality from a street number alone.
+_EDELAP_HEAD = re.compile(
+    r'\b(?P<weekday>lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)\s+'
+    r'(?P<day>\d{1,2})\s+de\s+'
+    r'(?P<month>enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|'
+    r'setiembre|octubre|noviembre|diciembre)\b', re.I)
+_EDELAP_SLOT = re.compile(
+    r'\bde\s+(?P<start>\d{1,2}(?::\d{2})?)\s+a\s+'
+    r'(?P<end>\d{1,2}(?::\d{2})?)\s*hs\.?\s*'
+    r'en\s+la\s+zona\s+de\b', re.I)
+_EDELAP_LOCALITIES = (
+    'San Carlos', 'Manuel B. Gonnet', 'Melchor Romero', 'Los Hornos',
+    'Villa Elvira', 'Villa Elisa', 'Villa Castells', 'City Bell',
+    'La Plata', 'Lisandro Olmos', 'Tolosa', 'Ringuelet', 'Ensenada',
+    'Berisso', 'Abasto', 'Gonnet', 'Gorina', 'Arana', 'Hernández',
+    'Arturo Seguí', 'El Peligro', 'Magdalena', 'Punta Indio',
+    'Villa Garibaldi', 'San Lorenzo', 'Altos de San Lorenzo',
+)
+_EDELAP_LOCALITY_RE = re.compile(
+    r',\s*(' + '|'.join(re.escape(x) for x in _EDELAP_LOCALITIES) + r')\s*$', re.I)
+
+
+def _parse_edelap(html, now):
+    _, visible = _visible(html)
+    header = re.search(r'\bObras\s+en\s+tu\s+barrio\b', visible, re.I)
+    if not header:
+        return [], 0, None
+    region = visible[header.end():]
+    footer = re.search(r'\bLos\s+trabajos\s+pueden\s+implicar\b|'
+                       r'\bLos\s+usuarios\s+alcanzados\s+por\s+estas\s+obras\b', region, re.I)
+    if footer:
+        region = region[:footer.start()]
+    dates = list(_EDELAP_HEAD.finditer(region))[:50]
+    seen, newest, records = 0, None, []
+    for i, heading in enumerate(dates):
+        month = _CPE_MONTHS[heading.group('month').lower()]
+        day = None
+        for year in (now.year - 1, now.year, now.year + 1):
+            try:
+                candidate = datetime(year, month, int(heading.group('day'))).date()
+            except ValueError:
+                continue
+            if (_plain_fold(heading.group('weekday')) == _COP_WEEKDAYS[candidate.weekday()]
+                    and now.date() - timedelta(days=31) <= candidate
+                    <= now.date() + timedelta(days=MAX_DAYS)):
+                day = candidate
+                break
+        if day is None:
+            continue
+        end_pos = dates[i + 1].start() if i + 1 < len(dates) else len(region)
+        section = region[heading.end():end_pos]
+        entries = list(_EDELAP_SLOT.finditer(section))[:100]
+        for j, entry in enumerate(entries):
+            next_pos = entries[j + 1].start() if j + 1 < len(entries) else len(section)
+            zone_text = section[entry.end():next_pos].split(';', 1)[0]
+            zone = _clean(zone_text, 700).strip(' .,;:-')
+            place = _EDELAP_LOCALITY_RE.search(zone)
+            if not place or len(zone) < 18:
+                continue
+            if re.search(r'\b(?:suspendid[oa]|cancelad[oa]|reprogramad[oa])\b', zone, re.I):
+                continue
+            def normalize_hour(h):
+                bits = h.split(':')
+                if len(bits) == 1:
+                    return f'{int(bits[0]):02}:00'
+                return f'{int(bits[0]):02}:{bits[1]}'
+            try:
+                start = _datetime(day, normalize_hour(entry.group('start')))
+                end = _datetime(day, normalize_hour(entry.group('end')))
+            except ValueError:
+                continue
+            if start >= end:
+                continue
+            seen += 1
+            newest = max(day, newest) if newest else day
+            records.append(_notice(
+                'EDELAP', 'Buenos Aires', PROVIDERS['edelap_la_plata'][2],
+                place.group(1), start, end, zone,
+                'Obra de mejora programada; puede requerir una interrupción del suministro'))
+    return _filter_window(records, now), seen, newest
+
+
 _EPEC = re.compile(
     r'\bDe\s+(?P<start>\d{1,2}:\d\d)\s+a\s+(?P<end>\d{1,2}:\d\d)\s*'
     r'Motivo\s*:\s*(?P<task>.*?)\s*'
@@ -1123,6 +1210,7 @@ def _diagnose_html(html, page, key):
         'edemsa_mendoza': r'(?<!\d)\d{2}-\d{2}-20\d{2}\s+\d{2}:\d{2}:\d{2}(?!\d)',
         'copelco_neuquen': r'\b\d{1,2}\s+(?:ENE|FEB|MAR|ABR|MAY|JUN|JUL|AGO|SEP|OCT|NOV|DIC)\b',
         'cpe_la_pampa': r'\b\d{1,2}\s+de\s+(?:enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\s+de\s+20\d{2}\b',
+        'edelap_la_plata': r'\b(?:lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)\s+\d{1,2}\s+de\s+(?:enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\b',
     }
     expected = patterns.get(key, '')
     dates = len(re.findall(expected, visible)) if expected else 0
@@ -1168,6 +1256,10 @@ def collect_one(key, checked_at, fetcher=None, script_fetcher=None):
         output['parser_revision'] = 'EJESA-WEB-v5.23'
     if key == 'edet_tucuman':
         output['parser_revision'] = 'EDET-WEB-v5.24'
+    if key == 'edelap_la_plata':
+        output['parser_revision'] = 'EDELAP-WEB-v5.27'
+        output['coverage_kind'] = 'planned_network_work_may_interrupt_only'
+        output['coverage_area'] = 'La Plata y alrededores (jurisdicción EDELAP)'
     if key == 'copelco_neuquen':
         output['parser_revision'] = 'COPELCO-WEB-v5.26'
         output['coverage_area'] = 'Cutral Có y Plaza Huincul'
@@ -1217,6 +1309,8 @@ def collect_one(key, checked_at, fetcher=None, script_fetcher=None):
                 notices, count, newest = _parse_edemsa_epre(html, now)
             elif key == 'copelco_neuquen':
                 notices, count, newest = _parse_copelco(html, now)
+            elif key == 'edelap_la_plata':
+                notices, count, newest = _parse_edelap(html, now)
             elif key == 'cpe_la_pampa':
                 notices, count, newest = _parse_cpe(html, now)
                 # Keep each bulletin linked to the page actually read.
@@ -1265,6 +1359,9 @@ def collect_one(key, checked_at, fetcher=None, script_fetcher=None):
                                          'NO confirma cortes en curso.')
             if not notices:
                 output['message'] = 'Sin trabajos futuros reconocidos en la consulta; NO confirma servicio normal.'
+            if key == 'edelap_la_plata' and notices:
+                output['message'] = ('Obras de red previstas que PUEDEN requerir interrupciones; '
+                                     'NO confirman cortes actualmente en curso.')
             return output
         except Exception as exc:
             attempt['result'] = 'fetch_or_parse_error'
