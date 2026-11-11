@@ -2622,7 +2622,7 @@
   },
   "water_services": {
     "schema_version": 1,
-    "generated_at": "2026-11-11T19:33:41Z",
+    "generated_at": "2026-11-11T19:47:27Z",
     "status": "pilot_not_integrated_in_android",
     "category": "agua",
     "country": "Argentina",
@@ -2637,21 +2637,21 @@
         "province": "Buenos Aires",
         "country": "Argentina",
         "source_url": "https://www.aguasbonaerenses.com.ar/noticias/",
-        "checked_at": "2026-11-11T19:33:41Z",
+        "checked_at": "2026-11-11T19:47:27Z",
         "coverage_kind": "public_water_bulletins_only",
         "notifications_enabled": false,
-        "parser_revision": "WATER-v5.32",
+        "parser_revision": "WATER-v5.33",
         "notices": [
           {
-            "id": "agua-8b72463b1dc5d6ab29",
+            "id": "agua-7ddc8af84cfcbf8b3d",
             "category": "agua",
             "country": "Argentina",
             "province": "Buenos Aires",
             "company": "ABSA",
             "kind": "water_service_bulletin",
             "status": "publication_only_not_live",
-            "locality_hint": "Patagones",
-            "zone_detail": "Se están registrando episodios de baja presión y algunas faltas de agua en la zona alta de Carmen de Patagones, esto es Barrio Bicentenario, Barrio 99 Viviendas y Barrio Dolores. Un corte de energía ocurrido en el día de ayer, sumado al mayor consumo de agua por temperaturas elevadas, y a la reparación en curso de un equipo usado habitualmente en la captación de agua, comprometieron el suministro en ese sector de la ciudad. Por esta razón, se solicita a las personas usuarias que cuenten con el servicio, que preserven las res",
+            "locality_hint": "Carmen de Patagones",
+            "zone_detail": "Se están registrando episodios de baja presión y algunas faltas de agua en la zona alta de Carmen de Patagones, esto es Barrio Bicentenario, Barrio 99 Viviendas y Barrio Dolores. Un corte de energía ocurrido en el día de ayer, sumado al mayor consumo de agua por temperaturas elevadas, y a la reparación en curso de un equipo usado habitualmente en la captación de agua, comprometieron el suministro en ese sector de la ciudad. Por esta razón, se solicita a las personas usuarias que cuenten con el servicio, que preserven las reservas de agua y utilicen el recurso solo para hidratación y tareas impostergables, hasta que se normalice el suministro. Se recuerda que, ante dificultades en el servicio, la empresa cuenta con la línea telefónica de Asistencia Técnica 0800-999-2272.",
             "source_url": "https://www.aguasbonaerenses.com.ar/noticias/5105",
             "notification_allowed": false,
             "message": "Comunicado oficial; no acredita el estado del suministro en tiempo real.",
@@ -2706,7 +2706,7 @@
             "kind": "water_service_bulletin",
             "status": "publication_only_not_live",
             "locality_hint": "Carlos Tejedor",
-            "zone_detail": "Esta mañana se llevan adelante tares de reparación sobre una cañería de impulsión de agua sobre la calle Flora afectando, hasta el mediodía, el suministro a los usuarios ubicados en esa arteria, entre Vergara y Almirón, en Carlos Tejedor. Por esta razón, se solicita a las personas usuarias que cuiden las reservas domiciliarias y utilicen el recurso únicamente para aquellos usos que sean impostergables, hasta la normalización del suministro. Se recuerda que, ante dificultades en el servicio, la empresa cuenta con la línea tel",
+            "zone_detail": "Esta mañana se llevan adelante tares de reparación sobre una cañería de impulsión de agua sobre la calle Flora afectando, hasta el mediodía, el suministro a los usuarios ubicados en esa arteria, entre Vergara y Almirón, en Carlos Tejedor. Por esta razón, se solicita a las personas usuarias que cuiden las reservas domiciliarias y utilicen el recurso únicamente para aquellos usos que sean impostergables, hasta la normalización del suministro. Se recuerda que, ante dificultades en el servicio, la empresa cuenta con la línea telefónica de Asistencia Técnica 0800-999-2272.",
             "source_url": "https://www.aguasbonaerenses.com.ar/noticias/5103",
             "notification_allowed": false,
             "message": "Comunicado oficial; no acredita el estado del suministro en tiempo real.",
@@ -2723,7 +2723,7 @@
             "kind": "water_service_bulletin",
             "status": "publication_only_not_live",
             "locality_hint": "General Lavalle",
-            "zone_detail": "En la jornada de hoy un corte de energía eléctrica causado por un incendio afectó instalaciones de producción y distribución de agua en General Lavalle. La empresa distribuidora de energía restableció el suministro en la Planta Potabilizadora de agua, pero aún no pudo reconectarse en la toma, por lo que se mantiene la operación con un grupo electrógeno de Aguas Bonaerenses, situación que se normalizará recién mañana. Por esa razón, debe reducirse la salida a la red de agua con el fin de garantizar el suministro hasta ese mom",
+            "zone_detail": "En la jornada de hoy un corte de energía eléctrica causado por un incendio afectó instalaciones de producción y distribución de agua en General Lavalle. La empresa distribuidora de energía restableció el suministro en la Planta Potabilizadora de agua, pero aún no pudo reconectarse en la toma, por lo que se mantiene la operación con un grupo electrógeno de Aguas Bonaerenses, situación que se normalizará recién mañana. Por esa razón, debe reducirse la salida a la red de agua con el fin de garantizar el suministro hasta ese momento, registrándose baja presión en la localidad. Por esta razón, se solicita a las personas usuarias que cuiden las reservas domiciliarias y utilicen el recurso únicamente para aquellos usos que sean impostergables, hasta tanto se restablezca el servicio de energía y se normalice el suministro. Se recuerda que, ante dificultades en el servicio, la empresa cuenta con la línea telefónica de Asistencia Técnica…",
             "source_url": "https://www.aguasbonaerenses.com.ar/noticias/5102",
             "notification_allowed": false,
             "message": "Comunicado oficial; no acredita el estado del suministro en tiempo real.",
@@ -2744,10 +2744,10 @@
         "province": "Salta",
         "country": "Argentina",
         "source_url": "https://www.aguasdelnortesalta.com.ar/cortes.php",
-        "checked_at": "2026-11-11T19:33:41Z",
+        "checked_at": "2026-11-11T19:47:27Z",
         "coverage_kind": "public_water_bulletins_only",
         "notifications_enabled": false,
-        "parser_revision": "WATER-v5.32",
+        "parser_revision": "WATER-v5.33",
         "notices": [],
         "message": "La página oficial indica que los trabajos en desarrollo no afectan el servicio. No implica ausencia de cortes imprevistos ni servicio normal.",
         "records_checked": 0,
@@ -2758,14 +2758,26 @@
         "company": "AYSAM",
         "province": "Mendoza",
         "country": "Argentina",
-        "source_url": "https://www.aysam.com.ar/cortes/index.html",
-        "checked_at": "2026-11-11T19:33:41Z",
+        "source_url": "https://aysam.com.ar/cortes/",
+        "checked_at": "2026-11-11T19:47:27Z",
         "coverage_kind": "public_water_bulletins_only",
         "notifications_enabled": false,
-        "parser_revision": "WATER-v5.32",
+        "parser_revision": "WATER-v5.33",
         "notices": [],
-        "message": "La tabla no presenta interrupciones programadas futuras completas verificables.",
-        "records_checked": 0
+        "message": "Sin cortes futuros completos reconocidos en los listados consultados.",
+        "records_checked": 0,
+        "source_attempts": [
+          {
+            "url": "https://aysam.com.ar/cortes/",
+            "result": "fetch_or_parse_error",
+            "error_type": "HTTPError"
+          },
+          {
+            "url": "https://www.aysam.com.ar/cortes/index.html",
+            "records_checked": 0,
+            "result": "page_read"
+          }
+        ]
       },
       "aguas_cordobesas": {
         "status": "unverified",
@@ -2773,10 +2785,10 @@
         "province": "Córdoba",
         "country": "Argentina",
         "source_url": "https://www.aws.aguascordobesas.com.ar/CanalNoticias/NoticiasCategoria/2/servicio",
-        "checked_at": "2026-11-11T19:33:41Z",
+        "checked_at": "2026-11-11T19:47:27Z",
         "coverage_kind": "public_water_bulletins_only",
         "notifications_enabled": false,
-        "parser_revision": "WATER-v5.32",
+        "parser_revision": "WATER-v5.33",
         "notices": [],
         "message": "No se pudo verificar fuente: URLError"
       },
@@ -2786,14 +2798,63 @@
         "province": "Santa Fe",
         "country": "Argentina",
         "source_url": "https://www.aguassantafesinas.com.ar/portal/noticias",
-        "checked_at": "2026-11-11T19:33:41Z",
+        "checked_at": "2026-11-11T19:47:27Z",
         "coverage_kind": "public_water_bulletins_only",
         "notifications_enabled": false,
-        "parser_revision": "WATER-v5.32",
+        "parser_revision": "WATER-v5.33",
         "notices": [],
         "message": "Portal accesible, sin aviso futuro completo con localidad y horario verificables.",
         "date_markers_checked": 0,
         "account_lookup_required_for_address": true
+      },
+      "aguas_rionegrinas_arsa": {
+        "status": "unverified",
+        "company": "Aguas Rionegrinas",
+        "province": "Río Negro",
+        "country": "Argentina",
+        "source_url": "https://aguasrionegrinas.com/category/interrupciones/",
+        "checked_at": "2026-11-11T19:47:27Z",
+        "coverage_kind": "public_water_bulletins_only",
+        "notifications_enabled": false,
+        "parser_revision": "ARSA-ARTICLES-v5.33",
+        "notices": [],
+        "message": "No se recuperaron artículos recientes con localidad y afectación verificables.",
+        "article_links_seen": 4,
+        "source_attempts": [
+          {
+            "url": "https://aguasrionegrinas.com/cipolletti-arsa-inicio-trabajos-en-calle-mengelle-para-optimizar-la-red-de-agua-potable-en-toda-la-ciudad/",
+            "result": "no_recent_service_notice"
+          },
+          {
+            "url": "https://aguasrionegrinas.com/bariloche-arsa-ejecutara-trabajos-para-fortalecer-la-red-de-agua-potable-en-el-sector-de-riberas-del-nireco/",
+            "result": "no_recent_service_notice"
+          },
+          {
+            "url": "https://aguasrionegrinas.com/coronel-belisle-arsa-realizara-trabajos-para-fortalecer-el-sistema-de-abastecimiento-de-agua/",
+            "result": "no_recent_service_notice"
+          },
+          {
+            "url": "https://aguasrionegrinas.com/cervantes-trabajan-para-restablecer-el-servicio-de-agua-potable-tras-un-inconveniente-electrico/",
+            "result": "no_recent_service_notice"
+          }
+        ],
+        "articles_checked": 4,
+        "records_checked": 4
+      },
+      "aguas_catamarca": {
+        "status": "unverified",
+        "company": "Aguas de Catamarca SAPEM",
+        "province": "Catamarca",
+        "country": "Argentina",
+        "source_url": "https://www.adcsapem.com.ar/?page_id=240",
+        "checked_at": "2026-11-11T19:47:27Z",
+        "coverage_kind": "public_water_bulletins_only",
+        "notifications_enabled": false,
+        "parser_revision": "CATAMARCA-STATUS-v5.33",
+        "notices": [],
+        "message": "Página pública de suspensiones consultada; no hay registros con fecha, localidad y estado suficientes. No confirma servicio normal.",
+        "page_read": true,
+        "records_checked": 0
       }
     },
     "notices": [
@@ -2806,7 +2867,7 @@
         "kind": "water_service_bulletin",
         "status": "publication_only_not_live",
         "locality_hint": "General Lavalle",
-        "zone_detail": "En la jornada de hoy un corte de energía eléctrica causado por un incendio afectó instalaciones de producción y distribución de agua en General Lavalle. La empresa distribuidora de energía restableció el suministro en la Planta Potabilizadora de agua, pero aún no pudo reconectarse en la toma, por lo que se mantiene la operación con un grupo electrógeno de Aguas Bonaerenses, situación que se normalizará recién mañana. Por esa razón, debe reducirse la salida a la red de agua con el fin de garantizar el suministro hasta ese mom",
+        "zone_detail": "En la jornada de hoy un corte de energía eléctrica causado por un incendio afectó instalaciones de producción y distribución de agua en General Lavalle. La empresa distribuidora de energía restableció el suministro en la Planta Potabilizadora de agua, pero aún no pudo reconectarse en la toma, por lo que se mantiene la operación con un grupo electrógeno de Aguas Bonaerenses, situación que se normalizará recién mañana. Por esa razón, debe reducirse la salida a la red de agua con el fin de garantizar el suministro hasta ese momento, registrándose baja presión en la localidad. Por esta razón, se solicita a las personas usuarias que cuiden las reservas domiciliarias y utilicen el recurso únicamente para aquellos usos que sean impostergables, hasta tanto se restablezca el servicio de energía y se normalice el suministro. Se recuerda que, ante dificultades en el servicio, la empresa cuenta con la línea telefónica de Asistencia Técnica…",
         "source_url": "https://www.aguasbonaerenses.com.ar/noticias/5102",
         "notification_allowed": false,
         "message": "Comunicado oficial; no acredita el estado del suministro en tiempo real.",
@@ -2815,15 +2876,15 @@
         "scheduled_end": null
       },
       {
-        "id": "agua-8b72463b1dc5d6ab29",
+        "id": "agua-7ddc8af84cfcbf8b3d",
         "category": "agua",
         "country": "Argentina",
         "province": "Buenos Aires",
         "company": "ABSA",
         "kind": "water_service_bulletin",
         "status": "publication_only_not_live",
-        "locality_hint": "Patagones",
-        "zone_detail": "Se están registrando episodios de baja presión y algunas faltas de agua en la zona alta de Carmen de Patagones, esto es Barrio Bicentenario, Barrio 99 Viviendas y Barrio Dolores. Un corte de energía ocurrido en el día de ayer, sumado al mayor consumo de agua por temperaturas elevadas, y a la reparación en curso de un equipo usado habitualmente en la captación de agua, comprometieron el suministro en ese sector de la ciudad. Por esta razón, se solicita a las personas usuarias que cuenten con el servicio, que preserven las res",
+        "locality_hint": "Carmen de Patagones",
+        "zone_detail": "Se están registrando episodios de baja presión y algunas faltas de agua en la zona alta de Carmen de Patagones, esto es Barrio Bicentenario, Barrio 99 Viviendas y Barrio Dolores. Un corte de energía ocurrido en el día de ayer, sumado al mayor consumo de agua por temperaturas elevadas, y a la reparación en curso de un equipo usado habitualmente en la captación de agua, comprometieron el suministro en ese sector de la ciudad. Por esta razón, se solicita a las personas usuarias que cuenten con el servicio, que preserven las reservas de agua y utilicen el recurso solo para hidratación y tareas impostergables, hasta que se normalice el suministro. Se recuerda que, ante dificultades en el servicio, la empresa cuenta con la línea telefónica de Asistencia Técnica 0800-999-2272.",
         "source_url": "https://www.aguasbonaerenses.com.ar/noticias/5105",
         "notification_allowed": false,
         "message": "Comunicado oficial; no acredita el estado del suministro en tiempo real.",
@@ -2840,7 +2901,7 @@
         "kind": "water_service_bulletin",
         "status": "publication_only_not_live",
         "locality_hint": "Carlos Tejedor",
-        "zone_detail": "Esta mañana se llevan adelante tares de reparación sobre una cañería de impulsión de agua sobre la calle Flora afectando, hasta el mediodía, el suministro a los usuarios ubicados en esa arteria, entre Vergara y Almirón, en Carlos Tejedor. Por esta razón, se solicita a las personas usuarias que cuiden las reservas domiciliarias y utilicen el recurso únicamente para aquellos usos que sean impostergables, hasta la normalización del suministro. Se recuerda que, ante dificultades en el servicio, la empresa cuenta con la línea tel",
+        "zone_detail": "Esta mañana se llevan adelante tares de reparación sobre una cañería de impulsión de agua sobre la calle Flora afectando, hasta el mediodía, el suministro a los usuarios ubicados en esa arteria, entre Vergara y Almirón, en Carlos Tejedor. Por esta razón, se solicita a las personas usuarias que cuiden las reservas domiciliarias y utilicen el recurso únicamente para aquellos usos que sean impostergables, hasta la normalización del suministro. Se recuerda que, ante dificultades en el servicio, la empresa cuenta con la línea telefónica de Asistencia Técnica 0800-999-2272.",
         "source_url": "https://www.aguasbonaerenses.com.ar/noticias/5103",
         "notification_allowed": false,
         "message": "Comunicado oficial; no acredita el estado del suministro en tiempo real.",
