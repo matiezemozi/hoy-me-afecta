@@ -1,4 +1,4 @@
-"""Conservative public water-service bulletin collectors for Argentina (v5.33).
+"""Conservative public water-service bulletin collectors for Argentina (v5.34).
 
 No report is a live outage confirmation. No credentials, service identifiers or
 unofficial APIs are used. Completely independent of provincial_electricity.
@@ -51,7 +51,7 @@ def checked_instant(value):
 def fetch_html(url):
     if urlsplit(url).scheme != 'https':
         raise ValueError('Solo HTTPS')
-    req = Request(url, headers={'User-Agent':'HoyMeAfecta/5.33 (public notice reader)',
+    req = Request(url, headers={'User-Agent':'HoyMeAfecta/5.34 (public notice reader)',
                                 'Accept':'text/html,application/xhtml+xml'})
     with urlopen(req, timeout=13) as response:
         raw = response.read(MAX_PAGE_BYTES + 1)
@@ -235,7 +235,7 @@ def _absa_article(html,url,now):
         for loc,opening,closing in parts:
             zone=content
             if opening and opening.lower() in content.lower():
-                zone=re.split(re.escape(opening),content,maxsplit=1,flags=re.I)[1]
+                zone=re.split(re.escape(opening),content,maxsplit=1,flags=re.I)[1].lstrip(' ,;:')
                 if closing and re.search(re.escape(closing),zone,re.I):
                     zone=re.split(re.escape(closing),zone,maxsplit=1,flags=re.I)[0]
             if not zone.strip():
@@ -309,7 +309,7 @@ def _result(key,checked_at):
     return {'status':'unverified','company':company,'province':province,'country':'Argentina',
             'source_url':url,'checked_at':checked_at,
             'coverage_kind':'public_water_bulletins_only',
-            'notifications_enabled':False,'parser_revision':'WATER-v5.33',
+            'notifications_enabled':False,'parser_revision':'WATER-v5.34',
             'notices':[],'message':'No se ha verificado un aviso completo.'}
 
 
@@ -368,7 +368,7 @@ def _collect_aysam(checked_at,now,fetch):
                 break
             # The modern public list explicitly says there are no cuts;
             # do not infer live supply or future schedules from that statement.
-            if url==current and checked==0 and re.search(r'\bno hay cortes\b',norm):
+            if checked==0 and re.search(r'\bno hay cortes\b',norm):
                 result.update(status='ok',source_url=url,coverage_horizon='current_listings_only',
                               message=('El listado público oficial dice «No hay cortes». '
                                        'No acredita servicio normal ni ausencia de fallas imprevistas.'))
@@ -379,7 +379,7 @@ def _collect_aysam(checked_at,now,fetch):
                               message='Solo hay registros antiguos; no implica suministro normal.')
                 break
             if url==legacy:
-                result['message']='Sin cortes futuros completos reconocidos en los listados consultados.'
+                result['message']='Página consultada, pero sin filas futuras completas legibles; puede cargar datos dinámicamente.'
         except Exception as exc:
             attempts.append({'url':url,'result':'fetch_or_parse_error','error_type':type(exc).__name__})
     result['source_attempts']=attempts
@@ -429,13 +429,10 @@ def _collect_diagnostic(key,checked_at,now,fetch):
 
 
 
-def _month_date_near_title(visible,title):
-    # Dates in neighboring/sidebar links are not evidence about this article.
-    pos=visible.find(title)
-    if pos<0:
-        return None
-    excerpt_text=folded(visible[pos+len(title):pos+len(title)+140])
-    m=re.search(r'\b(\d{1,2})\s+(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|setiembre|octubre|noviembre|diciembre)\s*,?\s*(20\d{2})\b',excerpt_text)
+def _parse_official_day(text):
+    """Return a calendar date from an explicit published-date label, not a weekday guess."""
+    raw=folded(text)
+    m=re.search(r'\b(\d{1,2})\s+(?:de\s+)?(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|setiembre|octubre|noviembre|diciembre)\s*,?\s*(?:de\s+)?(20\d{2})\b',raw)
     if not m:
         return None
     try:
@@ -444,12 +441,119 @@ def _month_date_near_title(visible,title):
         return None
 
 
-def _arsa_article(html,url,now):
+def _published_date_from_meta(html):
+    """WordPress article metadata (publication only; never an outage timestamp)."""
+    class MetaDates(HTMLParser):
+        def __init__(self):
+            super().__init__();self.values=[]
+        def handle_starttag(self,tag,attrs):
+            attrs=dict(attrs)
+            if tag=='meta':
+                key=attrs.get('property','') or attrs.get('name','') or attrs.get('itemprop','')
+                if key.lower() in ('article:published_time','datepublished','pubdate','date'):
+                    self.values.append(attrs.get('content',''))
+            elif tag=='time':
+                self.values.append(attrs.get('datetime',''))
+    parser=MetaDates();parser.feed(html)
+    # JSON-LD datePublished is still a publication date only. It may be within a
+    # script tag and is never treated as scheduled work timing.
+    parser.values += re.findall(r'["\']datePublished["\']\s*:\s*["\'](20\d{2}-\d\d-\d\d)[^"\']*["\']',html,re.I)
+    for value in parser.values:
+        match=re.match(r'^\s*(20\d{2})-(\d{2})-(\d{2})(?:T|\s|$)',value)
+        if match:
+            try:return date(*map(int,match.groups()))
+            except ValueError:continue
+    return None
+
+
+def _month_date_near_title(visible,title,html=None):
+    """Find a publication date attached to the article title, not sidebar dates.
+
+    The ARSA layout can repeat a title in neighboring navigation before the
+    article heading. Examining only the first occurrence silently dropped the
+    real notices in v5.33. Scan EVERY occurrence, nearest date first. HTML
+    publication metadata is a fallback only, not a reason to assume a cut.
+    """
+    positions=[m.start() for m in re.finditer(re.escape(title),visible,re.I)] if title else []
+    for pos in reversed(positions):
+        # The date may be just before or after the actual H1 depending on theme.
+        after=visible[pos+len(title):pos+len(title)+310]
+        day=_parse_official_day(after)
+        if day:return day
+        before=visible[max(0,pos-95):pos]
+        day=_parse_official_day(before)
+        if day:return day
+    return _published_date_from_meta(html) if html else None
+
+
+def _arsa_article_title(dom,html,url):
+    """Prefer the article heading and require locality evidence in the URL."""
+    all_headings=[h for h in dom.headings if ':' in h and 25<len(h)<250]
+    # Some WP themes render the real article title as H4, not H1. In that
+    # case recover a semantic heading only if the official page URL agrees.
+    if not all_headings:
+        m=re.search(r'<h[1-5]\b[^>]*>(.*?)</h[1-5]>',html,re.I|re.S)
+        if m:
+            candidate=page(m.group(1))[1]
+            if ':' in candidate and 25<len(candidate)<250:
+                all_headings=[candidate]
+    slug=urlsplit(url).path.strip('/').split('/')[-1]
+    for heading in all_headings:
+        locality=folded(heading.split(':',1)[0]).replace(' ','-')
+        if locality in slug or locality.replace('n','') in slug:
+            return heading
+    if len(all_headings)==1:
+        return all_headings[0]
+    return ''
+
+
+def _arsa_failure_hint(html,url,now):
+    """A limited, non-sensitive diagnostic for failed public-article parsing."""
+    try:
+        dom,visible=page(html)
+        title=_arsa_article_title(dom,html,url)
+        d=_month_date_near_title(visible,title,html) if title else None
+        if not title:return 'no_locality_title_matching_url'
+        if not d:return 'publication_date_not_found'
+        if d>now.date()+timedelta(days=1):return 'publication_in_future'
+        if d<now.date()-timedelta(days=2):return 'publication_too_old'
+        paragraphs=' '.join(p for p in dom.paragraphs if len(p)>=42)
+        if not paragraphs:return 'no_article_paragraphs'
+        return 'service_impact_not_explicit_or_excluded'
+    except Exception as exc:
+        return 'diagnostic_'+type(exc).__name__
+
+
+
+def _arsa_index_date(index_visible,label):
+    """A date published directly beside an article link in ARSA's official index.
+
+    This is a fallback for article pages with unparseable theme metadata, not
+    permission to infer scheduled hours or the current water-supply state.
+    """
+    if not label or len(label)<25:
+        return None
+    positions=[m.start() for m in re.finditer(re.escape(label),index_visible,re.I)]
+    for pos in reversed(positions):
+        excerpt=index_visible[max(0,pos-230):pos]
+        # Do not borrow a date from a preceding, different article.
+        if re.search(r'\b[A-ZÁÉÍÓÚÑ][\wÁÉÍÓÚÑáéíóúñ ]{3,45}:',excerpt):
+            continue
+        date_parts=re.findall(r'\b\d{1,2}\s+(?:de\s+)?(?:enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|setiembre|octubre|noviembre|diciembre)\s*,?\s*(?:de\s+)?20\d{2}\b',folded(excerpt))
+        if date_parts:
+            return _parse_official_day(date_parts[-1])
+    return None
+
+def _arsa_article(html,url,now,index_published=None):
     dom,visible=page(html)
-    title=next((h for h in dom.headings if ':' in h and len(h)>25 and len(h)<250),'')
+    title=_arsa_article_title(dom,html,url)
     if not title:
         return [],None
-    published=_month_date_near_title(visible,title)
+    article_published=_month_date_near_title(visible,title,html)
+    # If both official article and category show a date, they must agree.
+    if article_published and index_published and article_published!=index_published:
+        return [],None
+    published=article_published or index_published
     if not published or published>now.date()+timedelta(days=1):
         return [],None
     if published<now.date()-timedelta(days=2):
@@ -502,12 +606,13 @@ def _arsa_article(html,url,now):
 
 def _collect_arsa(checked_at,now,fetch):
     result=_result('aguas_rionegrinas_arsa',checked_at)
-    result['parser_revision']='ARSA-ARTICLES-v5.33'
+    result['parser_revision']='ARSA-ARTICLES-v5.34'
     url=result['source_url']
     seen=[];attempts=[];checked=0;newest=None
     try:
-        dom,_=page(fetch(url))
+        dom,index_visible=page(fetch(url))
         links=[]
+        link_dates={}
         for href,label in dom.anchors:
             link=urljoin(url,href)
             parsed=urlsplit(link)
@@ -519,15 +624,21 @@ def _collect_arsa(checked_at,now,fetch):
             if ':' not in label or len(label)<25 or link in links:
                 continue
             links.append(link)
+            link_dates[link]=_arsa_index_date(index_visible,label)
         result['article_links_seen']=len(links)
         for link in links[:9]:
             checked+=1
             try:
-                notices,published=_arsa_article(fetch(link),link,now)
+                article_html=fetch(link)
+                index_day=link_dates.get(link)
+                notices,published=_arsa_article(article_html,link,now,index_published=index_day)
                 if published:
                     newest=max(newest,published) if newest else published
                 seen.extend(notices)
-                attempts.append({'url':link,'result':'parsed' if notices else 'no_recent_service_notice'})
+                attempt={'url':link,'result':'parsed' if notices else 'no_recent_service_notice'}
+                if not notices:attempt['reason']=_arsa_failure_hint(article_html,link,now)
+                if index_day:attempt['category_published_on']=index_day.isoformat()
+                attempts.append(attempt)
             except Exception as exc:
                 attempts.append({'url':link,'result':'fetch_or_parse_error','error_type':type(exc).__name__})
     except Exception as exc:
