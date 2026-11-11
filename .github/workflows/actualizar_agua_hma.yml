@@ -1,0 +1,41 @@
+name: Actualizar avisos de agua HOY ME AFECTA
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Actualizar datos HOY ME AFECTA"]
+    types: [completed]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: hoy-me-afecta-water-feed-main
+  cancel-in-progress: false
+
+jobs:
+  water:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Checkout latest main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: true
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Collect water safely and preserve electricity
+        run: python backend/build_water_feed.py --out docs/water_feed.json --merge docs/feed.json
+      - name: Commit water data without restarting push CI
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/water_feed.json docs/feed.json
+          if ! git diff --cached --quiet; then
+            git commit -m "data: actualizar avisos de agua [skip ci]"
+            git push origin HEAD:main
+          fi
