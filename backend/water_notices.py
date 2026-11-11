@@ -1,4 +1,4 @@
-"""Conservative public water-service bulletin collectors for Argentina (v5.32).
+"""Conservative public water-service bulletin collectors for Argentina (v5.33).
 
 No report is a live outage confirmation. No credentials, service identifiers or
 unofficial APIs are used. Completely independent of provincial_electricity.
@@ -19,9 +19,11 @@ MAX_PAGE_BYTES = 1_500_000
 SOURCES = {
     'absa_buenos_aires': ('ABSA', 'Buenos Aires', 'https://www.aguasbonaerenses.com.ar/noticias/'),
     'aguas_del_norte_salta': ('Aguas del Norte', 'Salta', 'https://www.aguasdelnortesalta.com.ar/cortes.php'),
-    'aysam_mendoza': ('AYSAM', 'Mendoza', 'https://www.aysam.com.ar/cortes/index.html'),
+    'aysam_mendoza': ('AYSAM', 'Mendoza', 'https://aysam.com.ar/cortes/'),
     'aguas_cordobesas': ('Aguas Cordobesas', 'Córdoba', 'https://www.aws.aguascordobesas.com.ar/CanalNoticias/NoticiasCategoria/2/servicio'),
     'aguas_santafesinas': ('Aguas Santafesinas', 'Santa Fe', 'https://www.aguassantafesinas.com.ar/portal/noticias'),
+    'aguas_rionegrinas_arsa': ('Aguas Rionegrinas', 'Río Negro', 'https://aguasrionegrinas.com/category/interrupciones/'),
+    'aguas_catamarca': ('Aguas de Catamarca SAPEM', 'Catamarca', 'https://www.adcsapem.com.ar/?page_id=240'),
 }
 WEEKDAY = {'lunes':0, 'martes':1, 'miercoles':2, 'jueves':3, 'viernes':4,
            'sabado':5, 'domingo':6}
@@ -49,7 +51,7 @@ def checked_instant(value):
 def fetch_html(url):
     if urlsplit(url).scheme != 'https':
         raise ValueError('Solo HTTPS')
-    req = Request(url, headers={'User-Agent':'HoyMeAfecta/5.32 (public notice reader)',
+    req = Request(url, headers={'User-Agent':'HoyMeAfecta/5.33 (public notice reader)',
                                 'Accept':'text/html,application/xhtml+xml'})
     with urlopen(req, timeout=13) as response:
         raw = response.read(MAX_PAGE_BYTES + 1)
@@ -140,12 +142,21 @@ def page(html):
     return parser,clean(' '.join(parser.bits),MAX_PAGE_BYTES)
 
 
+def excerpt(text, limit=950):
+    """Preserve words and show when source details have been shortened."""
+    value = re.sub(r'\s+', ' ', str(text or '')).strip()
+    if len(value) <= limit:
+        return value
+    prefix = value[:limit - 2].rsplit(' ', 1)[0]
+    return (prefix if len(prefix) >= limit // 2 else value[:limit - 2]) + '…'
+
+
 def mk_notice(company, province, locality, url, kind, status, zone, **kwargs):
     key='|'.join([company,locality,url,kind,str(kwargs.get('scheduled_date') or kwargs.get('published_on'))])
     item={'id':'agua-'+sha256(key.encode('utf-8')).hexdigest()[:18],
           'category':'agua','country':'Argentina','province':province,'company':company,
           'kind':kind,'status':status,'locality_hint':clean(locality,100),
-          'zone_detail':clean(zone,530),'source_url':url,
+          'zone_detail':excerpt(zone,950),'source_url':url,
           'notification_allowed':False,
           'message':'Comunicado oficial; no acredita el estado del suministro en tiempo real.'}
     item.update(kwargs)
@@ -203,6 +214,8 @@ def _absa_article(html,url,now):
     if re.search(r'\bfinalizaron|\bnormalizad[oa]|\bse restablecio|\bconcluyeron',folded(title)):
         return [],published
     locality=clean(title.split(':')[0],90)
+    if folded(locality)=='patagones' and 'carmen de patagones' in f:
+        locality='Carmen de Patagones'
     notices=[]
     # Published schedules without an explicit finish time MUST keep an unknown end.
     future_day=None
@@ -296,7 +309,7 @@ def _result(key,checked_at):
     return {'status':'unverified','company':company,'province':province,'country':'Argentina',
             'source_url':url,'checked_at':checked_at,
             'coverage_kind':'public_water_bulletins_only',
-            'notifications_enabled':False,'parser_revision':'WATER-v5.32',
+            'notifications_enabled':False,'parser_revision':'WATER-v5.33',
             'notices':[],'message':'No se ha verificado un aviso completo.'}
 
 
@@ -336,21 +349,42 @@ def _parse_aysam(html,now,url):
 
 def _collect_aysam(checked_at,now,fetch):
     result=_result('aysam_mendoza',checked_at)
-    url=result['source_url']
-    try:
-        notices,checked,newest=_parse_aysam(fetch(url),now,url)
-        result['records_checked']=checked
-        if newest:
-            result['latest_published_date']=newest.isoformat()
-        if notices:
-            result.update(status='ok',notices=notices,
-                          message='Interrupciones PROGRAMADAS con zona, fecha y horas verificadas en tabla oficial.')
-        elif newest and newest<now.date()-timedelta(days=2):
-            result.update(status='stale',message='La tabla contiene solo cortes antiguos; no implica servicio normal.')
-        else:
-            result['message']='La tabla no presenta interrupciones programadas futuras completas verificables.'
-    except Exception as exc:
-        result['message']='No se pudo verificar tabla: '+type(exc).__name__
+    current=result['source_url']
+    legacy='https://www.aysam.com.ar/cortes/index.html'
+    attempts=[]
+    for url in (current,legacy):
+        try:
+            html=fetch(url)
+            notes,checked,newest=_parse_aysam(html,now,url)
+            dom,visible=page(html)
+            norm=folded(visible)
+            attempts.append({'url':url,'records_checked':checked,'result':'page_read'})
+            result['records_checked']=checked
+            if newest:
+                result['latest_published_date']=newest.isoformat()
+            if notes:
+                result.update(status='ok',source_url=url,notices=notes,
+                              message='Cortes programados con zona y horarios publicados en tabla oficial.')
+                break
+            # The modern public list explicitly says there are no cuts;
+            # do not infer live supply or future schedules from that statement.
+            if url==current and checked==0 and re.search(r'\bno hay cortes\b',norm):
+                result.update(status='ok',source_url=url,coverage_horizon='current_listings_only',
+                              message=('El listado público oficial dice «No hay cortes». '
+                                       'No acredita servicio normal ni ausencia de fallas imprevistas.'))
+                attempts[-1]['result']='explicit_no_listed_cuts'
+                break
+            if newest and newest<now.date()-timedelta(days=2):
+                result.update(status='stale',source_url=url,
+                              message='Solo hay registros antiguos; no implica suministro normal.')
+                break
+            if url==legacy:
+                result['message']='Sin cortes futuros completos reconocidos en los listados consultados.'
+        except Exception as exc:
+            attempts.append({'url':url,'result':'fetch_or_parse_error','error_type':type(exc).__name__})
+    result['source_attempts']=attempts
+    if result['status']=='unverified' and attempts and all(x['result']=='fetch_or_parse_error' for x in attempts):
+        result['message']='No se pudieron consultar ambas páginas oficiales de AYSAM.'
     return result
 
 
@@ -394,6 +428,141 @@ def _collect_diagnostic(key,checked_at,now,fetch):
     return result
 
 
+
+def _month_date_near_title(visible,title):
+    # Dates in neighboring/sidebar links are not evidence about this article.
+    pos=visible.find(title)
+    if pos<0:
+        return None
+    excerpt_text=folded(visible[pos+len(title):pos+len(title)+140])
+    m=re.search(r'\b(\d{1,2})\s+(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|setiembre|octubre|noviembre|diciembre)\s*,?\s*(20\d{2})\b',excerpt_text)
+    if not m:
+        return None
+    try:
+        return date(int(m.group(3)),MONTH[m.group(2)],int(m.group(1)))
+    except ValueError:
+        return None
+
+
+def _arsa_article(html,url,now):
+    dom,visible=page(html)
+    title=next((h for h in dom.headings if ':' in h and len(h)>25 and len(h)<250),'')
+    if not title:
+        return [],None
+    published=_month_date_near_title(visible,title)
+    if not published or published>now.date()+timedelta(days=1):
+        return [],None
+    if published<now.date()-timedelta(days=2):
+        return [],published
+    locality=clean(title.split(':')[0],90)
+    # Never infer location from generic organizational or site-navigation titles.
+    if len(locality)<3 or folded(locality) in ('noticias','interrupciones del servicio'):
+        return [],published
+    paragraphs=[p for p in dom.paragraphs if len(p)>=42]
+    content=' '.join(paragraphs)
+    f=folded(content)
+    if not re.search(r'agua potable|servicio de agua|suministro de agua|acueducto|red de agua|planta potabilizadora',f):
+        return [],published
+    if re.search(r'oficina|atencion al publico|factura|cobranz',folded(title)):
+        return [],published
+    if re.search(r'finalizaron|normalizad[oa]|restablecido|concluyeron',folded(title)):
+        return [],published
+    # A generic announcement about works is not evidence of affected supply.
+    impact=re.search(r'\b(baja presion|falta de (?:suministro|agua)|afectad[oa]|afectar|interrumpir|interrupcion|turbiedad|turbidez|corte de agua|corte del suministro)\b',f)
+    if not impact:
+        return [],published
+    scheduled=None
+    for p in paragraphs:
+        d=_weekday_date(p,published)
+        if d and now.date()<=d<=now.date()+timedelta(days=HORIZON_DAYS):
+            scheduled=d
+            break
+    title_fold=folded(title)
+    future_verb=bool(re.search(r'se realizaran|se llevaran adelante|se preve|realizara|tareas programadas|trabajos programados|esta previsto',f+' '+title_fold))
+    # Past-tense completed/same-day works are publication-only, not plans.
+    if scheduled and future_verb and not re.search(r'inicio trabajos|iniciaron los trabajos|tareas comenzaron',title_fold):
+        start=None
+        for p in paragraphs:
+            if _weekday_date(p,published)==scheduled:
+                tm=re.search(r'\b(?:desde las|a partir de las|entre las)\s+(\d{1,2})(?::(\d{2}))?\b',folded(p))
+                if tm:
+                    hour=int(tm.group(1));minute=int(tm.group(2) or 0)
+                    if hour<24 and minute<60:
+                        start=datetime(scheduled.year,scheduled.month,scheduled.day,hour,minute,tzinfo=ART).isoformat(timespec='minutes')
+                        break
+        return [mk_notice('Aguas Rionegrinas','Río Negro',locality,url,
+                  'planned_water_service_impact','scheduled_not_confirmed',content,
+                  published_on=published.isoformat(),scheduled_date=scheduled.isoformat(),
+                  scheduled_start=start,scheduled_end=None,
+                  time_precision='start_known_end_unknown' if start else 'date_only')],published
+    return [mk_notice('Aguas Rionegrinas','Río Negro',locality,url,
+                      'water_service_bulletin','publication_only_not_live',content,
+                      published_on=published.isoformat(),scheduled_start=None,scheduled_end=None)],published
+
+
+def _collect_arsa(checked_at,now,fetch):
+    result=_result('aguas_rionegrinas_arsa',checked_at)
+    result['parser_revision']='ARSA-ARTICLES-v5.33'
+    url=result['source_url']
+    seen=[];attempts=[];checked=0;newest=None
+    try:
+        dom,_=page(fetch(url))
+        links=[]
+        for href,label in dom.anchors:
+            link=urljoin(url,href)
+            parsed=urlsplit(link)
+            # Only real articles in the official interruption-category index.
+            if parsed.hostname not in ('aguasrionegrinas.com','www.aguasrionegrinas.com'):
+                continue
+            if not re.fullmatch(r'/[a-z0-9-]{20,}/?',parsed.path):
+                continue
+            if ':' not in label or len(label)<25 or link in links:
+                continue
+            links.append(link)
+        result['article_links_seen']=len(links)
+        for link in links[:9]:
+            checked+=1
+            try:
+                notices,published=_arsa_article(fetch(link),link,now)
+                if published:
+                    newest=max(newest,published) if newest else published
+                seen.extend(notices)
+                attempts.append({'url':link,'result':'parsed' if notices else 'no_recent_service_notice'})
+            except Exception as exc:
+                attempts.append({'url':link,'result':'fetch_or_parse_error','error_type':type(exc).__name__})
+    except Exception as exc:
+        attempts.append({'url':url,'result':'fetch_or_parse_error','error_type':type(exc).__name__})
+    result['source_attempts']=attempts
+    result['articles_checked']=checked
+    result['records_checked']=checked
+    result['notices']=list({n['id']:n for n in seen}.values())
+    if newest:
+        result['latest_published_date']=newest.isoformat()
+    if result['notices']:
+        result.update(status='ok',message='Comunicados de ARSA fechados; no confirman la situación en tiempo real.')
+    elif newest and newest<now.date()-timedelta(days=2):
+        result.update(status='stale',message='Solo publicaciones antiguas verificables.')
+    else:
+        result['message']='No se recuperaron artículos recientes con localidad y afectación verificables.'
+    return result
+
+
+def _collect_catamarca(checked_at,now,fetch):
+    # The official page is currently an empty heading, not a trustworthy status.
+    result=_result('aguas_catamarca',checked_at)
+    result['parser_revision']='CATAMARCA-STATUS-v5.33'
+    try:
+        dom,visible=page(fetch(result['source_url']))
+        result['page_read']=True
+        result['records_checked']=0
+        result['message']=('Página pública de suspensiones consultada; no hay registros '
+                           'con fecha, localidad y estado suficientes. No confirma servicio normal.')
+        # Intentionally no success state or notices until a structured row is available.
+    except Exception as exc:
+        result['message']='No se pudo verificar portal de Catamarca: '+type(exc).__name__
+    return result
+
+
 def collect_one(key,checked_at,fetcher=None):
     if key not in SOURCES:
         raise KeyError(key)
@@ -402,6 +571,8 @@ def collect_one(key,checked_at,fetcher=None):
     if key=='absa_buenos_aires':return _collect_absa(checked_at,now,fetch)
     if key=='aysam_mendoza':return _collect_aysam(checked_at,now,fetch)
     if key=='aguas_del_norte_salta':return _collect_salta(checked_at,now,fetch)
+    if key=='aguas_rionegrinas_arsa':return _collect_arsa(checked_at,now,fetch)
+    if key=='aguas_catamarca':return _collect_catamarca(checked_at,now,fetch)
     return _collect_diagnostic(key,checked_at,now,fetch)
 
 
