@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-12T20:02:49Z",
+  "generated_at": "2026-11-12T20:59:00Z",
   "alerts": [
     {
       "category": "electricidad",
@@ -12,7 +12,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
-      "observed_at": "2026-11-12T20:02:49Z",
+      "observed_at": "2026-11-12T20:59:00Z",
       "confirmation": "Publicado por ENRE",
       "id": "a35d7f9bc4779349"
     },
@@ -21,28 +21,14 @@
       "title": "Interrupción de media tensión",
       "company": "Edenor",
       "partido": "SAN ISIDRO",
-      "localidad": "ACASSUSO",
-      "users_affected": "82",
-      "expected_restoration": "2026-11-12 20:00",
-      "zone_detail": null,
-      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
-      "observed_at": "2026-11-12T20:02:49Z",
-      "confirmation": "Publicado por ENRE",
-      "id": "556026de70939375"
-    },
-    {
-      "category": "electricidad",
-      "title": "Interrupción de media tensión",
-      "company": "Edenor",
-      "partido": "SAN ISIDRO",
       "localidad": "SAN ISIDRO",
-      "users_affected": "507",
+      "users_affected": "68",
       "expected_restoration": "2026-11-12 20:00",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
-      "observed_at": "2026-11-12T20:02:49Z",
+      "observed_at": "2026-11-12T20:59:00Z",
       "confirmation": "Publicado por ENRE",
-      "id": "6088c408198030b6"
+      "id": "62f809c2cb75b013"
     },
     {
       "category": "electricidad",
@@ -54,7 +40,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-12T20:02:49Z",
+      "observed_at": "2026-11-12T20:59:00Z",
       "confirmation": "Publicado por ENRE",
       "id": "fe12eb4d5da4affb"
     },
@@ -68,7 +54,7 @@
       "expected_restoration": "2026-11-12 19:00",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-12T20:02:49Z",
+      "observed_at": "2026-11-12T20:59:00Z",
       "confirmation": "Publicado por ENRE",
       "id": "7fa0b17e75275d9d"
     },
@@ -82,7 +68,7 @@
       "expected_restoration": "2026-11-12 19:00",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-12T20:02:49Z",
+      "observed_at": "2026-11-12T20:59:00Z",
       "confirmation": "Publicado por ENRE",
       "id": "c1193022a2b226a4"
     },
@@ -96,7 +82,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-12T20:02:49Z",
+      "observed_at": "2026-11-12T20:59:00Z",
       "confirmation": "Publicado por ENRE",
       "id": "71f4553eb0629d62"
     },
@@ -110,9 +96,37 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-12T20:02:49Z",
+      "observed_at": "2026-11-12T20:59:00Z",
       "confirmation": "Publicado por ENRE",
       "id": "b754390be08a5a15"
+    },
+    {
+      "category": "electricidad",
+      "title": "Interrupción de media tensión",
+      "company": "Edesur",
+      "partido": "BERAZATEGUI",
+      "localidad": "BERAZATEGUI CENTRO",
+      "users_affected": "1067",
+      "expected_restoration": "2026-11-13 02:20",
+      "zone_detail": null,
+      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
+      "observed_at": "2026-11-12T20:59:00Z",
+      "confirmation": "Publicado por ENRE",
+      "id": "30a8d453cdc82aea"
+    },
+    {
+      "category": "electricidad",
+      "title": "Interrupción de media tensión",
+      "company": "Edesur",
+      "partido": "BERAZATEGUI",
+      "localidad": "V. ESPAÑA",
+      "users_affected": "551",
+      "expected_restoration": "2026-11-13 02:20",
+      "zone_detail": null,
+      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
+      "observed_at": "2026-11-12T20:59:00Z",
+      "confirmation": "Publicado por ENRE",
+      "id": "da8ba5c77311afbc"
     },
     {
       "category": "electricidad",
@@ -124,7 +138,7 @@
       "expected_restoration": "2026-11-12 20:44",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-12T20:02:49Z",
+      "observed_at": "2026-11-12T20:59:00Z",
       "confirmation": "Publicado por ENRE",
       "id": "536f93352d94ff18"
     },
@@ -138,7 +152,7 @@
       "expected_restoration": "2026-11-12 20:53",
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-12T20:02:49Z",
+      "observed_at": "2026-11-12T20:59:00Z",
       "confirmation": "Publicado por ENRE",
       "id": "12e96c9b9a587f46"
     },
@@ -148,13 +162,27 @@
       "company": "Edesur",
       "partido": "BERAZATEGUI",
       "localidad": "BERAZATEGUI",
-      "users_affected": "15",
+      "users_affected": "2",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-12T20:02:49Z",
+      "observed_at": "2026-11-12T20:59:00Z",
       "confirmation": "Publicado por ENRE",
-      "id": "b76a61fafb69441f"
+      "id": "cec9d4a165913c63"
+    },
+    {
+      "category": "electricidad",
+      "title": "Interrupción de baja tensión",
+      "company": "Edesur",
+      "partido": "CAÑUELAS",
+      "localidad": "CAÑUELAS",
+      "users_affected": "9",
+      "expected_restoration": null,
+      "zone_detail": null,
+      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
+      "observed_at": "2026-11-12T20:59:00Z",
+      "confirmation": "Publicado por ENRE",
+      "id": "8ce537dca4f14c0f"
     },
     {
       "category": "electricidad",
@@ -166,7 +194,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-12T20:02:49Z",
+      "observed_at": "2026-11-12T20:59:00Z",
       "confirmation": "Publicado por ENRE",
       "id": "c3d438600c045911"
     },
@@ -180,7 +208,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-12T20:02:49Z",
+      "observed_at": "2026-11-12T20:59:00Z",
       "confirmation": "Publicado por ENRE",
       "id": "11fae0552d463bbb"
     },
@@ -189,14 +217,14 @@
       "title": "Interrupción de baja tensión",
       "company": "Edesur",
       "partido": "CAPITAL",
-      "localidad": "FLORES",
-      "users_affected": "7",
+      "localidad": "CABALLITO",
+      "users_affected": "12",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-12T20:02:49Z",
+      "observed_at": "2026-11-12T20:59:00Z",
       "confirmation": "Publicado por ENRE",
-      "id": "aa59f0b8ad7e9bde"
+      "id": "58ee12436e4059fb"
     },
     {
       "category": "electricidad",
@@ -204,13 +232,13 @@
       "company": "Edesur",
       "partido": "CAPITAL",
       "localidad": "NUEVA POMPEYA",
-      "users_affected": "1",
+      "users_affected": "9",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-12T20:02:49Z",
+      "observed_at": "2026-11-12T20:59:00Z",
       "confirmation": "Publicado por ENRE",
-      "id": "267d4463953e5916"
+      "id": "76ca55600a2a6eed"
     },
     {
       "category": "electricidad",
@@ -222,23 +250,9 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-12T20:02:49Z",
+      "observed_at": "2026-11-12T20:59:00Z",
       "confirmation": "Publicado por ENRE",
       "id": "79313951c7d4f99a"
-    },
-    {
-      "category": "electricidad",
-      "title": "Interrupción de baja tensión",
-      "company": "Edesur",
-      "partido": "CAPITAL",
-      "localidad": "VILLA DEL PARQUE",
-      "users_affected": "8",
-      "expected_restoration": null,
-      "zone_detail": null,
-      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-12T20:02:49Z",
-      "confirmation": "Publicado por ENRE",
-      "id": "514a1a3e7c947aa8"
     },
     {
       "category": "electricidad",
@@ -250,7 +264,7 @@
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-12T20:02:49Z",
+      "observed_at": "2026-11-12T20:59:00Z",
       "confirmation": "Publicado por ENRE",
       "id": "8c906d04bf35db7f"
     },
@@ -258,29 +272,15 @@
       "category": "electricidad",
       "title": "Interrupción de baja tensión",
       "company": "Edesur",
-      "partido": "FLORENCIO VARELA",
-      "localidad": "FLORENCIO VARELA",
-      "users_affected": "27",
-      "expected_restoration": null,
-      "zone_detail": null,
-      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-12T20:02:49Z",
-      "confirmation": "Publicado por ENRE",
-      "id": "a7118cdc3ced20ac"
-    },
-    {
-      "category": "electricidad",
-      "title": "Interrupción de baja tensión",
-      "company": "Edesur",
       "partido": "LANUS",
-      "localidad": "LANUS",
-      "users_affected": "4",
+      "localidad": "REMEDIOS DE ESCALADA",
+      "users_affected": "3",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-12T20:02:49Z",
+      "observed_at": "2026-11-12T20:59:00Z",
       "confirmation": "Publicado por ENRE",
-      "id": "fafce28832e3d052"
+      "id": "924c05f983846301"
     },
     {
       "category": "electricidad",
@@ -288,27 +288,41 @@
       "company": "Edesur",
       "partido": "LOMAS DE ZAMORA",
       "localidad": "LOMAS DE ZAMORA",
-      "users_affected": "67",
+      "users_affected": "85",
       "expected_restoration": null,
       "zone_detail": null,
       "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
-      "observed_at": "2026-11-12T20:02:49Z",
+      "observed_at": "2026-11-12T20:59:00Z",
       "confirmation": "Publicado por ENRE",
-      "id": "16c3d7ac4b83cbc7"
+      "id": "dcd38868f07086ea"
+    },
+    {
+      "category": "electricidad",
+      "title": "Interrupción de baja tensión",
+      "company": "Edesur",
+      "partido": "QUILMES",
+      "localidad": "QUILMES",
+      "users_affected": "7",
+      "expected_restoration": null,
+      "zone_detail": null,
+      "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
+      "observed_at": "2026-11-12T20:59:00Z",
+      "confirmation": "Publicado por ENRE",
+      "id": "a202a7d415120cc8"
     }
   ],
   "sources": {
     "edenor": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDN.js",
-      "checked_at": "2026-11-12T20:02:49Z",
-      "event_count": 3
+      "checked_at": "2026-11-12T20:59:00Z",
+      "event_count": 2
     },
     "edesur": {
       "status": "ok",
       "url": "https://www.enre.gov.ar/paginacorte/js/data_EDS.js",
-      "checked_at": "2026-11-12T20:02:49Z",
-      "event_count": 18
+      "checked_at": "2026-11-12T20:59:00Z",
+      "event_count": 20
     }
   },
   "banking": {
@@ -337,7 +351,7 @@
       }
     ],
     "source_retrieval": "ok",
-    "checked_at": "2026-11-12T20:02:49Z"
+    "checked_at": "2026-11-12T20:59:00Z"
   },
   "coverage": {
     "trains": "manual_notices_only",
@@ -353,7 +367,7 @@
       "status": "not_connected",
       "message": "No hay conexión verificada con una fuente automática de estado de la línea 57.",
       "reference_url": "https://www.argentina.gob.ar/sube/cuandosubo",
-      "checked_at": "2026-11-12T20:02:49Z"
+      "checked_at": "2026-11-12T20:59:00Z"
     }
   },
   "edesa_salta": {
@@ -362,7 +376,7 @@
     "country": "Argentina",
     "company": "EDESA",
     "source_url": "https://www.edesa.com.ar/widgets/cortes.php",
-    "checked_at": "2026-11-12T20:02:49Z",
+    "checked_at": "2026-11-12T20:59:00Z",
     "coverage_kind": "planned_outages_only",
     "notices": [
       {
@@ -493,7 +507,7 @@
       "country": "Argentina",
       "company": "EPEC",
       "source_url": "https://www.epec.com.ar/actualidad/trabajos-mejoras",
-      "checked_at": "2026-11-12T20:02:49Z",
+      "checked_at": "2026-11-12T20:59:00Z",
       "coverage_kind": "planned_outages_only",
       "notices": [],
       "message": "No se pudo verificar la fuente: no_complete_records, no_complete_records",
@@ -538,7 +552,7 @@
       "country": "Argentina",
       "company": "EPE",
       "source_url": "https://www.epe.santafe.gov.ar/institucional/trabajos-programados",
-      "checked_at": "2026-11-12T20:02:49Z",
+      "checked_at": "2026-11-12T20:59:00Z",
       "coverage_kind": "planned_outages_only",
       "notices": [],
       "message": "No se pudo verificar la fuente: dynamic_shell, HTTPError, URLError",
@@ -576,7 +590,7 @@
       "country": "Argentina",
       "company": "EDERSA",
       "source_url": "https://www.edersa.com.ar/cortes-programados/",
-      "checked_at": "2026-11-12T20:02:49Z",
+      "checked_at": "2026-11-12T20:59:00Z",
       "coverage_kind": "planned_outages_only",
       "notices": [],
       "message": "Sin trabajos futuros reconocidos en la consulta; NO confirma servicio normal.",
@@ -615,7 +629,7 @@
       "country": "Argentina",
       "company": "EDESE",
       "source_url": "https://www.enrese.com.ar/CortesProgramados.html",
-      "checked_at": "2026-11-12T20:02:49Z",
+      "checked_at": "2026-11-12T20:59:00Z",
       "coverage_kind": "planned_outages_only",
       "notices": [
         {
@@ -660,7 +674,7 @@
       "country": "Argentina",
       "company": "EPEN",
       "source_url": "https://www.epen.gov.ar/index.php/cortes-programados/",
-      "checked_at": "2026-11-12T20:02:49Z",
+      "checked_at": "2026-11-12T20:59:00Z",
       "coverage_kind": "planned_outages_only",
       "notices": [
         {
@@ -706,7 +720,7 @@
       "country": "Argentina",
       "company": "EJESA",
       "source_url": "https://www.ejesa.com.ar/gestion/pwa/tareasprogramadas/mejora-y-mantenimiento",
-      "checked_at": "2026-11-12T20:02:49Z",
+      "checked_at": "2026-11-12T20:59:00Z",
       "coverage_kind": "planned_outages_only",
       "notices": [
         {
@@ -909,7 +923,7 @@
       "country": "Argentina",
       "company": "EDET",
       "source_url": "https://www.edetsa.com/gestion/pwa/tareasprogramadas/cortes-de-luz",
-      "checked_at": "2026-11-12T20:02:49Z",
+      "checked_at": "2026-11-12T20:59:00Z",
       "coverage_kind": "planned_outages_only",
       "notices": [],
       "message": "No se pudo verificar la fuente: no_complete_records",
@@ -942,7 +956,7 @@
       "country": "Argentina",
       "company": "EDEMSA",
       "source_url": "https://www.epremendoza.gob.ar/mantenimientos.php",
-      "checked_at": "2026-11-12T20:02:49Z",
+      "checked_at": "2026-11-12T20:59:00Z",
       "coverage_kind": "planned_outages_only",
       "notices": [],
       "message": "Sin trabajos futuros reconocidos en la consulta; NO confirma servicio normal.",
@@ -971,7 +985,7 @@
       "country": "Argentina",
       "company": "COPELCO",
       "source_url": "https://www.copelnet.com.ar/",
-      "checked_at": "2026-11-12T20:02:49Z",
+      "checked_at": "2026-11-12T20:59:00Z",
       "coverage_kind": "planned_outages_only",
       "notices": [
         {
@@ -1036,14 +1050,14 @@
       "country": "Argentina",
       "company": "CPE",
       "source_url": "https://cpe.coop.ar/estado-servicios",
-      "checked_at": "2026-11-12T20:02:49Z",
+      "checked_at": "2026-11-12T20:59:00Z",
       "coverage_kind": "planned_outages_only",
       "notices": [],
       "message": "No se pudo verificar la fuente: no_complete_records, HTTPError",
       "source_attempts": [
         {
           "url": "https://cpe.coop.ar/estado-servicios",
-          "html_bytes": 37764,
+          "html_bytes": 37759,
           "date_markers": 3,
           "has_locality": false,
           "has_zone": true,
@@ -1076,7 +1090,7 @@
       "country": "Argentina",
       "company": "EDELAP",
       "source_url": "https://www.edelap.com.ar/obras-en-tu-barrio/",
-      "checked_at": "2026-11-12T20:02:49Z",
+      "checked_at": "2026-11-12T20:59:00Z",
       "coverage_kind": "planned_network_work_may_interrupt_only",
       "notices": [],
       "message": "Sin trabajos futuros reconocidos en la consulta; NO confirma servicio normal.",
@@ -1114,7 +1128,7 @@
       "country": "Argentina",
       "company": "COOPELEC",
       "source_url": "https://www.coopelec.com.ar/cortes-programados/",
-      "checked_at": "2026-11-12T20:02:49Z",
+      "checked_at": "2026-11-12T20:59:00Z",
       "coverage_kind": "planned_outages_only",
       "notices": [],
       "message": "Solo se reconocieron publicaciones antiguas; no hay datos futuros verificables.",
@@ -1152,7 +1166,7 @@
       "country": "Argentina",
       "company": "CORPICO",
       "source_url": "https://www.corpico.com.ar/cortesprogramados",
-      "checked_at": "2026-11-12T20:02:49Z",
+      "checked_at": "2026-11-12T20:59:00Z",
       "coverage_kind": "planned_outages_only",
       "notices": [],
       "message": "El sitio declara que no hay cortes PROGRAMADOS vigentes; NO confirma servicio eléctrico normal ni cortes imprevistos.",
@@ -1184,7 +1198,7 @@
       "country": "Argentina",
       "company": "CALF",
       "source_url": "https://www.cooperativacalf.com.ar/category/cortes-programados/",
-      "checked_at": "2026-11-12T20:02:49Z",
+      "checked_at": "2026-11-12T20:59:00Z",
       "coverage_kind": "planned_outages_only",
       "notices": [],
       "parser_revision": "ARTICLES-SAFE-v5.29",
@@ -1239,7 +1253,7 @@
       "country": "Argentina",
       "company": "Energía de Misiones",
       "source_url": "https://www.energiademisiones.com.ar/fuera-de-servicio/",
-      "checked_at": "2026-11-12T20:02:49Z",
+      "checked_at": "2026-11-12T20:59:00Z",
       "coverage_kind": "planned_outages_only",
       "notices": [],
       "message": "No se pudo verificar la fuente: no_complete_records",
@@ -1274,7 +1288,7 @@
       "country": "Argentina",
       "company": "EDELAR",
       "source_url": "https://www.edelar.com.ar/cortes-programados",
-      "checked_at": "2026-11-12T20:02:49Z",
+      "checked_at": "2026-11-12T20:59:00Z",
       "coverage_kind": "planned_outages_only",
       "notices": [],
       "message": "No se pudo verificar la fuente: no_complete_records",
@@ -1309,7 +1323,7 @@
       "country": "Argentina",
       "company": "SCPL",
       "source_url": "https://scpl.coop/",
-      "checked_at": "2026-11-12T20:02:49Z",
+      "checked_at": "2026-11-12T20:59:00Z",
       "coverage_kind": "planned_outages_only",
       "notices": [],
       "parser_revision": "SCPL-ARTICLES-v5.31",
@@ -1352,7 +1366,7 @@
       "country": "Argentina",
       "company": "CEB",
       "source_url": "https://www.ceb.coop/category/cortes-programados/",
-      "checked_at": "2026-11-12T20:02:49Z",
+      "checked_at": "2026-11-12T20:59:00Z",
       "coverage_kind": "planned_outages_only",
       "notices": [],
       "parser_revision": "CEB-ARTICLES-v5.30",
@@ -1420,7 +1434,7 @@
       "country": "Argentina",
       "company": "CEPA",
       "source_url": "https://www.cepa.com.ar/cortes/Cortes.aspx",
-      "checked_at": "2026-11-12T20:02:49Z",
+      "checked_at": "2026-11-12T20:59:00Z",
       "coverage_kind": "planned_outages_only",
       "notices": [],
       "parser_revision": "OFFICIAL-STATUS-v5.30",
@@ -1441,7 +1455,7 @@
       "country": "Argentina",
       "company": "SPSE",
       "source_url": "https://spse.ar/suspension-servicios",
-      "checked_at": "2026-11-12T20:02:49Z",
+      "checked_at": "2026-11-12T20:59:00Z",
       "coverage_kind": "planned_outages_only",
       "notices": [],
       "parser_revision": "OFFICIAL-STATUS-v5.30",
@@ -1461,7 +1475,7 @@
       "country": "Argentina",
       "company": "Servicoop",
       "source_url": "https://web.servicoop.com/category/cortes-programados/",
-      "checked_at": "2026-11-12T20:02:49Z",
+      "checked_at": "2026-11-12T20:59:00Z",
       "coverage_kind": "planned_outages_only",
       "notices": [],
       "parser_revision": "SERVICOOP-ARTICLES-v5.30",
@@ -1516,7 +1530,7 @@
       "country": "Argentina",
       "company": "Usina de Tandil",
       "source_url": "https://www.usinatandil.com.ar/",
-      "checked_at": "2026-11-12T20:02:49Z",
+      "checked_at": "2026-11-12T20:59:00Z",
       "coverage_kind": "planned_outages_only",
       "notices": [],
       "parser_revision": "USINA-PUBLIC-v5.30",
@@ -1542,19 +1556,21 @@
       "country": "Argentina",
       "company": "EDEN",
       "source_url": "https://oceba.gba.gov.ar/nueva_web/s.php?distribuidora=3&i=123",
-      "checked_at": "2026-11-12T20:02:49Z",
+      "checked_at": "2026-11-12T20:59:00Z",
       "coverage_kind": "reported_outages_only",
       "notices": [],
       "parser_revision": "OCEBA-REPORT-v5.31",
       "source_attempts": [
         {
           "url": "https://oceba.gba.gov.ar/nueva_web/s.php?distribuidora=3&i=123",
-          "result": "fetch_or_parse_error",
-          "error_type": "TimeoutError"
+          "html_bytes": 68,
+          "records_checked": 0,
+          "result": "wrong_provider"
         }
       ],
       "notifications_enabled": false,
-      "message": "Monitor oficial experimental. Requiere verificación de vigencia; Android v5.23 no muestra estos registros."
+      "message": "Monitor oficial experimental. Requiere verificación de vigencia; Android v5.23 no muestra estos registros.",
+      "records_checked": 0
     },
     "oceba_edea_outages": {
       "status": "unverified",
@@ -1562,19 +1578,21 @@
       "country": "Argentina",
       "company": "EDEA",
       "source_url": "https://oceba.gba.gov.ar/nueva_web/s.php?distribuidora=2&i=123",
-      "checked_at": "2026-11-12T20:02:49Z",
+      "checked_at": "2026-11-12T20:59:00Z",
       "coverage_kind": "reported_outages_only",
       "notices": [],
       "parser_revision": "OCEBA-REPORT-v5.31",
-      "notifications_enabled": false,
       "source_attempts": [
         {
           "url": "https://oceba.gba.gov.ar/nueva_web/s.php?distribuidora=2&i=123",
-          "result": "skipped_shared_host_failure",
-          "error_type": "TimeoutError"
+          "html_bytes": 68,
+          "records_checked": 0,
+          "result": "wrong_provider"
         }
       ],
-      "message": "Sin consulta individual: el servidor oficial compartido falló en esta ejecución. No hay datos actuales verificables; no significa suministro normal."
+      "notifications_enabled": false,
+      "message": "Monitor oficial experimental. Requiere verificación de vigencia; Android v5.23 no muestra estos registros.",
+      "records_checked": 0
     },
     "oceba_edes_outages": {
       "status": "unverified",
@@ -1582,19 +1600,21 @@
       "country": "Argentina",
       "company": "EDES",
       "source_url": "https://oceba.gba.gov.ar/nueva_web/s.php?distribuidora=4&i=123",
-      "checked_at": "2026-11-12T20:02:49Z",
+      "checked_at": "2026-11-12T20:59:00Z",
       "coverage_kind": "reported_outages_only",
       "notices": [],
       "parser_revision": "OCEBA-REPORT-v5.31",
-      "notifications_enabled": false,
       "source_attempts": [
         {
           "url": "https://oceba.gba.gov.ar/nueva_web/s.php?distribuidora=4&i=123",
-          "result": "skipped_shared_host_failure",
-          "error_type": "TimeoutError"
+          "html_bytes": 68,
+          "records_checked": 0,
+          "result": "wrong_provider"
         }
       ],
-      "message": "Sin consulta individual: el servidor oficial compartido falló en esta ejecución. No hay datos actuales verificables; no significa suministro normal."
+      "notifications_enabled": false,
+      "message": "Monitor oficial experimental. Requiere verificación de vigencia; Android v5.23 no muestra estos registros.",
+      "records_checked": 0
     },
     "oceba_edelap_outages": {
       "status": "unverified",
@@ -1602,19 +1622,21 @@
       "country": "Argentina",
       "company": "EDELAP",
       "source_url": "https://oceba.gba.gov.ar/nueva_web/s.php?distribuidora=1&i=123",
-      "checked_at": "2026-11-12T20:02:49Z",
+      "checked_at": "2026-11-12T20:59:00Z",
       "coverage_kind": "reported_outages_only",
       "notices": [],
       "parser_revision": "OCEBA-REPORT-v5.31",
-      "notifications_enabled": false,
       "source_attempts": [
         {
           "url": "https://oceba.gba.gov.ar/nueva_web/s.php?distribuidora=1&i=123",
-          "result": "skipped_shared_host_failure",
-          "error_type": "TimeoutError"
+          "html_bytes": 68,
+          "records_checked": 0,
+          "result": "wrong_provider"
         }
       ],
-      "message": "Sin consulta individual: el servidor oficial compartido falló en esta ejecución. No hay datos actuales verificables; no significa suministro normal."
+      "notifications_enabled": false,
+      "message": "Monitor oficial experimental. Requiere verificación de vigencia; Android v5.23 no muestra estos registros.",
+      "records_checked": 0
     },
     "upc_necochea": {
       "status": "ok",
@@ -1622,7 +1644,7 @@
       "country": "Argentina",
       "company": "UPC Necochea",
       "source_url": "https://www.upcnecochea.com.ar/cortes-y-avisos/",
-      "checked_at": "2026-11-12T20:02:49Z",
+      "checked_at": "2026-11-12T20:59:00Z",
       "coverage_kind": "planned_outages_only",
       "notices": [],
       "parser_revision": "UPC-NECOCHEA-v5.31.1",
@@ -1645,7 +1667,7 @@
     "province": "Neuquén",
     "company": "EPEN",
     "source_url": "https://www.epen.gov.ar/index.php/cortes-programados/",
-    "checked_at": "2026-11-12T20:02:49Z",
+    "checked_at": "2026-11-12T20:59:00Z",
     "coverage_kind": "dated_planned_work_bulletins_only",
     "notices": [
       {
@@ -1712,7 +1734,7 @@
     "province": "Corrientes",
     "company": "DPEC",
     "source_url": "https://www.dpec.com.ar/comercial/cortes-programados/",
-    "checked_at": "2026-11-12T20:02:49Z",
+    "checked_at": "2026-11-12T20:59:00Z",
     "coverage_kind": "dated_planned_work_bulletins_only",
     "notices": [],
     "message": "La pagina consultada no proporciono comunicados completos con enlace, fecha y horario.",
@@ -1725,7 +1747,7 @@
     "province": "Entre Rios",
     "company": "ENERSA",
     "source_url": "https://www.enersa.com.ar/tag/cortes/",
-    "checked_at": "2026-11-12T20:02:49Z",
+    "checked_at": "2026-11-12T20:59:00Z",
     "coverage_kind": "dated_planned_work_bulletins_only",
     "notices": [],
     "message": "Sin comunicados futuros verificables. No significa servicio normal.",
@@ -1750,7 +1772,7 @@
       "province": "Buenos Aires",
       "country": "Argentina",
       "source_url": "https://www.edensa.com.ar/obras-en-tu-barrio/",
-      "checked_at": "2026-11-12T20:02:49Z",
+      "checked_at": "2026-11-12T20:59:00Z",
       "coverage_kind": "planned_network_work_may_interrupt_only",
       "notices": [],
       "parser_revision": "BA-v5.18",
@@ -1767,7 +1789,7 @@
       "province": "Buenos Aires",
       "country": "Argentina",
       "source_url": "https://www.edeaweb.com.ar/obras-en-tu-barrio/",
-      "checked_at": "2026-11-12T20:02:49Z",
+      "checked_at": "2026-11-12T20:59:00Z",
       "coverage_kind": "planned_network_work_may_interrupt_only",
       "notices": [],
       "parser_revision": "BA-v5.18",
@@ -1784,7 +1806,7 @@
       "province": "Buenos Aires",
       "country": "Argentina",
       "source_url": "https://www.infoedes.com/obras-en-tu-barrio/",
-      "checked_at": "2026-11-12T20:02:49Z",
+      "checked_at": "2026-11-12T20:59:00Z",
       "coverage_kind": "planned_network_work_may_interrupt_only",
       "notices": [
         {
@@ -1815,7 +1837,7 @@
       "province": "Buenos Aires",
       "country": "Argentina",
       "source_url": "https://www.edelap.com.ar/obras-en-tu-barrio/",
-      "checked_at": "2026-11-12T20:02:49Z",
+      "checked_at": "2026-11-12T20:59:00Z",
       "coverage_kind": "planned_network_work_may_interrupt_only",
       "notices": [],
       "parser_revision": "BA-v5.18",
@@ -2055,7 +2077,7 @@
   },
   "rail_official": {
     "status": "ok",
-    "checked_at": "2026-11-12T20:02:49Z",
+    "checked_at": "2026-11-12T20:59:00Z",
     "source_url": "https://www.argentina.gob.ar/transporte/trenes-argentinos",
     "message": "Comunicados fechados, NO estado en tiempo real. Confirmá antes de viajar.",
     "notices": [
@@ -2075,7 +2097,7 @@
   "subte": {
     "status": "unverified",
     "message": "La página no publica una fecha de actualización verificable.",
-    "checked_at": "2026-11-12T20:02:49Z",
+    "checked_at": "2026-11-12T20:59:00Z",
     "url": "https://buenosaires.gob.ar/inicio/mis-documentos",
     "lines": []
   },
@@ -2083,51 +2105,71 @@
   "change_tracking": {
     "status": "ok",
     "meaning": "Las novedades indican cambios respecto del informe anterior; no prueban cuándo comenzó un corte ni que uno ausente esté resuelto.",
-    "compared_to": "2026-11-12T19:07:43Z",
-    "new_in_publication_count": 4,
+    "compared_to": "2026-11-12T20:02:49Z",
+    "new_in_publication_count": 6,
     "new_in_publication": [
       {
-        "id": "556026de70939375",
-        "company": "Edenor",
-        "title": "Interrupción de media tensión",
-        "partido": "SAN ISIDRO",
-        "localidad": "ACASSUSO",
-        "observed_at": "2026-11-12T20:02:49Z",
-        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
-        "meaning": "No figuraba en el informe anterior; inicio real desconocido."
-      },
-      {
-        "id": "6088c408198030b6",
-        "company": "Edenor",
-        "title": "Interrupción de media tensión",
-        "partido": "SAN ISIDRO",
-        "localidad": "SAN ISIDRO",
-        "observed_at": "2026-11-12T20:02:49Z",
-        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edenor.html",
-        "meaning": "No figuraba en el informe anterior; inicio real desconocido."
-      },
-      {
-        "id": "fafce28832e3d052",
+        "id": "30a8d453cdc82aea",
         "company": "Edesur",
-        "title": "Interrupción de baja tensión",
-        "partido": "LANUS",
-        "localidad": "LANUS",
-        "observed_at": "2026-11-12T20:02:49Z",
+        "title": "Interrupción de media tensión",
+        "partido": "BERAZATEGUI",
+        "localidad": "BERAZATEGUI CENTRO",
+        "observed_at": "2026-11-12T20:59:00Z",
         "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
         "meaning": "No figuraba en el informe anterior; inicio real desconocido."
       },
       {
-        "id": "16c3d7ac4b83cbc7",
+        "id": "da8ba5c77311afbc",
+        "company": "Edesur",
+        "title": "Interrupción de media tensión",
+        "partido": "BERAZATEGUI",
+        "localidad": "V. ESPAÑA",
+        "observed_at": "2026-11-12T20:59:00Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
+        "meaning": "No figuraba en el informe anterior; inicio real desconocido."
+      },
+      {
+        "id": "8ce537dca4f14c0f",
         "company": "Edesur",
         "title": "Interrupción de baja tensión",
-        "partido": "LOMAS DE ZAMORA",
-        "localidad": "LOMAS DE ZAMORA",
-        "observed_at": "2026-11-12T20:02:49Z",
+        "partido": "CAÑUELAS",
+        "localidad": "CAÑUELAS",
+        "observed_at": "2026-11-12T20:59:00Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
+        "meaning": "No figuraba en el informe anterior; inicio real desconocido."
+      },
+      {
+        "id": "58ee12436e4059fb",
+        "company": "Edesur",
+        "title": "Interrupción de baja tensión",
+        "partido": "CAPITAL",
+        "localidad": "CABALLITO",
+        "observed_at": "2026-11-12T20:59:00Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
+        "meaning": "No figuraba en el informe anterior; inicio real desconocido."
+      },
+      {
+        "id": "924c05f983846301",
+        "company": "Edesur",
+        "title": "Interrupción de baja tensión",
+        "partido": "LANUS",
+        "localidad": "REMEDIOS DE ESCALADA",
+        "observed_at": "2026-11-12T20:59:00Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
+        "meaning": "No figuraba en el informe anterior; inicio real desconocido."
+      },
+      {
+        "id": "a202a7d415120cc8",
+        "company": "Edesur",
+        "title": "Interrupción de baja tensión",
+        "partido": "QUILMES",
+        "localidad": "QUILMES",
+        "observed_at": "2026-11-12T20:59:00Z",
         "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html",
         "meaning": "No figuraba en el informe anterior; inicio real desconocido."
       }
     ],
-    "no_longer_listed_count": 2,
+    "no_longer_listed_count": 5,
     "providers_compared": [
       "edenor",
       "edesur"
@@ -2141,6 +2183,61 @@
     "retention_hours": 3,
     "meaning": "Apareció en una publicación nueva; no prueba inicio del corte.",
     "events": [
+      {
+        "event_id": "2d23b11720e4a7ebd35e43ec",
+        "kind": "electricity_publication_added",
+        "country": "Argentina",
+        "company": "Edesur",
+        "title": "Interrupción de media tensión",
+        "partido": "BERAZATEGUI",
+        "localidad": "BERAZATEGUI CENTRO",
+        "first_seen_at": "2026-11-12T20:59:00Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html"
+      },
+      {
+        "event_id": "cbf79abd3761430a9b38b75b",
+        "kind": "electricity_publication_added",
+        "country": "Argentina",
+        "company": "Edesur",
+        "title": "Interrupción de media tensión",
+        "partido": "BERAZATEGUI",
+        "localidad": "V. ESPAÑA",
+        "first_seen_at": "2026-11-12T20:59:00Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html"
+      },
+      {
+        "event_id": "504284509661b1cb8b9a25c5",
+        "kind": "electricity_publication_added",
+        "country": "Argentina",
+        "company": "Edesur",
+        "title": "Interrupción de baja tensión",
+        "partido": "CAÑUELAS",
+        "localidad": "CAÑUELAS",
+        "first_seen_at": "2026-11-12T20:59:00Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html"
+      },
+      {
+        "event_id": "b745075fb716b2c55ce84e35",
+        "kind": "electricity_publication_added",
+        "country": "Argentina",
+        "company": "Edesur",
+        "title": "Interrupción de baja tensión",
+        "partido": "CAPITAL",
+        "localidad": "CABALLITO",
+        "first_seen_at": "2026-11-12T20:59:00Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html"
+      },
+      {
+        "event_id": "822fd9aac6958aad07d243ea",
+        "kind": "electricity_publication_added",
+        "country": "Argentina",
+        "company": "Edesur",
+        "title": "Interrupción de baja tensión",
+        "partido": "LANUS",
+        "localidad": "REMEDIOS DE ESCALADA",
+        "first_seen_at": "2026-11-12T20:59:00Z",
+        "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html"
+      },
       {
         "event_id": "3db5876f3c5c4e046a1d30cd",
         "kind": "electricity_publication_added",
@@ -2327,409 +2424,6 @@
         "localidad": "QUILMES",
         "first_seen_at": "2026-11-12T18:00:04Z",
         "source_url": "https://www.enre.gov.ar/paginacorte/tabla_cortes_edesur.html"
-      }
-    ]
-  },
-  "water_services": {
-    "schema_version": 1,
-    "generated_at": "2026-11-12T20:05:13Z",
-    "status": "pilot_not_integrated_in_android",
-    "category": "agua",
-    "country": "Argentina",
-    "coverage_kind": "public_official_notices_not_live_state",
-    "notifications_enabled": false,
-    "android_display_enabled": false,
-    "message": "Fuentes públicas de agua. Sin notificaciones hasta validación y nueva APK.",
-    "sources": {
-      "absa_buenos_aires": {
-        "status": "ok",
-        "company": "ABSA",
-        "province": "Buenos Aires",
-        "country": "Argentina",
-        "source_url": "https://www.aguasbonaerenses.com.ar/noticias/",
-        "checked_at": "2026-11-12T20:05:13Z",
-        "coverage_kind": "public_water_bulletins_only",
-        "notifications_enabled": false,
-        "parser_revision": "WATER-v5.35",
-        "notices": [
-          {
-            "id": "agua-e87e1c5a3c05d354f4",
-            "category": "agua",
-            "country": "Argentina",
-            "province": "Buenos Aires",
-            "company": "ABSA",
-            "kind": "water_service_bulletin",
-            "status": "publication_only_not_live",
-            "locality_hint": "General Lavalle",
-            "zone_detail": "Como consecuencia de un nuevo incidente sobre la línea de media tensión que abastece la toma de agua en el Canal 2, podría verse afectado con baja presión el suministro en General Lavalle. El corte se produjo a raíz del choque de un vehículo contra un poste de energía. Ante esta situación se instaló un grupo electrógeno de respaldo para la operación de los equipos, no obstante, podría verse afectado con baja presión el servicio de agua en la localidad. Por esta razón, se solicita a las personas usuarias que cuiden las reservas domiciliarias y utilicen el recurso únicamente para aquellos usos que sean impostergables. Se recuerda que, ante dificultades en el servicio, la empresa cuenta con la línea telefónica de Asistencia Técnica 0800-999-2272.",
-            "source_url": "https://www.aguasbonaerenses.com.ar/noticias/5109",
-            "notification_allowed": false,
-            "message": "Comunicado oficial; no acredita el estado del suministro en tiempo real.",
-            "published_on": "2026-11-12",
-            "scheduled_start": null,
-            "scheduled_end": null
-          },
-          {
-            "id": "agua-64aeef674fef9f2515",
-            "category": "agua",
-            "country": "Argentina",
-            "province": "Buenos Aires",
-            "company": "ABSA",
-            "kind": "water_service_bulletin",
-            "status": "publication_only_not_live",
-            "locality_hint": "French",
-            "zone_detail": "Producto de un corte de energía, se encuentra afectada la Planta Potabilizadora de Agua de French, generando posible baja presión en la localidad. Por esta razón, se solicita a las personas usuarias que cuiden las reservas domiciliarias y utilicen el recurso únicamente para aquellos usos que sean impostergables, hasta tanto se restablezca el servicio de energía y se normalice el suministro. Se recuerda que, ante dificultades en el servicio, la empresa cuenta con la línea telefónica de Asistencia Técnica 0800-999-2272.",
-            "source_url": "https://www.aguasbonaerenses.com.ar/noticias/5108",
-            "notification_allowed": false,
-            "message": "Comunicado oficial; no acredita el estado del suministro en tiempo real.",
-            "published_on": "2026-11-12",
-            "scheduled_start": null,
-            "scheduled_end": null
-          },
-          {
-            "id": "agua-7ddc8af84cfcbf8b3d",
-            "category": "agua",
-            "country": "Argentina",
-            "province": "Buenos Aires",
-            "company": "ABSA",
-            "kind": "water_service_bulletin",
-            "status": "publication_only_not_live",
-            "locality_hint": "Carmen de Patagones",
-            "zone_detail": "Se están registrando episodios de baja presión y algunas faltas de agua en la zona alta de Carmen de Patagones, esto es Barrio Bicentenario, Barrio 99 Viviendas y Barrio Dolores. Un corte de energía ocurrido en el día de ayer, sumado al mayor consumo de agua por temperaturas elevadas, y a la reparación en curso de un equipo usado habitualmente en la captación de agua, comprometieron el suministro en ese sector de la ciudad. Por esta razón, se solicita a las personas usuarias que cuenten con el servicio, que preserven las reservas de agua y utilicen el recurso solo para hidratación y tareas impostergables, hasta que se normalice el suministro. Se recuerda que, ante dificultades en el servicio, la empresa cuenta con la línea telefónica de Asistencia Técnica 0800-999-2272.",
-            "source_url": "https://www.aguasbonaerenses.com.ar/noticias/5105",
-            "notification_allowed": false,
-            "message": "Comunicado oficial; no acredita el estado del suministro en tiempo real.",
-            "published_on": "2026-11-10",
-            "scheduled_start": null,
-            "scheduled_end": null
-          },
-          {
-            "id": "agua-0c305b8467ad98db42",
-            "category": "agua",
-            "country": "Argentina",
-            "province": "Buenos Aires",
-            "company": "ABSA",
-            "kind": "planned_water_service_impact",
-            "status": "scheduled_not_confirmed",
-            "locality_hint": "General Daniel Cerri",
-            "zone_detail": "en el marco de la obra de reemplazo y ampliación del acueducto que abastece a la localidad, se prevén tareas a la altura de la Ruta 3 y el acceso a la localidad, por lo que se deberá interrumpir el suministro de agua desde las 8 y hasta hora de la tarde.",
-            "source_url": "https://www.aguasbonaerenses.com.ar/noticias/5104",
-            "notification_allowed": false,
-            "message": "Comunicado oficial; no acredita el estado del suministro en tiempo real.",
-            "scheduled_date": "2026-11-12",
-            "scheduled_start": "2026-11-12T08:00-03:00",
-            "scheduled_end": null,
-            "time_precision": "start_known_end_unknown",
-            "published_on": "2026-11-10"
-          },
-          {
-            "id": "agua-0c6cb83904285603d4",
-            "category": "agua",
-            "country": "Argentina",
-            "province": "Buenos Aires",
-            "company": "ABSA",
-            "kind": "planned_water_service_impact",
-            "status": "scheduled_not_confirmed",
-            "locality_hint": "Bahía Blanca",
-            "zone_detail": "en el marco de los recambios de cañería que lleva adelante la Dirección Provincial de Agua y Cloacas (DIPAC) en la ciudad, se ejecutarán tareas en las intersecciones de las calles: Terrada y Roca; Brown y Undiano, y Brown y Montevideo. De esta manera, se afectará el suministro en la calle Terrada, entre Roca y Blandengues, y el cuadrante Italia, Undiano, Montevideo y San Martín, hasta la finalización de las tareas.",
-            "source_url": "https://www.aguasbonaerenses.com.ar/noticias/5104",
-            "notification_allowed": false,
-            "message": "Comunicado oficial; no acredita el estado del suministro en tiempo real.",
-            "scheduled_date": "2026-11-12",
-            "scheduled_start": null,
-            "scheduled_end": null,
-            "time_precision": "date_only",
-            "published_on": "2026-11-10"
-          },
-          {
-            "id": "agua-bbe6bf94bce8ed8155",
-            "category": "agua",
-            "country": "Argentina",
-            "province": "Buenos Aires",
-            "company": "ABSA",
-            "kind": "water_service_bulletin",
-            "status": "publication_only_not_live",
-            "locality_hint": "Carlos Tejedor",
-            "zone_detail": "Esta mañana se llevan adelante tares de reparación sobre una cañería de impulsión de agua sobre la calle Flora afectando, hasta el mediodía, el suministro a los usuarios ubicados en esa arteria, entre Vergara y Almirón, en Carlos Tejedor. Por esta razón, se solicita a las personas usuarias que cuiden las reservas domiciliarias y utilicen el recurso únicamente para aquellos usos que sean impostergables, hasta la normalización del suministro. Se recuerda que, ante dificultades en el servicio, la empresa cuenta con la línea telefónica de Asistencia Técnica 0800-999-2272.",
-            "source_url": "https://www.aguasbonaerenses.com.ar/noticias/5103",
-            "notification_allowed": false,
-            "message": "Comunicado oficial; no acredita el estado del suministro en tiempo real.",
-            "published_on": "2026-11-10",
-            "scheduled_start": null,
-            "scheduled_end": null
-          }
-        ],
-        "message": "Noticias oficiales fechadas; no garantizan que la afectación continúe.",
-        "article_links_seen": 10,
-        "articles_checked": 10,
-        "records_checked": 10,
-        "latest_published_date": "2026-11-12"
-      },
-      "aguas_del_norte_salta": {
-        "status": "ok",
-        "company": "Aguas del Norte",
-        "province": "Salta",
-        "country": "Argentina",
-        "source_url": "https://www.aguasdelnortesalta.com.ar/cortes.php",
-        "checked_at": "2026-11-12T20:05:13Z",
-        "coverage_kind": "public_water_bulletins_only",
-        "notifications_enabled": false,
-        "parser_revision": "WATER-v5.35",
-        "notices": [],
-        "message": "La página oficial indica que los trabajos en desarrollo no afectan el servicio. No implica ausencia de cortes imprevistos ni servicio normal.",
-        "records_checked": 0,
-        "coverage_horizon": "works_in_progress_only"
-      },
-      "aysam_mendoza": {
-        "status": "unverified",
-        "company": "AYSAM",
-        "province": "Mendoza",
-        "country": "Argentina",
-        "source_url": "https://www.aysam.com.ar/cortes/index.html",
-        "checked_at": "2026-11-12T20:05:13Z",
-        "coverage_kind": "public_water_bulletins_only",
-        "notifications_enabled": false,
-        "parser_revision": "WATER-v5.35",
-        "notices": [],
-        "message": "Página consultada, pero sin filas futuras completas legibles; puede cargar datos dinámicamente.",
-        "records_checked": 0,
-        "source_attempts": [
-          {
-            "url": "https://aysam.com.ar/cortes/",
-            "result": "fetch_or_parse_error",
-            "error_type": "HTTPError"
-          },
-          {
-            "url": "https://www.aysam.com.ar/cortes/index.html",
-            "records_checked": 0,
-            "result": "page_read"
-          }
-        ]
-      },
-      "aguas_cordobesas": {
-        "status": "unverified",
-        "company": "Aguas Cordobesas",
-        "province": "Córdoba",
-        "country": "Argentina",
-        "source_url": "https://www.aws.aguascordobesas.com.ar/CanalNoticias/NoticiasCategoria/2/servicio",
-        "checked_at": "2026-11-12T20:05:13Z",
-        "coverage_kind": "public_water_bulletins_only",
-        "notifications_enabled": false,
-        "parser_revision": "WATER-v5.35",
-        "notices": [],
-        "message": "No se pudo verificar fuente: URLError"
-      },
-      "aguas_santafesinas": {
-        "status": "unverified",
-        "company": "Aguas Santafesinas",
-        "province": "Santa Fe",
-        "country": "Argentina",
-        "source_url": "https://www.aguassantafesinas.com.ar/portal/noticias",
-        "checked_at": "2026-11-12T20:05:13Z",
-        "coverage_kind": "public_water_bulletins_only",
-        "notifications_enabled": false,
-        "parser_revision": "WATER-v5.35",
-        "notices": [],
-        "message": "Portal accesible, sin aviso futuro completo con localidad y horario verificables.",
-        "date_markers_checked": 0,
-        "account_lookup_required_for_address": true
-      },
-      "aguas_rionegrinas_arsa": {
-        "status": "ok",
-        "company": "Aguas Rionegrinas",
-        "province": "Río Negro",
-        "country": "Argentina",
-        "source_url": "https://aguasrionegrinas.com/category/interrupciones/",
-        "checked_at": "2026-11-12T20:05:13Z",
-        "coverage_kind": "public_water_bulletins_only",
-        "notifications_enabled": false,
-        "parser_revision": "ARSA-ARTICLES-v5.35",
-        "notices": [
-          {
-            "id": "agua-5790c9c3d26c72c480",
-            "category": "agua",
-            "country": "Argentina",
-            "province": "Río Negro",
-            "company": "Aguas Rionegrinas",
-            "kind": "water_service_bulletin",
-            "status": "publication_only_not_live",
-            "locality_hint": "Playas Doradas",
-            "zone_detail": "Aguas Rionegrinas S.A. desarrolla tareas sobre el acueducto Los Berros. Tras detectar una disminución de presión en la conducción, los equipos técnicos identificaron que el origen podría estar en las válvulas de alivio de aire. Por ese motivo, se realizan trabajos en esos componentes para encontrar una solución. Para estas intervenciones se cuenta con la anuencia del Departamento Provincial de Aguas (DPA) y de South Mining, empresa a cargo de la operación del acueducto. Como consecuencia de esta situación, la localidad de Playas Doradas registra baja presión en el servicio. Las cuadrillas continúan en el lugar con las tareas necesarias para revertir esta situación. Se recomienda a los vecinos y vecinas hacer un uso responsable del agua y cuidar las reservas domiciliarias mientras duren los trabajos. Se informará oportunamente cualquier novedad. Ante consultas o reclamos, Aguas Rionegrinas dispone de los siguientes canales de…",
-            "source_url": "https://aguasrionegrinas.com/playas-doradas-arsa-y-dpa-trabajan-en-el-acueducto-los-berros-para-restablecer-la-presion/",
-            "notification_allowed": false,
-            "message": "Comunicado oficial; no acredita el estado del suministro en tiempo real.",
-            "published_on": "2026-11-12",
-            "scheduled_start": null,
-            "scheduled_end": null
-          }
-        ],
-        "message": "Comunicados de ARSA fechados; no confirman la situación en tiempo real.",
-        "article_links_seen": 4,
-        "source_attempts": [
-          {
-            "url": "https://aguasrionegrinas.com/playas-doradas-arsa-y-dpa-trabajan-en-el-acueducto-los-berros-para-restablecer-la-presion/",
-            "result": "parsed",
-            "category_published_on": "2026-11-12"
-          },
-          {
-            "url": "https://aguasrionegrinas.com/el-condor-arsa-realizo-un-operativo-nocturno-de-limpieza-de-cisterna-para-fortalecer-el-abastecimiento-de-agua-de-cara-al-verano/",
-            "result": "fetch_or_parse_error",
-            "error_type": "HTTPError"
-          },
-          {
-            "url": "https://aguasrionegrinas.com/cipolletti-arsa-inicio-trabajos-en-calle-mengelle-para-optimizar-la-red-de-agua-potable-en-toda-la-ciudad/",
-            "result": "fetch_or_parse_error",
-            "error_type": "HTTPError"
-          },
-          {
-            "url": "https://aguasrionegrinas.com/bariloche-arsa-ejecutara-trabajos-para-fortalecer-la-red-de-agua-potable-en-el-sector-de-riberas-del-nireco/",
-            "result": "fetch_or_parse_error",
-            "error_type": "HTTPError"
-          }
-        ],
-        "articles_checked": 4,
-        "records_checked": 4,
-        "latest_published_date": "2026-11-12"
-      },
-      "aguas_catamarca": {
-        "status": "unverified",
-        "company": "Aguas de Catamarca SAPEM",
-        "province": "Catamarca",
-        "country": "Argentina",
-        "source_url": "https://www.adcsapem.com.ar/?page_id=240",
-        "checked_at": "2026-11-12T20:05:13Z",
-        "coverage_kind": "public_water_bulletins_only",
-        "notifications_enabled": false,
-        "parser_revision": "CATAMARCA-STATUS-v5.33",
-        "notices": [],
-        "message": "Página pública de suspensiones consultada; no hay registros con fecha, localidad y estado suficientes. No confirma servicio normal.",
-        "page_read": true,
-        "records_checked": 0
-      }
-    },
-    "notices": [
-      {
-        "id": "agua-7ddc8af84cfcbf8b3d",
-        "category": "agua",
-        "country": "Argentina",
-        "province": "Buenos Aires",
-        "company": "ABSA",
-        "kind": "water_service_bulletin",
-        "status": "publication_only_not_live",
-        "locality_hint": "Carmen de Patagones",
-        "zone_detail": "Se están registrando episodios de baja presión y algunas faltas de agua en la zona alta de Carmen de Patagones, esto es Barrio Bicentenario, Barrio 99 Viviendas y Barrio Dolores. Un corte de energía ocurrido en el día de ayer, sumado al mayor consumo de agua por temperaturas elevadas, y a la reparación en curso de un equipo usado habitualmente en la captación de agua, comprometieron el suministro en ese sector de la ciudad. Por esta razón, se solicita a las personas usuarias que cuenten con el servicio, que preserven las reservas de agua y utilicen el recurso solo para hidratación y tareas impostergables, hasta que se normalice el suministro. Se recuerda que, ante dificultades en el servicio, la empresa cuenta con la línea telefónica de Asistencia Técnica 0800-999-2272.",
-        "source_url": "https://www.aguasbonaerenses.com.ar/noticias/5105",
-        "notification_allowed": false,
-        "message": "Comunicado oficial; no acredita el estado del suministro en tiempo real.",
-        "published_on": "2026-11-10",
-        "scheduled_start": null,
-        "scheduled_end": null
-      },
-      {
-        "id": "agua-bbe6bf94bce8ed8155",
-        "category": "agua",
-        "country": "Argentina",
-        "province": "Buenos Aires",
-        "company": "ABSA",
-        "kind": "water_service_bulletin",
-        "status": "publication_only_not_live",
-        "locality_hint": "Carlos Tejedor",
-        "zone_detail": "Esta mañana se llevan adelante tares de reparación sobre una cañería de impulsión de agua sobre la calle Flora afectando, hasta el mediodía, el suministro a los usuarios ubicados en esa arteria, entre Vergara y Almirón, en Carlos Tejedor. Por esta razón, se solicita a las personas usuarias que cuiden las reservas domiciliarias y utilicen el recurso únicamente para aquellos usos que sean impostergables, hasta la normalización del suministro. Se recuerda que, ante dificultades en el servicio, la empresa cuenta con la línea telefónica de Asistencia Técnica 0800-999-2272.",
-        "source_url": "https://www.aguasbonaerenses.com.ar/noticias/5103",
-        "notification_allowed": false,
-        "message": "Comunicado oficial; no acredita el estado del suministro en tiempo real.",
-        "published_on": "2026-11-10",
-        "scheduled_start": null,
-        "scheduled_end": null
-      },
-      {
-        "id": "agua-0c305b8467ad98db42",
-        "category": "agua",
-        "country": "Argentina",
-        "province": "Buenos Aires",
-        "company": "ABSA",
-        "kind": "planned_water_service_impact",
-        "status": "scheduled_not_confirmed",
-        "locality_hint": "General Daniel Cerri",
-        "zone_detail": "en el marco de la obra de reemplazo y ampliación del acueducto que abastece a la localidad, se prevén tareas a la altura de la Ruta 3 y el acceso a la localidad, por lo que se deberá interrumpir el suministro de agua desde las 8 y hasta hora de la tarde.",
-        "source_url": "https://www.aguasbonaerenses.com.ar/noticias/5104",
-        "notification_allowed": false,
-        "message": "Comunicado oficial; no acredita el estado del suministro en tiempo real.",
-        "scheduled_date": "2026-11-12",
-        "scheduled_start": "2026-11-12T08:00-03:00",
-        "scheduled_end": null,
-        "time_precision": "start_known_end_unknown",
-        "published_on": "2026-11-10"
-      },
-      {
-        "id": "agua-0c6cb83904285603d4",
-        "category": "agua",
-        "country": "Argentina",
-        "province": "Buenos Aires",
-        "company": "ABSA",
-        "kind": "planned_water_service_impact",
-        "status": "scheduled_not_confirmed",
-        "locality_hint": "Bahía Blanca",
-        "zone_detail": "en el marco de los recambios de cañería que lleva adelante la Dirección Provincial de Agua y Cloacas (DIPAC) en la ciudad, se ejecutarán tareas en las intersecciones de las calles: Terrada y Roca; Brown y Undiano, y Brown y Montevideo. De esta manera, se afectará el suministro en la calle Terrada, entre Roca y Blandengues, y el cuadrante Italia, Undiano, Montevideo y San Martín, hasta la finalización de las tareas.",
-        "source_url": "https://www.aguasbonaerenses.com.ar/noticias/5104",
-        "notification_allowed": false,
-        "message": "Comunicado oficial; no acredita el estado del suministro en tiempo real.",
-        "scheduled_date": "2026-11-12",
-        "scheduled_start": null,
-        "scheduled_end": null,
-        "time_precision": "date_only",
-        "published_on": "2026-11-10"
-      },
-      {
-        "id": "agua-5790c9c3d26c72c480",
-        "category": "agua",
-        "country": "Argentina",
-        "province": "Río Negro",
-        "company": "Aguas Rionegrinas",
-        "kind": "water_service_bulletin",
-        "status": "publication_only_not_live",
-        "locality_hint": "Playas Doradas",
-        "zone_detail": "Aguas Rionegrinas S.A. desarrolla tareas sobre el acueducto Los Berros. Tras detectar una disminución de presión en la conducción, los equipos técnicos identificaron que el origen podría estar en las válvulas de alivio de aire. Por ese motivo, se realizan trabajos en esos componentes para encontrar una solución. Para estas intervenciones se cuenta con la anuencia del Departamento Provincial de Aguas (DPA) y de South Mining, empresa a cargo de la operación del acueducto. Como consecuencia de esta situación, la localidad de Playas Doradas registra baja presión en el servicio. Las cuadrillas continúan en el lugar con las tareas necesarias para revertir esta situación. Se recomienda a los vecinos y vecinas hacer un uso responsable del agua y cuidar las reservas domiciliarias mientras duren los trabajos. Se informará oportunamente cualquier novedad. Ante consultas o reclamos, Aguas Rionegrinas dispone de los siguientes canales de…",
-        "source_url": "https://aguasrionegrinas.com/playas-doradas-arsa-y-dpa-trabajan-en-el-acueducto-los-berros-para-restablecer-la-presion/",
-        "notification_allowed": false,
-        "message": "Comunicado oficial; no acredita el estado del suministro en tiempo real.",
-        "published_on": "2026-11-12",
-        "scheduled_start": null,
-        "scheduled_end": null
-      },
-      {
-        "id": "agua-64aeef674fef9f2515",
-        "category": "agua",
-        "country": "Argentina",
-        "province": "Buenos Aires",
-        "company": "ABSA",
-        "kind": "water_service_bulletin",
-        "status": "publication_only_not_live",
-        "locality_hint": "French",
-        "zone_detail": "Producto de un corte de energía, se encuentra afectada la Planta Potabilizadora de Agua de French, generando posible baja presión en la localidad. Por esta razón, se solicita a las personas usuarias que cuiden las reservas domiciliarias y utilicen el recurso únicamente para aquellos usos que sean impostergables, hasta tanto se restablezca el servicio de energía y se normalice el suministro. Se recuerda que, ante dificultades en el servicio, la empresa cuenta con la línea telefónica de Asistencia Técnica 0800-999-2272.",
-        "source_url": "https://www.aguasbonaerenses.com.ar/noticias/5108",
-        "notification_allowed": false,
-        "message": "Comunicado oficial; no acredita el estado del suministro en tiempo real.",
-        "published_on": "2026-11-12",
-        "scheduled_start": null,
-        "scheduled_end": null
-      },
-      {
-        "id": "agua-e87e1c5a3c05d354f4",
-        "category": "agua",
-        "country": "Argentina",
-        "province": "Buenos Aires",
-        "company": "ABSA",
-        "kind": "water_service_bulletin",
-        "status": "publication_only_not_live",
-        "locality_hint": "General Lavalle",
-        "zone_detail": "Como consecuencia de un nuevo incidente sobre la línea de media tensión que abastece la toma de agua en el Canal 2, podría verse afectado con baja presión el suministro en General Lavalle. El corte se produjo a raíz del choque de un vehículo contra un poste de energía. Ante esta situación se instaló un grupo electrógeno de respaldo para la operación de los equipos, no obstante, podría verse afectado con baja presión el servicio de agua en la localidad. Por esta razón, se solicita a las personas usuarias que cuiden las reservas domiciliarias y utilicen el recurso únicamente para aquellos usos que sean impostergables. Se recuerda que, ante dificultades en el servicio, la empresa cuenta con la línea telefónica de Asistencia Técnica 0800-999-2272.",
-        "source_url": "https://www.aguasbonaerenses.com.ar/noticias/5109",
-        "notification_allowed": false,
-        "message": "Comunicado oficial; no acredita el estado del suministro en tiempo real.",
-        "published_on": "2026-11-12",
-        "scheduled_start": null,
-        "scheduled_end": null
       }
     ]
   }
