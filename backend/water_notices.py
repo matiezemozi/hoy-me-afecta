@@ -1,4 +1,4 @@
-"""Conservative public water-service bulletin collectors for Argentina (v5.34).
+"""Conservative public water-service bulletin collectors for Argentina (v5.35).
 
 No report is a live outage confirmation. No credentials, service identifiers or
 unofficial APIs are used. Completely independent of provincial_electricity.
@@ -51,7 +51,7 @@ def checked_instant(value):
 def fetch_html(url):
     if urlsplit(url).scheme != 'https':
         raise ValueError('Solo HTTPS')
-    req = Request(url, headers={'User-Agent':'HoyMeAfecta/5.34 (public notice reader)',
+    req = Request(url, headers={'User-Agent':'HoyMeAfecta/5.35 (public notice reader)',
                                 'Accept':'text/html,application/xhtml+xml'})
     with urlopen(req, timeout=13) as response:
         raw = response.read(MAX_PAGE_BYTES + 1)
@@ -309,7 +309,7 @@ def _result(key,checked_at):
     return {'status':'unverified','company':company,'province':province,'country':'Argentina',
             'source_url':url,'checked_at':checked_at,
             'coverage_kind':'public_water_bulletins_only',
-            'notifications_enabled':False,'parser_revision':'WATER-v5.34',
+            'notifications_enabled':False,'parser_revision':'WATER-v5.35',
             'notices':[],'message':'No se ha verificado un aviso completo.'}
 
 
@@ -356,6 +356,9 @@ def _collect_aysam(checked_at,now,fetch):
         try:
             html=fetch(url)
             notes,checked,newest=_parse_aysam(html,now,url)
+            # Report the actual official page that was successfully read,
+            # not the preceding URL which may have returned an HTTP error.
+            result['source_url']=url
             dom,visible=page(html)
             norm=folded(visible)
             attempts.append({'url':url,'records_checked':checked,'result':'page_read'})
@@ -544,6 +547,63 @@ def _arsa_index_date(index_visible,label):
             return _parse_official_day(date_parts[-1])
     return None
 
+def _arsa_times_from_dated_paragraphs(paragraphs, published, scheduled):
+    """Extract only explicitly attached work times; never infer an end hour.
+
+    The publication can put the date in one paragraph and the times in the
+    next. Limit the search to that paragraph and its immediate neighbor,
+    rejecting a neighboring paragraph that introduces a different date.
+    """
+    for index, paragraph in enumerate(paragraphs):
+        if _weekday_date(paragraph, published) != scheduled:
+            continue
+        scope = paragraph
+        if index + 1 < len(paragraphs):
+            next_paragraph = paragraphs[index + 1]
+            neighbor_day = _weekday_date(next_paragraph, published)
+            if neighbor_day is None or neighbor_day == scheduled:
+                scope += ' ' + next_paragraph
+        flat = folded(scope)
+        start_match = re.search(
+            r'\b(?:desde|a partir de|entre)\s+las\s+(\d{1,2})(?::(\d{2}))?\b'
+            r'|\b(?:comenzaran|comenzara|iniciaran|iniciara)\s+a\s+las\s+(\d{1,2})(?::(\d{2}))?\b',
+            flat)
+        if not start_match:
+            continue
+        captured = start_match.groups()
+        hour = int(captured[0] or captured[2])
+        minute = int(captured[1] or captured[3] or 0)
+        if hour > 23 or minute > 59:
+            continue
+        start = datetime(scheduled.year, scheduled.month, scheduled.day, hour, minute, tzinfo=ART)
+        result = {'scheduled_start': start.isoformat(timespec='minutes'),
+                  'scheduled_end': None, 'time_precision': 'start_known_end_unknown'}
+        after = flat[start_match.end():]
+        # An end must be tied to the SAME scheduled work, not to unrelated
+        # office hours or an adjacent news article.
+        end_match = re.search(
+            r'\b(?:y\s+las|hasta\s+(?:aproximadamente\s+)?las|finalizaran\s+a\s+las|finalizara\s+a\s+las)\s+'
+            r'(\d{1,2})(?::(\d{2}))?\b', after[:230])
+        if not end_match:
+            return result
+        end_hour = int(end_match.group(1))
+        end_minute = int(end_match.group(2) or 0)
+        if end_hour > 23 or end_minute > 59:
+            return result
+        end = datetime(scheduled.year, scheduled.month, scheduled.day, end_hour, end_minute, tzinfo=ART)
+        if not start < end <= start + timedelta(hours=18):
+            return result
+        near_end = after[max(0,end_match.start()-40):end_match.end()+55]
+        if re.search(r'\baproximad|\bestimad|\bprevist', near_end):
+            result['scheduled_end_estimate'] = end.isoformat(timespec='minutes')
+            result['time_precision'] = 'start_known_end_estimated'
+        else:
+            result['scheduled_end'] = end.isoformat(timespec='minutes')
+            result['time_precision'] = 'start_and_end_published'
+        return result
+    return {'scheduled_start':None,'scheduled_end':None,'time_precision':'date_only'}
+
+
 def _arsa_article(html,url,now,index_published=None):
     dom,visible=page(html)
     title=_arsa_article_title(dom,html,url)
@@ -585,20 +645,11 @@ def _arsa_article(html,url,now,index_published=None):
     future_verb=bool(re.search(r'se realizaran|se llevaran adelante|se preve|realizara|tareas programadas|trabajos programados|esta previsto',f+' '+title_fold))
     # Past-tense completed/same-day works are publication-only, not plans.
     if scheduled and future_verb and not re.search(r'inicio trabajos|iniciaron los trabajos|tareas comenzaron',title_fold):
-        start=None
-        for p in paragraphs:
-            if _weekday_date(p,published)==scheduled:
-                tm=re.search(r'\b(?:desde las|a partir de las|entre las)\s+(\d{1,2})(?::(\d{2}))?\b',folded(p))
-                if tm:
-                    hour=int(tm.group(1));minute=int(tm.group(2) or 0)
-                    if hour<24 and minute<60:
-                        start=datetime(scheduled.year,scheduled.month,scheduled.day,hour,minute,tzinfo=ART).isoformat(timespec='minutes')
-                        break
+        times=_arsa_times_from_dated_paragraphs(paragraphs,published,scheduled)
         return [mk_notice('Aguas Rionegrinas','Río Negro',locality,url,
                   'planned_water_service_impact','scheduled_not_confirmed',content,
                   published_on=published.isoformat(),scheduled_date=scheduled.isoformat(),
-                  scheduled_start=start,scheduled_end=None,
-                  time_precision='start_known_end_unknown' if start else 'date_only')],published
+                  **times)],published
     return [mk_notice('Aguas Rionegrinas','Río Negro',locality,url,
                       'water_service_bulletin','publication_only_not_live',content,
                       published_on=published.isoformat(),scheduled_start=None,scheduled_end=None)],published
@@ -606,7 +657,7 @@ def _arsa_article(html,url,now,index_published=None):
 
 def _collect_arsa(checked_at,now,fetch):
     result=_result('aguas_rionegrinas_arsa',checked_at)
-    result['parser_revision']='ARSA-ARTICLES-v5.34'
+    result['parser_revision']='ARSA-ARTICLES-v5.35'
     url=result['source_url']
     seen=[];attempts=[];checked=0;newest=None
     try:

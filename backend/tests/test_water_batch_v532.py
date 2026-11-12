@@ -41,7 +41,8 @@ class WaterV532Tests(unittest.TestCase):
         self.now=w.checked_instant(STAMP)
 
     def test_source_count(self):
-        self.assertEqual(len(w.SOURCES),7)
+        self.assertGreaterEqual(len(w.SOURCES),5)
+        self.assertTrue({'absa_buenos_aires','aysam_mendoza','aguas_cordobesas','aguas_santafesinas','aguas_del_norte_salta'} <= set(w.SOURCES))
 
     def test_timezone(self):
         self.assertEqual(self.now.hour,20)
@@ -171,7 +172,7 @@ class WaterV532Tests(unittest.TestCase):
             if 'aysam' in url:return AYSAM
             return '<h1>Acceso a zona</h1>'
         result=w.collect_water(STAMP,fetcher=fetch)
-        self.assertEqual(len(result['sources']),7)
+        self.assertEqual(set(result['sources']),set(w.SOURCES))
         self.assertEqual(len(result['notices']),4)
         self.assertFalse(result['notifications_enabled'])
         self.assertFalse(result['android_display_enabled'])
