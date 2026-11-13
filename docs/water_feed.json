@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-13T06:16:29Z",
+  "generated_at": "2026-11-13T08:26:38Z",
   "status": "pilot_not_integrated_in_android",
   "category": "agua",
   "country": "Argentina",
@@ -15,7 +15,7 @@
       "province": "Buenos Aires",
       "country": "Argentina",
       "source_url": "https://www.aguasbonaerenses.com.ar/noticias/",
-      "checked_at": "2026-11-13T06:16:29Z",
+      "checked_at": "2026-11-13T08:26:38Z",
       "coverage_kind": "public_water_bulletins_only",
       "notifications_enabled": false,
       "parser_revision": "WATER-v5.35",
@@ -67,7 +67,7 @@
       "province": "Salta",
       "country": "Argentina",
       "source_url": "https://www.aguasdelnortesalta.com.ar/cortes.php",
-      "checked_at": "2026-11-13T06:16:29Z",
+      "checked_at": "2026-11-13T08:26:38Z",
       "coverage_kind": "public_water_bulletins_only",
       "notifications_enabled": false,
       "parser_revision": "WATER-v5.35",
@@ -82,7 +82,7 @@
       "province": "Mendoza",
       "country": "Argentina",
       "source_url": "https://www.aysam.com.ar/cortes/index.html",
-      "checked_at": "2026-11-13T06:16:29Z",
+      "checked_at": "2026-11-13T08:26:38Z",
       "coverage_kind": "public_water_bulletins_only",
       "notifications_enabled": false,
       "parser_revision": "WATER-v5.35",
@@ -108,7 +108,7 @@
       "province": "Córdoba",
       "country": "Argentina",
       "source_url": "https://www.aws.aguascordobesas.com.ar/CanalNoticias/NoticiasCategoria/2/servicio",
-      "checked_at": "2026-11-13T06:16:29Z",
+      "checked_at": "2026-11-13T08:26:38Z",
       "coverage_kind": "public_water_bulletins_only",
       "notifications_enabled": false,
       "parser_revision": "WATER-v5.35",
@@ -121,7 +121,7 @@
       "province": "Santa Fe",
       "country": "Argentina",
       "source_url": "https://www.aguassantafesinas.com.ar/portal/noticias",
-      "checked_at": "2026-11-13T06:16:29Z",
+      "checked_at": "2026-11-13T08:26:38Z",
       "coverage_kind": "public_water_bulletins_only",
       "notifications_enabled": false,
       "parser_revision": "WATER-v5.35",
@@ -136,7 +136,7 @@
       "province": "Río Negro",
       "country": "Argentina",
       "source_url": "https://aguasrionegrinas.com/category/interrupciones/",
-      "checked_at": "2026-11-13T06:16:29Z",
+      "checked_at": "2026-11-13T08:26:38Z",
       "coverage_kind": "public_water_bulletins_only",
       "notifications_enabled": false,
       "parser_revision": "ARSA-ARTICLES-v5.35",
@@ -157,6 +157,23 @@
           "published_on": "2026-11-12",
           "scheduled_start": null,
           "scheduled_end": null
+        },
+        {
+          "id": "agua-312d5301b26438e297",
+          "category": "agua",
+          "country": "Argentina",
+          "province": "Río Negro",
+          "company": "Aguas Rionegrinas",
+          "kind": "water_service_bulletin",
+          "status": "publication_only_not_live",
+          "locality_hint": "Bariloche",
+          "zone_detail": "Aguas Rionegrinas informa que este jueves 12 de noviembre se realizarán trabajos de empalme de cañería en Bariloche, una intervención destinada a fortalecer la infraestructura y optimizar el funcionamiento de la red de distribución de agua potable. Las tareas se ejecutarán sobre calle 7 y La Habana, en el barrio Riberas del Ñireco. Los trabajos comenzarán a las 8 y se extenderán hasta las 18 horas, aproximadamente. Esta intervención permitirá mejorar las condiciones de conexión y funcionamiento de la red en el sector. Para llevar adelante estas tareas será necesario afectar temporalmente la prestación del servicio en el barrio Quimey Ruca. Por este motivo, se solicita a los usuarios tomar los recaudos necesarios y resguardar las reservas domiciliarias para evitar inconvenientes durante el desarrollo de los trabajos. Estas acciones forman parte de la planificación de ARSA para continuar incorporando mejoras a la infraestructura…",
+          "source_url": "https://aguasrionegrinas.com/bariloche-arsa-ejecutara-trabajos-para-fortalecer-la-red-de-agua-potable-en-el-sector-de-riberas-del-nireco/",
+          "notification_allowed": false,
+          "message": "Comunicado oficial; no acredita el estado del suministro en tiempo real.",
+          "published_on": "2026-11-11",
+          "scheduled_start": null,
+          "scheduled_end": null
         }
       ],
       "message": "Comunicados de ARSA fechados; no confirman la situación en tiempo real.",
@@ -169,9 +186,8 @@
         },
         {
           "url": "https://aguasrionegrinas.com/el-condor-arsa-realizo-un-operativo-nocturno-de-limpieza-de-cisterna-para-fortalecer-el-abastecimiento-de-agua-de-cara-al-verano/",
-          "result": "no_recent_service_notice",
-          "reason": "service_impact_not_explicit_or_excluded",
-          "category_published_on": "2026-11-12"
+          "result": "fetch_or_parse_error",
+          "error_type": "HTTPError"
         },
         {
           "url": "https://aguasrionegrinas.com/cipolletti-arsa-inicio-trabajos-en-calle-mengelle-para-optimizar-la-red-de-agua-potable-en-toda-la-ciudad/",
@@ -180,8 +196,8 @@
         },
         {
           "url": "https://aguasrionegrinas.com/bariloche-arsa-ejecutara-trabajos-para-fortalecer-la-red-de-agua-potable-en-el-sector-de-riberas-del-nireco/",
-          "result": "fetch_or_parse_error",
-          "error_type": "HTTPError"
+          "result": "parsed",
+          "category_published_on": "2026-11-11"
         }
       ],
       "articles_checked": 4,
@@ -194,7 +210,7 @@
       "province": "Catamarca",
       "country": "Argentina",
       "source_url": "https://www.adcsapem.com.ar/?page_id=240",
-      "checked_at": "2026-11-13T06:16:29Z",
+      "checked_at": "2026-11-13T08:26:38Z",
       "coverage_kind": "public_water_bulletins_only",
       "notifications_enabled": false,
       "parser_revision": "CATAMARCA-STATUS-v5.33",
@@ -205,6 +221,23 @@
     }
   },
   "notices": [
+    {
+      "id": "agua-312d5301b26438e297",
+      "category": "agua",
+      "country": "Argentina",
+      "province": "Río Negro",
+      "company": "Aguas Rionegrinas",
+      "kind": "water_service_bulletin",
+      "status": "publication_only_not_live",
+      "locality_hint": "Bariloche",
+      "zone_detail": "Aguas Rionegrinas informa que este jueves 12 de noviembre se realizarán trabajos de empalme de cañería en Bariloche, una intervención destinada a fortalecer la infraestructura y optimizar el funcionamiento de la red de distribución de agua potable. Las tareas se ejecutarán sobre calle 7 y La Habana, en el barrio Riberas del Ñireco. Los trabajos comenzarán a las 8 y se extenderán hasta las 18 horas, aproximadamente. Esta intervención permitirá mejorar las condiciones de conexión y funcionamiento de la red en el sector. Para llevar adelante estas tareas será necesario afectar temporalmente la prestación del servicio en el barrio Quimey Ruca. Por este motivo, se solicita a los usuarios tomar los recaudos necesarios y resguardar las reservas domiciliarias para evitar inconvenientes durante el desarrollo de los trabajos. Estas acciones forman parte de la planificación de ARSA para continuar incorporando mejoras a la infraestructura…",
+      "source_url": "https://aguasrionegrinas.com/bariloche-arsa-ejecutara-trabajos-para-fortalecer-la-red-de-agua-potable-en-el-sector-de-riberas-del-nireco/",
+      "notification_allowed": false,
+      "message": "Comunicado oficial; no acredita el estado del suministro en tiempo real.",
+      "published_on": "2026-11-11",
+      "scheduled_start": null,
+      "scheduled_end": null
+    },
     {
       "id": "agua-5790c9c3d26c72c480",
       "category": "agua",
