@@ -11,8 +11,8 @@ android {
         applicationId 'ar.com.hoymeafecta'
         minSdk 23
         targetSdk 33
-        versionCode 19
-        versionName '0.5.23-piloto'
+        versionCode 20
+        versionName '0.5.39-piloto'
     }
 
     signingConfigs {

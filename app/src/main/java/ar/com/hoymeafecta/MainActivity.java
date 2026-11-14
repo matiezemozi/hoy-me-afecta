@@ -265,7 +265,7 @@ public class MainActivity extends Activity {
 
         root.addView(text("HOY ME AFECTA", 26, INK, true));
         root.addView(text("Lo que te conviene saber antes de salir", 14, GREY, false));
-        root.addView(text("Piloto v5.23 · Nuevas fuentes provinciales y resumen navegable", 12, GREY, false));
+        root.addView(text("Piloto v5.39 · Boletines oficiales de agua (vista experimental)", 12, GREY, false));
         LinearLayout status = card();
         status.addView(text(connection, 14, BLUE, false));
         if (feed != null) {
@@ -375,8 +375,7 @@ public class MainActivity extends Activity {
         }
         if (sectionVisible("agua")) {
             title("Agua", "agua");
-            publicCategory("agua", "Interrupciones del suministro", "Todavía no existe un conector automático verificado para el servicio de agua.",
-                    "Consultar AySA", "https://www.aysa.com.ar/");
+            waterBulletins();
         }
         if (sectionVisible("transito")) {
             title("Tránsito y vías públicas", "transito");
@@ -398,7 +397,8 @@ public class MainActivity extends Activity {
             notes.addView(text("Bancos: calendario nacional del BCRA consultado automáticamente; " +
                     "no indica si las sucursales están abiertas. " +
                     "Trenes: novedades oficiales fechadas sin estado en vivo. " +
-                    "Agua, tránsito y operativos: sin conexión automática verificada.",
+                    "Agua: boletines oficiales fechados de cobertura parcial, solo lectura; " +
+                    "sin notificaciones automáticas. Tránsito y operativos: cobertura incompleta.",
                     12, GREY, false));
             notes.addView(text("Las zonas se comparan por nombre exacto con partido o localidad. " +
                     "No se comprueba si un corte alcanza una dirección específica.", 12, GREY, false));
@@ -1016,11 +1016,20 @@ public class MainActivity extends Activity {
         }
         if (sectionVisible("agua")) {
             categories++;
-            int alerts = fresh && hasZones ? countPublicMatches("agua") : 0;
-            reportLink(box, "agua", "Agua",
-                    fresh && hasZones ? alerts + " aviso(s) documentado(s) para tus zonas. " +
-                            "Sin conector automático completo." :
-                            "Sin información local actual verificable.");
+            int bulletins = countRelevantWaterNotices();
+            String detail;
+            if (!"Argentina".equals(selectedCountry())) {
+                detail = "Esta fuente piloto solo contempla localidades de Argentina.";
+            } else if (!waterFeedIsRecent()) {
+                detail = "No hay consulta reciente verificable de agua; ver fuentes oficiales.";
+            } else if (!hasZones) {
+                detail = "Elegí localidades para ver sus comunicados oficiales.";
+            } else {
+                detail = bulletins + (bulletins == 1 ?
+                        " comunicado oficial coincidente" : " comunicados oficiales coincidentes") +
+                        ". Son publicaciones fechadas, no cortes confirmados en vivo.";
+            }
+            reportLink(box, "agua", "Agua", detail);
         }
         if (sectionVisible("transito")) {
             categories++;
@@ -1886,6 +1895,173 @@ public class MainActivity extends Activity {
         }
         if (found == 0) card.addView(text("No hay avisos documentados vigentes para tus zonas en esta categoría. " +
                 "No significa que el servicio sea normal.", 13, GREY, false));
+    }
+
+    // Water stays read-only: independent freshness, exact locality filter and no notifier calls.
+    // The main electrical feed timestamp is deliberately NOT used for water freshness:
+    // GitHub publishes the merged water snapshot after the electrical generation.
+    private boolean waterFeedIsRecent() {
+        if (feed == null || !"Argentina".equals(selectedCountry())) return false;
+        JSONObject water = feed.optJSONObject("water_services");
+        return water != null && "agua".equals(usable(water, "category")) &&
+                "Argentina".equals(usable(water, "country")) &&
+                WaterNoticeRules.sourceIsRecent(usable(water, "generated_at"),
+                        System.currentTimeMillis());
+    }
+
+    private boolean waterSourceVerified(JSONObject water, String company, long nowMs) {
+        JSONObject sources = water == null ? null : water.optJSONObject("sources");
+        if (sources == null) return false;
+        java.util.Iterator<String> it = sources.keys();
+        while (it.hasNext()) {
+            JSONObject source = sources.optJSONObject(it.next());
+            if (source == null) continue;
+            if (!company.equals(usable(source, "company"))) continue;
+            if (!"ok".equals(usable(source, "status"))) continue;
+            if (WaterNoticeRules.sourceIsRecent(usable(source, "checked_at"), nowMs))
+                return true;
+        }
+        return false;
+    }
+
+    private boolean validWaterNotice(JSONObject water, JSONObject notice, long nowMs) {
+        if (notice == null || !"agua".equals(usable(notice, "category"))) return false;
+        if (!"Argentina".equals(usable(notice, "country"))) return false;
+        if (notice.optBoolean("notification_allowed", true)) return false;
+        if (!usable(notice, "source_url").startsWith("https://")) return false;
+        if (!WaterNoticeRules.matchesSavedLocality(prefs.getString("place", ""),
+                usable(notice, "locality_hint"))) return false;
+        if (!waterSourceVerified(water, usable(notice, "company"), nowMs)) return false;
+        if ("planned_water_service_impact".equals(usable(notice, "kind")) &&
+                !WaterNoticeRules.knownEndNotPassed(usable(notice, "scheduled_end"), nowMs))
+            return false;
+        return WaterNoticeRules.displayableNotice(
+                usable(notice, "kind"), usable(notice, "status"),
+                usable(notice, "published_on"), usable(notice, "scheduled_date"), nowMs);
+    }
+
+    private int countRelevantWaterNotices() {
+        if (!waterFeedIsRecent()) return 0;
+        JSONObject water = feed.optJSONObject("water_services");
+        JSONArray notices = water == null ? null : water.optJSONArray("notices");
+        if (notices == null) return 0;
+        int found = 0;
+        long nowMs = System.currentTimeMillis();
+        for (int i = 0; i < notices.length(); i++) {
+            if (validWaterNotice(water, notices.optJSONObject(i), nowMs)) found++;
+        }
+        return found;
+    }
+
+    private static String waterDay(String date) {
+        if (date.length() != 10) return "fecha no disponible";
+        return date.substring(8, 10) + "/" + date.substring(5, 7) + "/" +
+                date.substring(0, 4);
+    }
+
+    private static String waterHour(String iso) {
+        if (iso.length() < 16 || iso.charAt(10) != 'T') return "";
+        return iso.substring(11, 16);
+    }
+
+    private static String shortenWaterDetail(String detail) {
+        if (detail.length() <= 650) return detail;
+        int end = detail.lastIndexOf(' ', 650);
+        if (end < 200) end = 650;
+        return detail.substring(0, end).trim() + "…";
+    }
+
+    private void waterBulletins() {
+        LinearLayout c = card();
+        c.addView(text("Boletines oficiales de agua · piloto de lectura", 15, INK, true));
+        c.addView(text("Se muestran únicamente comunicados fechados de fuentes verificadas " +
+                "para las localidades que elegiste. No son confirmaciones de cortes actuales " +
+                "y NO generan notificaciones automáticas.", 13, GREY, false));
+        if (!"Argentina".equals(selectedCountry())) {
+            c.addView(text("Por ahora la cobertura experimental se limita a Argentina.",
+                    13, GREY, false));
+            return;
+        }
+        if (!waterFeedIsRecent()) {
+            c.addView(text("Sin consulta reciente de agua o datos todavía no integrados. " +
+                    "No se puede inferir que el servicio funcione normalmente.",
+                    13, GREY, true));
+            c.addView(button("Consultar ABSA", () ->
+                    open("https://www.aguasbonaerenses.com.ar/noticias/")));
+            return;
+        }
+        JSONObject water = feed.optJSONObject("water_services");
+        c.addView(text("Recopilación de agua: " +
+                formatUtc(usable(water, "generated_at")), 12, GREY, false));
+        JSONObject sources = water.optJSONObject("sources");
+        int totalSources = 0, verifiedSources = 0;
+        if (sources != null) {
+            java.util.Iterator<String> keys = sources.keys();
+            while (keys.hasNext()) {
+                JSONObject source = sources.optJSONObject(keys.next());
+                if (source == null) continue;
+                totalSources++;
+                if ("ok".equals(usable(source, "status")) &&
+                        WaterNoticeRules.sourceIsRecent(usable(source, "checked_at"),
+                                System.currentTimeMillis())) verifiedSources++;
+            }
+        }
+        c.addView(text("Fuentes consultadas: " + totalSources +
+                " · verificadas recientemente: " + verifiedSources +
+                ". Cobertura parcial, no nacional.", 12, GREY, false));
+        String chosenAreas = prefs.getString("place", "").trim();
+        if (chosenAreas.isEmpty()) {
+            c.addView(text("Ingresá tus localidades en Tus preferencias para consultar " +
+                    "las publicaciones de agua coincidentes.", 13, GREY, false));
+            return;
+        }
+        c.addView(text("Localidades seleccionadas: " + chosenAreas, 12, BLUE, true));
+        JSONArray notices = water.optJSONArray("notices");
+        int shown = 0;
+        final long nowMs = System.currentTimeMillis();
+        if (notices != null) for (int i = 0; i < notices.length() && shown < 12; i++) {
+            JSONObject n = notices.optJSONObject(i);
+            if (!validWaterNotice(water, n, nowMs)) continue;
+            final String url = usable(n, "source_url");
+            boolean planned = "planned_water_service_impact".equals(usable(n, "kind"));
+            c.addView(text("• " + usable(n, "locality_hint") + " · " +
+                    usable(n, "company"), 15, INK, true));
+            c.addView(text(planned ? "Trabajo previsto; no confirma interrupción actual" :
+                    "Comunicado publicado; la situación puede haber cambiado",
+                    13, BLUE, true));
+            if (planned) {
+                String date = usable(n, "scheduled_date");
+                String start = waterHour(usable(n, "scheduled_start"));
+                String end = waterHour(usable(n, "scheduled_end"));
+                String estimate = waterHour(usable(n, "scheduled_end_estimate"));
+                String schedule = "Previsto para " + waterDay(date);
+                if (!start.isEmpty()) schedule += " · Inicio: " + start;
+                if (!end.isEmpty()) schedule += " · Fin anunciado: " + end + " (sujeto a cambios)";
+                else if (!estimate.isEmpty()) schedule += " · Fin estimado: " + estimate;
+                else schedule += " · Fin sin horario confirmado";
+                c.addView(text(schedule, 13, GREY, false));
+            } else {
+                c.addView(text("Publicado: " + waterDay(usable(n, "published_on")),
+                        12, GREY, false));
+            }
+            String detail = usable(n, "zone_detail");
+            if (!detail.isEmpty()) c.addView(text(shortenWaterDetail(detail),
+                    13, INK, false));
+            c.addView(button("Ver comunicado oficial", () -> open(url)));
+            shown++;
+        }
+        if (shown == 0) {
+            c.addView(text("No se encontraron publicaciones recientes verificadas " +
+                    "para tus localidades en estas fuentes. Esto NO confirma servicio normal.",
+                    13, GREY, false));
+        }
+        c.addView(text("Las fuentes no verificadas se excluyen. No se informa " +
+                "si un domicilio determinado tiene o no suministro.",
+                12, GREY, false));
+        c.addView(button("Consultar ABSA", () ->
+                open("https://www.aguasbonaerenses.com.ar/noticias/")));
+        c.addView(button("Consultar Aguas Rionegrinas", () ->
+                open("https://aguasrionegrinas.com/category/interrupciones/")));
     }
 
     private void publicCategory(String category, String subtitle, String explanation,
