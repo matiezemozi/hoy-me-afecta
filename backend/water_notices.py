@@ -1,4 +1,4 @@
-"""Conservative public water-service bulletin collectors for Argentina (v5.35).
+"""Conservative public water-service bulletin collectors for Argentina (v5.35.1).
 
 No report is a live outage confirmation. No credentials, service identifiers or
 unofficial APIs are used. Completely independent of provincial_electricity.
@@ -51,7 +51,7 @@ def checked_instant(value):
 def fetch_html(url):
     if urlsplit(url).scheme != 'https':
         raise ValueError('Solo HTTPS')
-    req = Request(url, headers={'User-Agent':'HoyMeAfecta/5.35 (public notice reader)',
+    req = Request(url, headers={'User-Agent':'HoyMeAfecta/5.35.1 (public notice reader)',
                                 'Accept':'text/html,application/xhtml+xml'})
     with urlopen(req, timeout=13) as response:
         raw = response.read(MAX_PAGE_BYTES + 1)
@@ -550,20 +550,32 @@ def _arsa_index_date(index_visible,label):
 def _arsa_times_from_dated_paragraphs(paragraphs, published, scheduled):
     """Extract only explicitly attached work times; never infer an end hour.
 
-    The publication can put the date in one paragraph and the times in the
-    next. Limit the search to that paragraph and its immediate neighbor,
-    rejecting a neighboring paragraph that introduces a different date.
+    The actual 12 Nov Bariloche article publishes the date in paragraph 1,
+    the affected zone in paragraph 2, and the hours in paragraph 3. Search
+    at most two following paragraphs of the *same dated work*, stopping at
+    another explicitly dated notice or office-hours content. Do not look
+    further into site navigation or unrelated announcements.
     """
     for index, paragraph in enumerate(paragraphs):
         if _weekday_date(paragraph, published) != scheduled:
             continue
-        scope = paragraph
-        if index + 1 < len(paragraphs):
-            next_paragraph = paragraphs[index + 1]
+        scoped = [paragraph]
+        for next_paragraph in paragraphs[index+1:index+3]:
+            normalized = folded(next_paragraph)
             neighbor_day = _weekday_date(next_paragraph, published)
-            if neighbor_day is None or neighbor_day == scheduled:
-                scope += ' ' + next_paragraph
-        flat = folded(scope)
+            if neighbor_day is not None and neighbor_day != scheduled:
+                break
+            # A different weekday/date is a boundary even if it is malformed
+            # or outside the publication horizon; never borrow its times.
+            has_explicit_date = re.search(
+                r'\b(?:lunes|martes|miercoles|jueves|viernes|sabado|domingo)\s+'
+                r'\d{1,2}\b', normalized)
+            if has_explicit_date and neighbor_day != scheduled:
+                break
+            if re.search(r'\boficina\b|atencion al publico|horario de atencion', normalized):
+                break
+            scoped.append(next_paragraph)
+        flat = folded(' '.join(scoped))
         start_match = re.search(
             r'\b(?:desde|a partir de|entre)\s+las\s+(\d{1,2})(?::(\d{2}))?\b'
             r'|\b(?:comenzaran|comenzara|iniciaran|iniciara)\s+a\s+las\s+(\d{1,2})(?::(\d{2}))?\b',
@@ -657,7 +669,7 @@ def _arsa_article(html,url,now,index_published=None):
 
 def _collect_arsa(checked_at,now,fetch):
     result=_result('aguas_rionegrinas_arsa',checked_at)
-    result['parser_revision']='ARSA-ARTICLES-v5.35'
+    result['parser_revision']='ARSA-ARTICLES-v5.35.1'
     url=result['source_url']
     seen=[];attempts=[];checked=0;newest=None
     try:
