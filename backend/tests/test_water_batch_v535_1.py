@@ -66,7 +66,7 @@ class PublishedBarilocheRegression(unittest.TestCase):
             raise ValueError(url)
         result=w.collect_one('aguas_rionegrinas_arsa',STAMP,fetcher=fetch)
         self.assertEqual(result['status'],'ok')
-        self.assertEqual(result['parser_revision'],'ARSA-ARTICLES-v5.35.1')
+        self.assertEqual(result['parser_revision'],'ARSA-ARTICLES-v5.36')
         self.assertEqual(len(result['notices']),1)
         self.assertEqual(result['notices'][0]['scheduled_start'],'2026-11-12T08:00-03:00')
         self.assertEqual(result['notices'][0]['scheduled_end_estimate'],'2026-11-12T18:00-03:00')

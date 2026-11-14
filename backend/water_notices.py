@@ -1,4 +1,4 @@
-"""Conservative public water-service bulletin collectors for Argentina (v5.35.1).
+"""Conservative public water-service bulletin collectors for Argentina (v5.36).
 
 No report is a live outage confirmation. No credentials, service identifiers or
 unofficial APIs are used. Completely independent of provincial_electricity.
@@ -10,6 +10,7 @@ from hashlib import sha256
 from html.parser import HTMLParser
 from urllib.parse import urljoin, urlsplit
 from urllib.request import Request, urlopen
+from urllib.error import HTTPError
 import calendar
 import re
 
@@ -51,7 +52,7 @@ def checked_instant(value):
 def fetch_html(url):
     if urlsplit(url).scheme != 'https':
         raise ValueError('Solo HTTPS')
-    req = Request(url, headers={'User-Agent':'HoyMeAfecta/5.35.1 (public notice reader)',
+    req = Request(url, headers={'User-Agent':'HoyMeAfecta/5.36 (public notice reader)',
                                 'Accept':'text/html,application/xhtml+xml'})
     with urlopen(req, timeout=13) as response:
         raw = response.read(MAX_PAGE_BYTES + 1)
@@ -510,6 +511,27 @@ def _arsa_article_title(dom,html,url):
     return ''
 
 
+def _arsa_water_topic(text):
+    """Recognize water infrastructure without calling ordinary civil works an outage.
+
+    ARSA sometimes writes about interrupted cistern pumping without repeating
+    the phrase 'agua potable'. Such notices still require an explicit impact.
+    """
+    return bool(re.search(
+        r'agua potable|servicio de agua|suministro de agua|acueducto|red de agua|'
+        r'planta potabilizadora|sistema de bombeo|cisterna|sistema de abastecimiento',
+        folded(text)))
+
+
+def _arsa_explicit_service_impact(text):
+    """Require an actual, localized service impact, not routine maintenance."""
+    return bool(re.search(
+        r'\b(?:baja presion|falta de (?:suministro|agua)|afectad[oa]|afectar|'
+        r'interrumpir|interrupcion|turbiedad|turbidez|corte de agua|'
+        r'corte del suministro|afecta (?:a los barrios|a las zonas|el suministro|el servicio))\b',
+        folded(text)))
+
+
 def _arsa_failure_hint(html,url,now):
     """A limited, non-sensitive diagnostic for failed public-article parsing."""
     try:
@@ -522,7 +544,9 @@ def _arsa_failure_hint(html,url,now):
         if d<now.date()-timedelta(days=2):return 'publication_too_old'
         paragraphs=' '.join(p for p in dom.paragraphs if len(p)>=42)
         if not paragraphs:return 'no_article_paragraphs'
-        return 'service_impact_not_explicit_or_excluded'
+        if not _arsa_water_topic(paragraphs):return 'water_topic_not_identified'
+        if not _arsa_explicit_service_impact(paragraphs):return 'water_service_impact_not_explicit'
+        return 'notice_rejected_by_validation'
     except Exception as exc:
         return 'diagnostic_'+type(exc).__name__
 
@@ -637,15 +661,14 @@ def _arsa_article(html,url,now,index_published=None):
     paragraphs=[p for p in dom.paragraphs if len(p)>=42]
     content=' '.join(paragraphs)
     f=folded(content)
-    if not re.search(r'agua potable|servicio de agua|suministro de agua|acueducto|red de agua|planta potabilizadora',f):
+    if not _arsa_water_topic(content):
         return [],published
     if re.search(r'oficina|atencion al publico|factura|cobranz',folded(title)):
         return [],published
     if re.search(r'finalizaron|normalizad[oa]|restablecido|concluyeron',folded(title)):
         return [],published
     # A generic announcement about works is not evidence of affected supply.
-    impact=re.search(r'\b(baja presion|falta de (?:suministro|agua)|afectad[oa]|afectar|interrumpir|interrupcion|turbiedad|turbidez|corte de agua|corte del suministro)\b',f)
-    if not impact:
+    if not _arsa_explicit_service_impact(content):
         return [],published
     scheduled=None
     for p in paragraphs:
@@ -669,7 +692,7 @@ def _arsa_article(html,url,now,index_published=None):
 
 def _collect_arsa(checked_at,now,fetch):
     result=_result('aguas_rionegrinas_arsa',checked_at)
-    result['parser_revision']='ARSA-ARTICLES-v5.35.1'
+    result['parser_revision']='ARSA-ARTICLES-v5.36'
     url=result['source_url']
     seen=[];attempts=[];checked=0;newest=None
     try:
@@ -692,18 +715,30 @@ def _collect_arsa(checked_at,now,fetch):
         for link in links[:9]:
             checked+=1
             try:
-                article_html=fetch(link)
+                transient_retry=False
+                try:
+                    article_html=fetch(link)
+                except HTTPError as http_exc:
+                    # Retry ONCE only for transient status codes. A permanent
+                    # 403/404 is not retried or silently treated as no incident.
+                    if http_exc.code not in (429,500,502,503,504):
+                        raise
+                    transient_retry=True
+                    article_html=fetch(link)
                 index_day=link_dates.get(link)
                 notices,published=_arsa_article(article_html,link,now,index_published=index_day)
                 if published:
                     newest=max(newest,published) if newest else published
                 seen.extend(notices)
                 attempt={'url':link,'result':'parsed' if notices else 'no_recent_service_notice'}
+                if transient_retry:attempt['transient_http_retry_succeeded']=True
                 if not notices:attempt['reason']=_arsa_failure_hint(article_html,link,now)
                 if index_day:attempt['category_published_on']=index_day.isoformat()
                 attempts.append(attempt)
             except Exception as exc:
-                attempts.append({'url':link,'result':'fetch_or_parse_error','error_type':type(exc).__name__})
+                failed={'url':link,'result':'fetch_or_parse_error','error_type':type(exc).__name__}
+                if isinstance(exc,HTTPError):failed['http_status']=exc.code
+                attempts.append(failed)
     except Exception as exc:
         attempts.append({'url':url,'result':'fetch_or_parse_error','error_type':type(exc).__name__})
     result['source_attempts']=attempts
@@ -717,7 +752,10 @@ def _collect_arsa(checked_at,now,fetch):
     elif newest and newest<now.date()-timedelta(days=2):
         result.update(status='stale',message='Solo publicaciones antiguas verificables.')
     else:
+        blocked=sum(1 for a in attempts if a.get('result')=='fetch_or_parse_error')
         result['message']='No se recuperaron artículos recientes con localidad y afectación verificables.'
+        if blocked:
+            result['message']+=f' {blocked} artículo(s) no pudieron consultarse; no implica servicio normal.'
     return result
 
 
