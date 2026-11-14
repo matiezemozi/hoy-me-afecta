@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-14T01:16:30Z",
+  "generated_at": "2026-11-14T02:33:20Z",
   "status": "pilot_not_integrated_in_android",
   "category": "agua",
   "country": "Argentina",
@@ -15,7 +15,7 @@
       "province": "Buenos Aires",
       "country": "Argentina",
       "source_url": "https://www.aguasbonaerenses.com.ar/noticias/",
-      "checked_at": "2026-11-14T01:16:30Z",
+      "checked_at": "2026-11-14T02:33:20Z",
       "coverage_kind": "public_water_bulletins_only",
       "notifications_enabled": false,
       "parser_revision": "WATER-v5.35",
@@ -67,7 +67,7 @@
       "province": "Salta",
       "country": "Argentina",
       "source_url": "https://www.aguasdelnortesalta.com.ar/cortes.php",
-      "checked_at": "2026-11-14T01:16:30Z",
+      "checked_at": "2026-11-14T02:33:20Z",
       "coverage_kind": "public_water_bulletins_only",
       "notifications_enabled": false,
       "parser_revision": "WATER-v5.35",
@@ -82,7 +82,7 @@
       "province": "Mendoza",
       "country": "Argentina",
       "source_url": "https://www.aysam.com.ar/cortes/index.html",
-      "checked_at": "2026-11-14T01:16:30Z",
+      "checked_at": "2026-11-14T02:33:20Z",
       "coverage_kind": "public_water_bulletins_only",
       "notifications_enabled": false,
       "parser_revision": "WATER-v5.35",
@@ -108,7 +108,7 @@
       "province": "Córdoba",
       "country": "Argentina",
       "source_url": "https://www.aws.aguascordobesas.com.ar/CanalNoticias/NoticiasCategoria/2/servicio",
-      "checked_at": "2026-11-14T01:16:30Z",
+      "checked_at": "2026-11-14T02:33:20Z",
       "coverage_kind": "public_water_bulletins_only",
       "notifications_enabled": false,
       "parser_revision": "WATER-v5.35",
@@ -121,7 +121,7 @@
       "province": "Santa Fe",
       "country": "Argentina",
       "source_url": "https://www.aguassantafesinas.com.ar/portal/noticias",
-      "checked_at": "2026-11-14T01:16:30Z",
+      "checked_at": "2026-11-14T02:33:20Z",
       "coverage_kind": "public_water_bulletins_only",
       "notifications_enabled": false,
       "parser_revision": "WATER-v5.35",
@@ -131,34 +131,53 @@
       "account_lookup_required_for_address": true
     },
     "aguas_rionegrinas_arsa": {
-      "status": "unverified",
+      "status": "ok",
       "company": "Aguas Rionegrinas",
       "province": "Río Negro",
       "country": "Argentina",
       "source_url": "https://aguasrionegrinas.com/category/interrupciones/",
-      "checked_at": "2026-11-14T01:16:30Z",
+      "checked_at": "2026-11-14T02:33:20Z",
       "coverage_kind": "public_water_bulletins_only",
       "notifications_enabled": false,
-      "parser_revision": "ARSA-ARTICLES-v5.35",
-      "notices": [],
-      "message": "No se recuperaron artículos recientes con localidad y afectación verificables.",
+      "parser_revision": "ARSA-ARTICLES-v5.36",
+      "notices": [
+        {
+          "id": "agua-becc3d3b7b1296c2d9",
+          "category": "agua",
+          "country": "Argentina",
+          "province": "Río Negro",
+          "company": "Aguas Rionegrinas",
+          "kind": "water_service_bulletin",
+          "status": "publication_only_not_live",
+          "locality_hint": "El Bolsón",
+          "zone_detail": "Aguas Rionegrinas informa que este viernes 13 de noviembre se dio inicio una intervención técnica para solucionar una variación en el sistema de bombeo, lo que requirió interrumpir preventivamente la salida del recurso de cisterna con el objetivo de recuperar los niveles de reserva. La medida afecta a los barrios Buena Vista 1 y Buena Vista 2. Las tareas comenzaron a las 8 y se estima que a partir de las 14 horas empiece la normalización progresiva del servicio. Una vez recuperados los niveles de la cisterna, el suministro se restablecerá paulatinamente hasta alcanzar las condiciones habituales de prestación. Aguas Rionegrinas agradece a los usuarios la comprensión ante esta situación y recuerda que por cualquier consulta, los usuarios pueden comunicarse a través del WhatsApp 2920 402808 o llamar a la línea gratuita 0800 999 24827.",
+          "source_url": "https://aguasrionegrinas.com/el-bolson-arsa-trabaja-para-recuperar-los-niveles-de-cisterna-y-normalizar-el-servicio-en-barrio-buena-vista/",
+          "notification_allowed": false,
+          "message": "Comunicado oficial; no acredita el estado del suministro en tiempo real.",
+          "published_on": "2026-11-13",
+          "scheduled_start": null,
+          "scheduled_end": null
+        }
+      ],
+      "message": "Comunicados de ARSA fechados; no confirman la situación en tiempo real.",
       "article_links_seen": 3,
       "source_attempts": [
         {
           "url": "https://aguasrionegrinas.com/el-bolson-arsa-trabaja-para-recuperar-los-niveles-de-cisterna-y-normalizar-el-servicio-en-barrio-buena-vista/",
-          "result": "no_recent_service_notice",
-          "reason": "service_impact_not_explicit_or_excluded",
+          "result": "parsed",
           "category_published_on": "2026-11-13"
         },
         {
           "url": "https://aguasrionegrinas.com/playas-doradas-arsa-y-dpa-trabajan-en-el-acueducto-los-berros-para-restablecer-la-presion/",
           "result": "fetch_or_parse_error",
-          "error_type": "HTTPError"
+          "error_type": "HTTPError",
+          "http_status": 429
         },
         {
           "url": "https://aguasrionegrinas.com/el-condor-arsa-realizo-un-operativo-nocturno-de-limpieza-de-cisterna-para-fortalecer-el-abastecimiento-de-agua-de-cara-al-verano/",
-          "result": "fetch_or_parse_error",
-          "error_type": "HTTPError"
+          "result": "no_recent_service_notice",
+          "reason": "water_service_impact_not_explicit",
+          "category_published_on": "2026-11-12"
         }
       ],
       "articles_checked": 3,
@@ -171,7 +190,7 @@
       "province": "Catamarca",
       "country": "Argentina",
       "source_url": "https://www.adcsapem.com.ar/?page_id=240",
-      "checked_at": "2026-11-14T01:16:30Z",
+      "checked_at": "2026-11-14T02:33:20Z",
       "coverage_kind": "public_water_bulletins_only",
       "notifications_enabled": false,
       "parser_revision": "CATAMARCA-STATUS-v5.33",
@@ -213,6 +232,23 @@
       "notification_allowed": false,
       "message": "Comunicado oficial; no acredita el estado del suministro en tiempo real.",
       "published_on": "2026-11-12",
+      "scheduled_start": null,
+      "scheduled_end": null
+    },
+    {
+      "id": "agua-becc3d3b7b1296c2d9",
+      "category": "agua",
+      "country": "Argentina",
+      "province": "Río Negro",
+      "company": "Aguas Rionegrinas",
+      "kind": "water_service_bulletin",
+      "status": "publication_only_not_live",
+      "locality_hint": "El Bolsón",
+      "zone_detail": "Aguas Rionegrinas informa que este viernes 13 de noviembre se dio inicio una intervención técnica para solucionar una variación en el sistema de bombeo, lo que requirió interrumpir preventivamente la salida del recurso de cisterna con el objetivo de recuperar los niveles de reserva. La medida afecta a los barrios Buena Vista 1 y Buena Vista 2. Las tareas comenzaron a las 8 y se estima que a partir de las 14 horas empiece la normalización progresiva del servicio. Una vez recuperados los niveles de la cisterna, el suministro se restablecerá paulatinamente hasta alcanzar las condiciones habituales de prestación. Aguas Rionegrinas agradece a los usuarios la comprensión ante esta situación y recuerda que por cualquier consulta, los usuarios pueden comunicarse a través del WhatsApp 2920 402808 o llamar a la línea gratuita 0800 999 24827.",
+      "source_url": "https://aguasrionegrinas.com/el-bolson-arsa-trabaja-para-recuperar-los-niveles-de-cisterna-y-normalizar-el-servicio-en-barrio-buena-vista/",
+      "notification_allowed": false,
+      "message": "Comunicado oficial; no acredita el estado del suministro en tiempo real.",
+      "published_on": "2026-11-13",
       "scheduled_start": null,
       "scheduled_end": null
     }
