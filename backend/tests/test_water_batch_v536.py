@@ -57,7 +57,7 @@ class V536(unittest.TestCase):
         def fetch(url):
             return listing((13,BOLSON_URL,BOLSON_LABEL)) if url==BASE else BOLSON
         r=w.collect_one('aguas_rionegrinas_arsa',STAMP,fetcher=fetch)
-        self.assertEqual(r['parser_revision'],'ARSA-ARTICLES-v5.36')
+        self.assertEqual(r['parser_revision'],'ARSA-ARTICLES-v5.37')
         self.assertEqual(r['status'],'ok')
         self.assertEqual(len(r['notices']),1)
 

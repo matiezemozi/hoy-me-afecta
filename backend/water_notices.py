@@ -1,4 +1,4 @@
-"""Conservative public water-service bulletin collectors for Argentina (v5.36).
+"""Conservative public water-service bulletin collectors for Argentina (v5.37).
 
 No report is a live outage confirmation. No credentials, service identifiers or
 unofficial APIs are used. Completely independent of provincial_electricity.
@@ -11,6 +11,7 @@ from html.parser import HTMLParser
 from urllib.parse import urljoin, urlsplit
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError
+from time import sleep
 import calendar
 import re
 
@@ -52,7 +53,7 @@ def checked_instant(value):
 def fetch_html(url):
     if urlsplit(url).scheme != 'https':
         raise ValueError('Solo HTTPS')
-    req = Request(url, headers={'User-Agent':'HoyMeAfecta/5.36 (public notice reader)',
+    req = Request(url, headers={'User-Agent':'HoyMeAfecta/5.37 (public notice reader)',
                                 'Accept':'text/html,application/xhtml+xml'})
     with urlopen(req, timeout=13) as response:
         raw = response.read(MAX_PAGE_BYTES + 1)
@@ -692,11 +693,15 @@ def _arsa_article(html,url,now,index_published=None):
 
 def _collect_arsa(checked_at,now,fetch):
     result=_result('aguas_rionegrinas_arsa',checked_at)
-    result['parser_revision']='ARSA-ARTICLES-v5.36'
+    result['parser_revision']='ARSA-ARTICLES-v5.37'
+    result['rate_limited']=False
+    result['article_links_skipped_after_rate_limit']=0
     url=result['source_url']
     seen=[];attempts=[];checked=0;newest=None
+    index_read=False
     try:
         dom,index_visible=page(fetch(url))
+        index_read=True
         links=[]
         link_dates={}
         for href,label in dom.anchors:
@@ -712,16 +717,22 @@ def _collect_arsa(checked_at,now,fetch):
             links.append(link)
             link_dates[link]=_arsa_index_date(index_visible,label)
         result['article_links_seen']=len(links)
-        for link in links[:9]:
+        selected=links[:9]
+        for position,link in enumerate(selected):
+            # A small delay for production HTTP requests is courteous to the
+            # official host. Fixture-based unit tests do not sleep.
+            if position and fetch is fetch_html:
+                sleep(0.65)
             checked+=1
             try:
                 transient_retry=False
                 try:
                     article_html=fetch(link)
                 except HTTPError as http_exc:
-                    # Retry ONCE only for transient status codes. A permanent
-                    # 403/404 is not retried or silently treated as no incident.
-                    if http_exc.code not in (429,500,502,503,504):
+                    # HTTP 429 is explicitly NOT retried: a second immediate
+                    # request can extend the site's rate limiting. A short list
+                    # of true server failures may be retried once only.
+                    if http_exc.code not in (500,502,503,504):
                         raise
                     transient_retry=True
                     article_html=fetch(link)
@@ -739,23 +750,46 @@ def _collect_arsa(checked_at,now,fetch):
                 failed={'url':link,'result':'fetch_or_parse_error','error_type':type(exc).__name__}
                 if isinstance(exc,HTTPError):failed['http_status']=exc.code
                 attempts.append(failed)
+                if isinstance(exc,HTTPError) and exc.code==429:
+                    result['rate_limited']=True
+                    # Stop requests to the same provider until the next run.
+                    # Never infer that the unvisited articles contain no news.
+                    result['article_links_skipped_after_rate_limit']=len(selected)-position-1
+                    break
     except Exception as exc:
-        attempts.append({'url':url,'result':'fetch_or_parse_error','error_type':type(exc).__name__})
+        attempt={'url':url,'result':'fetch_or_parse_error','error_type':type(exc).__name__}
+        if isinstance(exc,HTTPError):
+            attempt['http_status']=exc.code
+            if exc.code==429:result['rate_limited']=True
+        attempts.append(attempt)
     result['source_attempts']=attempts
     result['articles_checked']=checked
     result['records_checked']=checked
     result['notices']=list({n['id']:n for n in seen}.values())
     if newest:
         result['latest_published_date']=newest.isoformat()
+    # This is the completeness of article FETCHING, not of water service
+    # coverage in the province or confirmation of any ongoing outage.
+    error_count=sum(1 for attempt in attempts if attempt['result']=='fetch_or_parse_error')
+    result['article_fetch_completeness']=(
+        'partial' if error_count or result['rate_limited'] else
+        'selected_articles_checked' if index_read else 'unverified')
     if result['notices']:
-        result.update(status='ok',message='Comunicados de ARSA fechados; no confirman la situación en tiempo real.')
+        result['status']='ok'
+        result['message']='Comunicados de ARSA fechados; no confirman la situación en tiempo real.'
+        if result['rate_limited']:
+            result['message']+=' Consulta PARCIAL por límite HTTP 429; no se verificaron todos los artículos.'
+        elif error_count:
+            result['message']+=f' Consulta PARCIAL: {error_count} artículo(s) inaccesible(s).'
+    elif result['rate_limited']:
+        result['message']=('La fuente impuso un límite HTTP 429; no hay avisos recuperados '
+                           'de forma verificable en esta consulta. No significa suministro normal.')
     elif newest and newest<now.date()-timedelta(days=2):
         result.update(status='stale',message='Solo publicaciones antiguas verificables.')
     else:
-        blocked=sum(1 for a in attempts if a.get('result')=='fetch_or_parse_error')
         result['message']='No se recuperaron artículos recientes con localidad y afectación verificables.'
-        if blocked:
-            result['message']+=f' {blocked} artículo(s) no pudieron consultarse; no implica servicio normal.'
+        if error_count:
+            result['message']+=f' {error_count} artículo(s) no pudieron consultarse; no implica servicio normal.'
     return result
 
 
