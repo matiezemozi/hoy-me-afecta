@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-14T09:00:47Z",
+  "generated_at": "2026-11-14T09:57:28Z",
   "status": "pilot_not_integrated_in_android",
   "category": "agua",
   "country": "Argentina",
@@ -15,7 +15,7 @@
       "province": "Buenos Aires",
       "country": "Argentina",
       "source_url": "https://www.aguasbonaerenses.com.ar/noticias/",
-      "checked_at": "2026-11-14T09:00:47Z",
+      "checked_at": "2026-11-14T09:57:28Z",
       "coverage_kind": "public_water_bulletins_only",
       "notifications_enabled": false,
       "parser_revision": "WATER-v5.35",
@@ -67,7 +67,7 @@
       "province": "Salta",
       "country": "Argentina",
       "source_url": "https://www.aguasdelnortesalta.com.ar/cortes.php",
-      "checked_at": "2026-11-14T09:00:47Z",
+      "checked_at": "2026-11-14T09:57:28Z",
       "coverage_kind": "public_water_bulletins_only",
       "notifications_enabled": false,
       "parser_revision": "WATER-v5.35",
@@ -82,7 +82,7 @@
       "province": "Mendoza",
       "country": "Argentina",
       "source_url": "https://www.aysam.com.ar/cortes/index.html",
-      "checked_at": "2026-11-14T09:00:47Z",
+      "checked_at": "2026-11-14T09:57:28Z",
       "coverage_kind": "public_water_bulletins_only",
       "notifications_enabled": false,
       "parser_revision": "WATER-v5.35",
@@ -108,7 +108,7 @@
       "province": "Córdoba",
       "country": "Argentina",
       "source_url": "https://www.aws.aguascordobesas.com.ar/CanalNoticias/NoticiasCategoria/2/servicio",
-      "checked_at": "2026-11-14T09:00:47Z",
+      "checked_at": "2026-11-14T09:57:28Z",
       "coverage_kind": "public_water_bulletins_only",
       "notifications_enabled": false,
       "parser_revision": "WATER-v5.35",
@@ -121,7 +121,7 @@
       "province": "Santa Fe",
       "country": "Argentina",
       "source_url": "https://www.aguassantafesinas.com.ar/portal/noticias",
-      "checked_at": "2026-11-14T09:00:47Z",
+      "checked_at": "2026-11-14T09:57:28Z",
       "coverage_kind": "public_water_bulletins_only",
       "notifications_enabled": false,
       "parser_revision": "WATER-v5.35",
@@ -136,7 +136,7 @@
       "province": "Río Negro",
       "country": "Argentina",
       "source_url": "https://aguasrionegrinas.com/category/interrupciones/",
-      "checked_at": "2026-11-14T09:00:47Z",
+      "checked_at": "2026-11-14T09:57:28Z",
       "coverage_kind": "public_water_bulletins_only",
       "notifications_enabled": false,
       "parser_revision": "ARSA-ARTICLES-v5.37",
@@ -176,8 +176,8 @@
           "scheduled_end": null
         }
       ],
-      "message": "Comunicados de ARSA fechados; no confirman la situación en tiempo real.",
-      "rate_limited": false,
+      "message": "Comunicados de ARSA fechados; no confirman la situación en tiempo real. Consulta PARCIAL por límite HTTP 429; no se verificaron todos los artículos.",
+      "rate_limited": true,
       "article_links_skipped_after_rate_limit": 0,
       "article_links_seen": 3,
       "source_attempts": [
@@ -193,15 +193,15 @@
         },
         {
           "url": "https://aguasrionegrinas.com/el-condor-arsa-realizo-un-operativo-nocturno-de-limpieza-de-cisterna-para-fortalecer-el-abastecimiento-de-agua-de-cara-al-verano/",
-          "result": "no_recent_service_notice",
-          "reason": "water_service_impact_not_explicit",
-          "category_published_on": "2026-11-12"
+          "result": "fetch_or_parse_error",
+          "error_type": "HTTPError",
+          "http_status": 429
         }
       ],
       "articles_checked": 3,
       "records_checked": 3,
       "latest_published_date": "2026-11-13",
-      "article_fetch_completeness": "selected_articles_checked"
+      "article_fetch_completeness": "partial"
     },
     "aguas_catamarca": {
       "status": "unverified",
@@ -209,7 +209,7 @@
       "province": "Catamarca",
       "country": "Argentina",
       "source_url": "https://www.adcsapem.com.ar/?page_id=240",
-      "checked_at": "2026-11-14T09:00:47Z",
+      "checked_at": "2026-11-14T09:57:28Z",
       "coverage_kind": "public_water_bulletins_only",
       "notifications_enabled": false,
       "parser_revision": "CATAMARCA-STATUS-v5.33",
