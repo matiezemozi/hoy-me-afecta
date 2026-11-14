@@ -10,8 +10,9 @@ permissions:
   contents: write
 
 concurrency:
-  group: hoy-me-afecta-water-feed-main
+  group: hoy-me-afecta-publicacion-feed
   cancel-in-progress: false
+  queue: max
 
 jobs:
   water:
