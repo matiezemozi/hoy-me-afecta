@@ -265,7 +265,7 @@ public class MainActivity extends Activity {
 
         root.addView(text("HOY ME AFECTA", 26, INK, true));
         root.addView(text("Lo que te conviene saber antes de salir", 14, GREY, false));
-        root.addView(text("Piloto v5.39 · Boletines oficiales de agua (vista experimental)", 12, GREY, false));
+        root.addView(text("Piloto v5.41 · Boletines oficiales de agua (vista experimental)", 12, GREY, false));
         LinearLayout status = card();
         status.addView(text(connection, 14, BLUE, false));
         if (feed != null) {
@@ -1986,6 +1986,8 @@ public class MainActivity extends Activity {
             c.addView(text("Sin consulta reciente de agua o datos todavía no integrados. " +
                     "No se puede inferir que el servicio funcione normalmente.",
                     13, GREY, true));
+            c.addView(button("Consultar cortes en AySA (por cuenta)", () ->
+                    open("https://www.aysa.com.ar/usuarios/interrupcion_servicio")));
             c.addView(button("Consultar ABSA", () ->
                     open("https://www.aguasbonaerenses.com.ar/noticias/")));
             return;
@@ -2058,6 +2060,14 @@ public class MainActivity extends Activity {
         c.addView(text("Las fuentes no verificadas se excluyen. No se informa " +
                 "si un domicilio determinado tiene o no suministro.",
                 12, GREY, false));
+        c.addView(text("AySA (Pilar, CABA y otras zonas): la consulta por domicilio " +
+                "requiere el numero de cuenta del servicio. HOY ME AFECTA no " +
+                "solicita ni almacena ese numero. No confundir falta de " +
+                "boletines con suministro normal.", 12, GREY, false));
+        c.addView(button("Consultar cortes en AySA", () ->
+                open("https://www.aysa.com.ar/usuarios/interrupcion_servicio")));
+        c.addView(button("Suscribirse a avisos de AySA", () ->
+                open("https://cortes.web.aysa.com.ar/")));
         c.addView(button("Consultar ABSA", () ->
                 open("https://www.aguasbonaerenses.com.ar/noticias/")));
         c.addView(button("Consultar Aguas Rionegrinas", () ->

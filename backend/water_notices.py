@@ -1,4 +1,4 @@
-"""Conservative public water-service bulletin collectors for Argentina (v5.37).
+"""Conservative public water-service bulletin collectors for Argentina (v5.41).
 
 No report is a live outage confirmation. No credentials, service identifiers or
 unofficial APIs are used. Completely independent of provincial_electricity.
@@ -26,6 +26,8 @@ SOURCES = {
     'aguas_santafesinas': ('Aguas Santafesinas', 'Santa Fe', 'https://www.aguassantafesinas.com.ar/portal/noticias'),
     'aguas_rionegrinas_arsa': ('Aguas Rionegrinas', 'Río Negro', 'https://aguasrionegrinas.com/category/interrupciones/'),
     'aguas_catamarca': ('Aguas de Catamarca SAPEM', 'Catamarca', 'https://www.adcsapem.com.ar/?page_id=240'),
+    'aysa_amba': ('AySA', 'Buenos Aires / CABA', 'https://www.aysa.com.ar/usuarios/interrupcion_servicio'),
+    'sameep_chaco': ('SAMEEP', 'Chaco', 'https://sameep.gob.ar/noticias/'),
 }
 WEEKDAY = {'lunes':0, 'martes':1, 'miercoles':2, 'jueves':3, 'viernes':4,
            'sabado':5, 'domingo':6}
@@ -809,6 +811,124 @@ def _collect_catamarca(checked_at,now,fetch):
     return result
 
 
+# Account-specific AySA lookups require a service account and must NEVER be
+# queried or synthesized by the public bulletin collector.
+def _collect_aysa(checked_at,now,fetch):
+    result=_result('aysa_amba',checked_at)
+    result['parser_revision']='AYSA-ACCOUNT-ONLY-v5.41'
+    result['coverage_kind']='address_account_lookup_only'
+    result['account_lookup_required']=True
+    result['subscription_url']='https://cortes.web.aysa.com.ar/'
+    result['notices']=[]
+    result['notifications_enabled']=False
+    result['message']='AySA exige consulta por cuenta de servicio para verificar un domicilio. No se consultan datos personales ni se infiere un corte por localidad.'
+    try:
+        _,visible=page(fetch(result['source_url']))
+        lowered=folded(visible)
+        if 'cuenta' in lowered and ('interrupcion' in lowered or 'servicio' in lowered):
+            result['status']='unverified'
+            result['access_mode']='account_required'
+            result['portal_reachable']=True
+        else:
+            result['portal_reachable']=True
+            result['message']='Portal de AySA accesible sin criterios publicos suficientes para verificar domicilio; requiere consulta del titular.'
+    except Exception as exc:
+        result['portal_reachable']=False
+        result['message']='No se pudo verificar portal de AySA: '+type(exc).__name__+'. Requiere consulta por cuenta, no implica servicio normal.'
+    return result
+
+
+_SAMEEP_LOCALITIES=(
+    'Resistencia','Barranqueras','Fontana','Puerto Tirol','Villa Angela',
+    'Presidencia Roque Saenz Pena','Concepcion del Bermejo',
+    'Juan Jose Castelli','Puerto Lavalle','Corzuela','Charata',
+    'Quitilipi','La Leonesa','General San Martin','Campo Largo',
+)
+
+def _sameep_article(html,url,now):
+    dom,visible=page(html)
+    head=visible.split('Noticias relacionadas')[0]
+    match=re.search(r'\b(\d{2}/\d{2}/\d{4})\b',head)
+    if not match:
+        return None,None
+    try:
+        published=_ddmmyyyy(match.group(1))
+    except ValueError:
+        return None,None
+    if published>now.date()+timedelta(days=1):
+        return None,None
+    if published < now.date()-timedelta(days=3):
+        return None,published
+    heading=next((h for h in dom.headings if h and folded(h) not in ('novedades','noticias')), '')
+    body=' '.join(x for x in dom.paragraphs if len(x)>40).split('Noticias relacionadas')[0]
+    if not heading or not body:
+        return None,published
+    normal_heading=folded(heading)
+    normal_body=folded(body)
+    if re.search(r'\b(sin cortes|no afectara|no se vera afectado|sin afectar|ya se restablecio)\b',normal_heading+' '+normal_body[:350]):
+        return None,published
+    if re.search(r'\b(finalizo|finalizaron|se restablecio|se recupero|normalizo)\b',normal_heading):
+        return None,published
+    if not re.search(r'(baja presion|falta de agua|afectad[oa] el servicio|se vera afectad[oa]|interrupcion del servicio|reduc(?:cion|ira) (?:en )?(?:el )?(?:servicio|suministro)|corte de agua|sin suministro)',normal_body):
+        return None,published
+    names=[n for n in _SAMEEP_LOCALITIES if re.search(r'(?<![a-z])'+re.escape(folded(n))+r'(?![a-z])',normal_heading)]
+    if len(names)!=1:
+        return None,published
+    return mk_notice('SAMEEP','Chaco',names[0],url,
+                     'water_service_bulletin','publication_only_not_live',body,
+                     published_on=published.isoformat(),
+                     scheduled_start=None,scheduled_end=None),published
+
+
+def _collect_sameep(checked_at,now,fetch):
+    result=_result('sameep_chaco',checked_at)
+    result['parser_revision']='SAMEEP-ARTICLES-v5.41'
+    result['coverage_kind']='dated_official_public_bulletins_only'
+    result['article_links_seen']=0
+    result['articles_checked']=0
+    result['source_attempts']=[]
+    last=None
+    try:
+        dom,_=page(fetch(result['source_url']))
+        urls=[]
+        for href,label in dom.anchors:
+            link=urljoin(result['source_url'],href)
+            parsed=urlsplit(link)
+            if parsed.hostname not in ('sameep.gob.ar','www.sameep.gob.ar'):
+                continue
+            if not re.fullmatch(r'/noticias/detalle/\d+/?',parsed.path):
+                continue
+            if len(label)<12 or link in urls:
+                continue
+            urls.append(link)
+        result['article_links_seen']=len(urls)
+        for link in urls[:6]:
+            try:
+                notice,published=_sameep_article(fetch(link),link,now)
+                result['articles_checked']+=1
+                if published is not None and (last is None or published>last):last=published
+                if notice is not None:
+                    result['notices'].append(notice)
+                    result['source_attempts'].append({'url':link,'result':'parsed'})
+                else:
+                    result['source_attempts'].append({'url':link,'result':'no_recent_service_notice'})
+            except Exception as exc:
+                result['source_attempts'].append({'url':link,'result':'fetch_or_parse_error','error_type':type(exc).__name__})
+        if last is not None:
+            result['latest_published_date']=last.isoformat()
+        if result['notices']:
+            result['status']='ok'
+            result['message']='Comunicados oficiales fechados; no confirman el estado del suministro en tiempo real.'
+        elif result['articles_checked'] and last is not None and last<now.date()-timedelta(days=3):
+            result['status']='stale'
+            result['message']='Solo se encontraron publicaciones antiguas o sin afectacion verificable; no significa suministro normal.'
+        else:
+            result['message']='No se recuperaron comunicados recientes con localidad y afectacion verificables; no significa servicio normal.'
+    except Exception as exc:
+        result['message']='No se pudo consultar SAMEEP: '+type(exc).__name__
+    return result
+
+
 def collect_one(key,checked_at,fetcher=None):
     if key not in SOURCES:
         raise KeyError(key)
@@ -819,6 +939,8 @@ def collect_one(key,checked_at,fetcher=None):
     if key=='aguas_del_norte_salta':return _collect_salta(checked_at,now,fetch)
     if key=='aguas_rionegrinas_arsa':return _collect_arsa(checked_at,now,fetch)
     if key=='aguas_catamarca':return _collect_catamarca(checked_at,now,fetch)
+    if key=='aysa_amba':return _collect_aysa(checked_at,now,fetch)
+    if key=='sameep_chaco':return _collect_sameep(checked_at,now,fetch)
     return _collect_diagnostic(key,checked_at,now,fetch)
 
 
