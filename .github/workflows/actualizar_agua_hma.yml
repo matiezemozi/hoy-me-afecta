@@ -28,8 +28,16 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      - name: Save baseline electricity feed for merge validation
+        run: cp docs/feed.json "$RUNNER_TEMP/hma-feed-before-water.json"
       - name: Collect water safely and preserve electricity
         run: python backend/build_water_feed.py --out docs/water_feed.json --merge docs/feed.json
+      - name: Verify merged water data and unchanged electricity feed
+        run: |
+          python backend/verify_water_merge.py \
+            --before "$RUNNER_TEMP/hma-feed-before-water.json" \
+            --feed docs/feed.json \
+            --water docs/water_feed.json
       - name: Commit water data without restarting push CI
         run: |
           git config user.name "github-actions[bot]"
