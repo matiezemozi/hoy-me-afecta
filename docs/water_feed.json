@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-14T10:55:13Z",
+  "generated_at": "2026-11-14T11:51:32Z",
   "status": "pilot_not_integrated_in_android",
   "category": "agua",
   "country": "Argentina",
@@ -15,7 +15,7 @@
       "province": "Buenos Aires",
       "country": "Argentina",
       "source_url": "https://www.aguasbonaerenses.com.ar/noticias/",
-      "checked_at": "2026-11-14T10:55:13Z",
+      "checked_at": "2026-11-14T11:51:32Z",
       "coverage_kind": "public_water_bulletins_only",
       "notifications_enabled": false,
       "parser_revision": "WATER-v5.35",
@@ -67,7 +67,7 @@
       "province": "Salta",
       "country": "Argentina",
       "source_url": "https://www.aguasdelnortesalta.com.ar/cortes.php",
-      "checked_at": "2026-11-14T10:55:13Z",
+      "checked_at": "2026-11-14T11:51:32Z",
       "coverage_kind": "public_water_bulletins_only",
       "notifications_enabled": false,
       "parser_revision": "WATER-v5.35",
@@ -82,7 +82,7 @@
       "province": "Mendoza",
       "country": "Argentina",
       "source_url": "https://www.aysam.com.ar/cortes/index.html",
-      "checked_at": "2026-11-14T10:55:13Z",
+      "checked_at": "2026-11-14T11:51:32Z",
       "coverage_kind": "public_water_bulletins_only",
       "notifications_enabled": false,
       "parser_revision": "WATER-v5.35",
@@ -108,7 +108,7 @@
       "province": "Córdoba",
       "country": "Argentina",
       "source_url": "https://www.aws.aguascordobesas.com.ar/CanalNoticias/NoticiasCategoria/2/servicio",
-      "checked_at": "2026-11-14T10:55:13Z",
+      "checked_at": "2026-11-14T11:51:32Z",
       "coverage_kind": "public_water_bulletins_only",
       "notifications_enabled": false,
       "parser_revision": "WATER-v5.35",
@@ -121,7 +121,7 @@
       "province": "Santa Fe",
       "country": "Argentina",
       "source_url": "https://www.aguassantafesinas.com.ar/portal/noticias",
-      "checked_at": "2026-11-14T10:55:13Z",
+      "checked_at": "2026-11-14T11:51:32Z",
       "coverage_kind": "public_water_bulletins_only",
       "notifications_enabled": false,
       "parser_revision": "WATER-v5.35",
@@ -136,7 +136,7 @@
       "province": "Río Negro",
       "country": "Argentina",
       "source_url": "https://aguasrionegrinas.com/category/interrupciones/",
-      "checked_at": "2026-11-14T10:55:13Z",
+      "checked_at": "2026-11-14T11:51:32Z",
       "coverage_kind": "public_water_bulletins_only",
       "notifications_enabled": false,
       "parser_revision": "ARSA-ARTICLES-v5.37",
@@ -157,11 +157,28 @@
           "published_on": "2026-11-13",
           "scheduled_start": null,
           "scheduled_end": null
+        },
+        {
+          "id": "agua-5790c9c3d26c72c480",
+          "category": "agua",
+          "country": "Argentina",
+          "province": "Río Negro",
+          "company": "Aguas Rionegrinas",
+          "kind": "water_service_bulletin",
+          "status": "publication_only_not_live",
+          "locality_hint": "Playas Doradas",
+          "zone_detail": "Aguas Rionegrinas S.A. desarrolla tareas sobre el acueducto Los Berros. Tras detectar una disminución de presión en la conducción, los equipos técnicos identificaron que el origen podría estar en las válvulas de alivio de aire. Por ese motivo, se realizan trabajos en esos componentes para encontrar una solución. Para estas intervenciones se cuenta con la anuencia del Departamento Provincial de Aguas (DPA) y de South Mining, empresa a cargo de la operación del acueducto. Como consecuencia de esta situación, la localidad de Playas Doradas registra baja presión en el servicio. Las cuadrillas continúan en el lugar con las tareas necesarias para revertir esta situación. Se recomienda a los vecinos y vecinas hacer un uso responsable del agua y cuidar las reservas domiciliarias mientras duren los trabajos. Se informará oportunamente cualquier novedad. Ante consultas o reclamos, Aguas Rionegrinas dispone de los siguientes canales de…",
+          "source_url": "https://aguasrionegrinas.com/playas-doradas-arsa-y-dpa-trabajan-en-el-acueducto-los-berros-para-restablecer-la-presion/",
+          "notification_allowed": false,
+          "message": "Comunicado oficial; no acredita el estado del suministro en tiempo real.",
+          "published_on": "2026-11-12",
+          "scheduled_start": null,
+          "scheduled_end": null
         }
       ],
       "message": "Comunicados de ARSA fechados; no confirman la situación en tiempo real. Consulta PARCIAL por límite HTTP 429; no se verificaron todos los artículos.",
       "rate_limited": true,
-      "article_links_skipped_after_rate_limit": 1,
+      "article_links_skipped_after_rate_limit": 0,
       "article_links_seen": 3,
       "source_attempts": [
         {
@@ -171,13 +188,18 @@
         },
         {
           "url": "https://aguasrionegrinas.com/playas-doradas-arsa-y-dpa-trabajan-en-el-acueducto-los-berros-para-restablecer-la-presion/",
+          "result": "parsed",
+          "category_published_on": "2026-11-12"
+        },
+        {
+          "url": "https://aguasrionegrinas.com/el-condor-arsa-realizo-un-operativo-nocturno-de-limpieza-de-cisterna-para-fortalecer-el-abastecimiento-de-agua-de-cara-al-verano/",
           "result": "fetch_or_parse_error",
           "error_type": "HTTPError",
           "http_status": 429
         }
       ],
-      "articles_checked": 2,
-      "records_checked": 2,
+      "articles_checked": 3,
+      "records_checked": 3,
       "latest_published_date": "2026-11-13",
       "article_fetch_completeness": "partial"
     },
@@ -187,7 +209,7 @@
       "province": "Catamarca",
       "country": "Argentina",
       "source_url": "https://www.adcsapem.com.ar/?page_id=240",
-      "checked_at": "2026-11-14T10:55:13Z",
+      "checked_at": "2026-11-14T11:51:32Z",
       "coverage_kind": "public_water_bulletins_only",
       "notifications_enabled": false,
       "parser_revision": "CATAMARCA-STATUS-v5.33",
@@ -198,6 +220,23 @@
     }
   },
   "notices": [
+    {
+      "id": "agua-5790c9c3d26c72c480",
+      "category": "agua",
+      "country": "Argentina",
+      "province": "Río Negro",
+      "company": "Aguas Rionegrinas",
+      "kind": "water_service_bulletin",
+      "status": "publication_only_not_live",
+      "locality_hint": "Playas Doradas",
+      "zone_detail": "Aguas Rionegrinas S.A. desarrolla tareas sobre el acueducto Los Berros. Tras detectar una disminución de presión en la conducción, los equipos técnicos identificaron que el origen podría estar en las válvulas de alivio de aire. Por ese motivo, se realizan trabajos en esos componentes para encontrar una solución. Para estas intervenciones se cuenta con la anuencia del Departamento Provincial de Aguas (DPA) y de South Mining, empresa a cargo de la operación del acueducto. Como consecuencia de esta situación, la localidad de Playas Doradas registra baja presión en el servicio. Las cuadrillas continúan en el lugar con las tareas necesarias para revertir esta situación. Se recomienda a los vecinos y vecinas hacer un uso responsable del agua y cuidar las reservas domiciliarias mientras duren los trabajos. Se informará oportunamente cualquier novedad. Ante consultas o reclamos, Aguas Rionegrinas dispone de los siguientes canales de…",
+      "source_url": "https://aguasrionegrinas.com/playas-doradas-arsa-y-dpa-trabajan-en-el-acueducto-los-berros-para-restablecer-la-presion/",
+      "notification_allowed": false,
+      "message": "Comunicado oficial; no acredita el estado del suministro en tiempo real.",
+      "published_on": "2026-11-12",
+      "scheduled_start": null,
+      "scheduled_end": null
+    },
     {
       "id": "agua-64aeef674fef9f2515",
       "category": "agua",
