@@ -1,4 +1,4 @@
-"""Conservative public water-service bulletin collectors for Argentina (v5.41).
+"""Conservative public water-service bulletin collectors for Argentina (v5.42).
 
 No report is a live outage confirmation. No credentials, service identifiers or
 unofficial APIs are used. Completely independent of provincial_electricity.
@@ -27,6 +27,7 @@ SOURCES = {
     'aguas_rionegrinas_arsa': ('Aguas Rionegrinas', 'Río Negro', 'https://aguasrionegrinas.com/category/interrupciones/'),
     'aguas_catamarca': ('Aguas de Catamarca SAPEM', 'Catamarca', 'https://www.adcsapem.com.ar/?page_id=240'),
     'aysa_amba': ('AySA', 'Buenos Aires / CABA', 'https://www.aysa.com.ar/usuarios/interrupcion_servicio'),
+    'aysa_public_bulletins_amba': ('AySA', 'Buenos Aires / CABA', 'https://www.aysa.com.ar/usuarios/Novedades'),
     'sameep_chaco': ('SAMEEP', 'Chaco', 'https://sameep.gob.ar/noticias/'),
 }
 WEEKDAY = {'lunes':0, 'martes':1, 'miercoles':2, 'jueves':3, 'viernes':4,
@@ -838,6 +839,170 @@ def _collect_aysa(checked_at,now,fetch):
     return result
 
 
+# The public AySA news section is entirely separate from account-specific checks.
+# A news article does not establish that a particular home has lost water.
+_AYSA_BA_LOCALITIES = (
+    'Tigre','San Fernando','San Martin','Vicente Lopez','San Isidro',
+    'Tres de Febrero','Hurlingham','Moron','Ituzaingo','Merlo','La Matanza',
+    'Quilmes','Bernal','Avellaneda','Lanus','Lomas de Zamora',
+    'Temperley','Banfield','Adrogue','Burzaco','Ezeiza','Berazategui',
+    'Pilar','Jose C. Paz','Malvinas Argentinas','San Miguel',
+)
+_AYSA_CABA_BARRIOS = (
+    'Recoleta','Palermo','Belgrano','Caballito','Almagro','Balvanera',
+    'Villa Crespo','San Nicolas','Retiro','Constitucion','San Telmo',
+    'Monserrat','Barracas','Parque Patricios','Villa Urquiza','Saavedra',
+    'Nunez','Flores','Floresta','Villa Devoto','Villa del Parque',
+    'Colegiales','Chacarita','La Boca','Puerto Madero',
+)
+_AYSA_NEWS_TERMS = (
+    'agua','servicio','inspeccion','reparacion','mantenimiento',
+    'interrupcion','estacion elevadora','rios subterraneos',
+    'corte','operativo','valvulas',
+)
+_AYSA_IMPACT = re.compile(
+    r'(?:baja\s+presion|falta\s+de\s+agua|podri[aa]\s+(?:verse\s+)?afectad[oa]|'
+    r'podria\s+haber\s+una\s+afectacion|posible\s+afectacion|afectacion\s+(?:en|del)\s+(?:el\s+)?servicio|'
+    r'servicio\s+de\s+agua\s+(?:potable\s+)?(?:se\s+vera\s+afectado|podria\s+verse\s+afectado)|'
+    r'se\s+ver[aa]\s+afectad[oa]|'
+    r'interrupcion\s+del\s+(?:suministro|servicio)|'
+    r'reduccion\s+(?:de\s+)?(?:la\s+)?presion|'
+    r'se\s+registrar[aa]\s+(?:una\s+)?(?:baja|falta))'
+)
+_AYSA_CLEAR_LOCATION_GROUP = re.compile(
+    r'(?:localidades|partidos|barrios|zonas|sectores)\s+(?:de|del|en)\s+', re.I
+)
+
+
+def _aysa_news_date(visible):
+    match=re.search(r'\b(\d{1,2})\s+de\s+([a-z]+)\s+de\s+(20\d{2})\b',folded(visible[:6000]))
+    if not match or match.group(2) not in MONTH:
+        return None
+    try:
+        return date(int(match.group(3)),MONTH[match.group(2)],int(match.group(1)))
+    except ValueError:
+        return None
+
+
+def _aysa_news_article(html,url,now):
+    dom,visible=page(html)
+    published=_aysa_news_date(visible)
+    if not published:
+        return [],None
+    if published>now.date() or published<now.date()-timedelta(days=3):
+        return [],published
+    title=next((h for h in dom.headings if len(h)>12 and folded(h) not in ('novedades','aysa')), '')
+    title_f=folded(title)
+    if not title or re.search(r'finalizo|finalizaron|normalizad[oa]|restablecido|concluyeron',title_f):
+        return [],published
+    # Only text from actual news paragraphs; no footer or contact-hours text.
+    body=[]
+    for para in dom.paragraphs:
+        f=folded(para)
+        if 'atencion comercial' in f or 'atencion tecnica' in f:
+            break
+        if len(para)>45:
+            body.append(para)
+    if not body:
+        return [],published
+    impact_sentences=[]
+    for para in body:
+        for sentence in re.split(r'(?<=[.!?])\s+',para):
+            normal=folded(sentence)
+            # A negated impact must never become an affected-locality bulletin.
+            if re.search(r'\b(?:no\s+(?:se\s+)?ver[aa]\s+afectad[oa]|sin\s+afectar|sin\s+cortes|no\s+habr[aa]\s+(?:cortes|baja\s+presion)|no\s+se\s+registrar[aa]\s+(?:baja|falta))', normal):
+                continue
+            if _AYSA_IMPACT.search(normal):
+                impact_sentences.append(sentence)
+    if not impact_sentences:
+        return [],published
+    candidates=list(_AYSA_BA_LOCALITIES)+list(_AYSA_CABA_BARRIOS)
+    unique={}
+    for sentence in impact_sentences:
+        f=folded(sentence)
+        # A precise named city must be described as potentially affected, not
+        # merely mentioned as a plant, headquarters, district or article title.
+        scopes=[]
+        for match in _AYSA_CLEAR_LOCATION_GROUP.finditer(f):
+            scopes.append(f[match.end():match.end()+230])
+        if re.search(r'\b(?:en|de)\s+(?:el\s+)?(?:barrio|localidad|partido|ciudad)\s+(?:de\s+)?',f):
+            scopes.append(f)
+        for name in candidates:
+            exact=r'(?<![a-z])'+re.escape(folded(name))+r'(?![a-z])'
+            if any(re.search(exact,scope) for scope in scopes):
+                unique[folded(name)]=name
+    if not unique:
+        return [],published
+    content=excerpt(' '.join(impact_sentences),950)
+    result=[]
+    for name in sorted(unique.values(),key=folded):
+        province='CABA' if name in _AYSA_CABA_BARRIOS else 'Buenos Aires'
+        result.append(mk_notice('AySA',province,name,url,
+                                'water_service_bulletin','publication_only_not_live',
+                                content,published_on=published.isoformat(),
+                                area_precision='partes_de_localidad_segun_comunicado',
+                                scheduled_start=None,scheduled_end=None))
+    return result,published
+
+
+def _collect_aysa_public(checked_at,now,fetch):
+    result=_result('aysa_public_bulletins_amba',checked_at)
+    result['parser_revision']='AYSA-NEWS-v5.42'
+    result['coverage_kind']='public_dated_articles_only_not_account_status'
+    result['account_lookup_required_for_address']=True
+    result['article_links_seen']=0
+    result['articles_checked']=0
+    result['source_attempts']=[]
+    newest=None
+    latest_index_date=None
+    try:
+        dom,_=page(fetch(result['source_url']))
+        urls=[]
+        for href,label in dom.anchors:
+            absolute=urljoin(result['source_url'],href)
+            parsed=urlsplit(absolute)
+            if parsed.scheme!='https' or parsed.hostname not in ('www.aysa.com.ar','aysa.com.ar'):
+                continue
+            if not re.fullmatch(r'/usuarios/Novedades/20\d{2}/\d{2}/[a-zA-Z0-9_-]+/?',parsed.path,re.I):
+                continue
+            if not any(term in folded(label) for term in _AYSA_NEWS_TERMS):
+                continue
+            listing_date=_aysa_news_date(label)
+            if listing_date:
+                if latest_index_date is None or listing_date>latest_index_date:
+                    latest_index_date=listing_date
+                if listing_date>now.date() or listing_date<now.date()-timedelta(days=3):
+                    continue
+            if absolute not in urls:
+                urls.append(absolute)
+        result['article_links_seen']=len(urls)
+        for url in urls[:8]:
+            try:
+                notes,pub=_aysa_news_article(fetch(url),url,now)
+                result['articles_checked']+=1
+                if pub and (newest is None or pub>newest):
+                    newest=pub
+                result['notices'].extend(notes)
+                result['source_attempts'].append({'url':url,'result':'parsed' if notes else 'no_precise_recent_impact'})
+            except Exception as exc:
+                result['source_attempts'].append({'url':url,'result':'fetch_or_parse_error','error_type':type(exc).__name__})
+        if newest or latest_index_date:
+            result['latest_published_date']=max(x for x in (newest,latest_index_date) if x).isoformat()
+        if result['notices']:
+            result['status']='ok'
+            result['message']='Comunicados publicos fechados con localidades mencionadas como posiblemente afectadas. No garantizan afectacion de domicilios.'
+        elif (newest or latest_index_date) and (newest or latest_index_date)<now.date()-timedelta(days=3):
+            result['status']='stale'
+            result['message']='Noticias antiguas sin avisos recientes precisos; el estado del servicio es desconocido.'
+        else:
+            result['message']='Sin avisos recientes con afectacion y localidad verificables. Para domicilios, usar consulta por cuenta de AySA.'
+        if any(a['result']=='fetch_or_parse_error' for a in result['source_attempts']):
+            result['message']+=' Algunos articulos no pudieron abrirse.'
+    except Exception as exc:
+        result['message']='No se pudo consultar novedades publicas de AySA: '+type(exc).__name__
+    return result
+
+
 _SAMEEP_LOCALITIES=(
     'Resistencia','Barranqueras','Fontana','Puerto Tirol','Villa Angela',
     'Presidencia Roque Saenz Pena','Concepcion del Bermejo',
@@ -940,6 +1105,7 @@ def collect_one(key,checked_at,fetcher=None):
     if key=='aguas_rionegrinas_arsa':return _collect_arsa(checked_at,now,fetch)
     if key=='aguas_catamarca':return _collect_catamarca(checked_at,now,fetch)
     if key=='aysa_amba':return _collect_aysa(checked_at,now,fetch)
+    if key=='aysa_public_bulletins_amba':return _collect_aysa_public(checked_at,now,fetch)
     if key=='sameep_chaco':return _collect_sameep(checked_at,now,fetch)
     return _collect_diagnostic(key,checked_at,now,fetch)
 

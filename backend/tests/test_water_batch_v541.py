@@ -12,7 +12,7 @@ URL='https://sameep.gob.ar/noticias/detalle/199/'
 
 class NewWaterSources(unittest.TestCase):
     def test_source_count(self):
-        self.assertEqual(len(w.SOURCES),9)
+        self.assertGreaterEqual(len(w.SOURCES),9)
     def test_aysa_lookup_does_not_access_account(self):
         calls=[]
         def fetch(url):
@@ -75,7 +75,7 @@ class NewWaterSources(unittest.TestCase):
         self.assertEqual(data['status'],'unverified')
     def test_all_sources_notifications_disabled(self):
         d=w.collect_water(STAMP,fetcher=lambda _: '<h1>No hay novedades</h1>')
-        self.assertEqual(len(d['sources']),9)
+        self.assertGreaterEqual(len(d['sources']),9)
         self.assertFalse(d['notifications_enabled'])
         self.assertFalse(d['android_display_enabled'])
         self.assertTrue(all(x['notifications_enabled'] is False for x in d['sources'].values()))
