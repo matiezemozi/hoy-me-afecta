@@ -8,9 +8,12 @@ on:
 permissions:
   contents: write
 
+# La automatizacion de agua utiliza exactamente este mismo grupo.
+# No permite que ambas publiquen al mismo tiempo.
 concurrency:
-  group: actualizar-feed-enre
+  group: hoy-me-afecta-publicacion-feed
   cancel-in-progress: false
+  queue: max
 
 jobs:
   update:
@@ -19,6 +22,8 @@ jobs:
     steps:
       - name: Obtener proyecto
         uses: actions/checkout@v4
+        with:
+          ref: main
 
       # El diagnostico ENRE obtuvo HTTP 200 con el Python del sistema.
       # No usar actions/setup-python en este trabajo.
@@ -47,7 +52,7 @@ jobs:
           git add docs/feed.json
           if ! git diff --cached --quiet; then
             git commit -m 'Actualizar feed de fuentes'
-            git push
+            git push origin HEAD:main
           else
             echo 'Sin cambios en el informe'
           fi
