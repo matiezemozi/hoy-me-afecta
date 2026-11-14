@@ -1,4 +1,4 @@
-"""Conservative public water-service bulletin collectors for Argentina (v5.42).
+"""Conservative public water-service bulletin collectors for Argentina (v5.43).
 
 No report is a live outage confirmation. No credentials, service identifiers or
 unofficial APIs are used. Completely independent of provincial_electricity.
@@ -29,6 +29,7 @@ SOURCES = {
     'aysa_amba': ('AySA', 'Buenos Aires / CABA', 'https://www.aysa.com.ar/usuarios/interrupcion_servicio'),
     'aysa_public_bulletins_amba': ('AySA', 'Buenos Aires / CABA', 'https://www.aysa.com.ar/usuarios/Novedades'),
     'sameep_chaco': ('SAMEEP', 'Chaco', 'https://sameep.gob.ar/noticias/'),
+    'edos_concordia': ('EDOS Concordia', 'Entre Ríos', 'https://www.concordia.gob.ar/noticias?area=obras-sanitarias'),
 }
 WEEKDAY = {'lunes':0, 'martes':1, 'miercoles':2, 'jueves':3, 'viernes':4,
            'sabado':5, 'domingo':6}
@@ -948,6 +949,7 @@ def _aysa_news_article(html,url,now):
 def _collect_aysa_public(checked_at,now,fetch):
     result=_result('aysa_public_bulletins_amba',checked_at)
     result['parser_revision']='AYSA-NEWS-v5.42'
+    result['coverage_limitation']='Las noticias publicas de AySA pueden no incluir todos sus comunicados de emergencia ni verificar domicilios.'
     result['coverage_kind']='public_dated_articles_only_not_account_status'
     result['account_lookup_required_for_address']=True
     result['article_links_seen']=0
@@ -1094,6 +1096,123 @@ def _collect_sameep(checked_at,now,fetch):
     return result
 
 
+
+# Concordia's municipal sanitation authority (EDOS) publishes dated official
+# water interruption stories. Only the municipal site is accepted. Headlines
+# about completed works are never treated as new interruptions.
+_EDOS_HOST='www.concordia.gob.ar'
+_EDOS_IMPACT = re.compile(
+    r'(?:corte\s+(?:programado\s+)?(?:de\s+)?agua|'
+    r'interrupci[oó]n\s+(?:temporal\s+)?del\s+(?:servicio|suministro)|'
+    r'se\s+interrumpir[aá]\s+el\s+(?:servicio|suministro)|'
+    r'parada\s+programada\s+de\s+la\s+planta\s+potabilizadora|'
+    r'(?:baja|menor|reducci[oó]n\s+de)\s+presi[oó]n|'
+    r'falta\s+de\s+agua|'
+    r'se\s+reducir[aá]\s+el\s+(?:servicio|suministro))', re.I)
+_EDOS_FINISHED = re.compile(
+    r'(?:finalizaron|finaliz[oó]|terminaron|concluyeron|se\s+normaliz[oó]|'
+    r'(?:servicio|suministro)\s+(?:ya\s+)?restablecido|'
+    r'restaurado\s+el\s+servicio)', re.I)
+
+
+def _edos_date(text):
+    """Read an unambiguous complete Spanish publication date, not a relative day."""
+    m=re.search(r'\b(\d{1,2})\s+de\s+([a-z]+)\s+de\s+(20\d{2})\b',folded(text))
+    if not m or m.group(2) not in MONTH:
+        return None
+    try:
+        return date(int(m.group(3)),MONTH[m.group(2)],int(m.group(1)))
+    except ValueError:
+        return None
+
+
+def _edos_article(html,url,now):
+    dom,visible=page(html)
+    # Dates shown under other/related articles cannot date the main story.
+    intro=visible.split('Noticias relacionadas')[0].split('Te puede interesar')[0]
+    published=_edos_date(intro[:1200])
+    if not published or published>now.date():
+        return None,published
+    if published<now.date()-timedelta(days=4):
+        return None,published
+    title=next((h for h in dom.headings if len(h)>14 and folded(h) not in
+                ('noticias','obras sanitarias','municipalidad de concordia')), '')
+    if not title or _EDOS_FINISHED.search(folded(title)):
+        return None,published
+    paragraphs=[]
+    for para in dom.paragraphs:
+        f=folded(para)
+        if 'noticias relacionadas' in f or 'te puede interesar' in f:
+            break
+        if len(para)>45:
+            paragraphs.append(para)
+    content=' '.join(paragraphs)
+    if not content or not _EDOS_IMPACT.search(folded(title+' '+content)):
+        return None,published
+    # Explicit negation cannot become a positive outage bulletin.
+    if re.search(r'(?:sin\s+afectar\s+el\s+servicio|sin\s+cortes|'
+                 r'no\s+(?:se\s+)?interrumpir[aá]\s+el\s+(?:servicio|suministro))',folded(content)):
+        return None,published
+    notice=mk_notice('EDOS Concordia','Entre Ríos','Concordia',url,
+                     'water_service_bulletin','publication_only_not_live',
+                     content,published_on=published.isoformat(),
+                     area_precision='zonas_segun_comunicado_no_toda_la_ciudad',
+                     scheduled_start=None,scheduled_end=None)
+    return notice,published
+
+
+def _collect_edos(checked_at,now,fetch):
+    result=_result('edos_concordia',checked_at)
+    result['parser_revision']='EDOS-MUNICIPIO-v5.43'
+    result['coverage_kind']='dated_municipal_water_bulletins_only'
+    result['article_links_seen']=0
+    result['articles_checked']=0
+    result['source_attempts']=[]
+    last=None
+    try:
+        dom,_=page(fetch(result['source_url']))
+        links=[]
+        for href,label in dom.anchors:
+            link=urljoin(result['source_url'],href)
+            parsed=urlsplit(link)
+            if parsed.scheme!='https' or parsed.hostname!=_EDOS_HOST:
+                continue
+            if not re.fullmatch(r'/noticias/[a-zA-Z0-9_%-]+/?',parsed.path):
+                continue
+            if len(label)<12 or link in links:
+                continue
+            links.append(link)
+        result['article_links_seen']=len(links)
+        for link in links[:8]:
+            try:
+                notice,published=_edos_article(fetch(link),link,now)
+                result['articles_checked']+=1
+                if published is not None and (last is None or published>last):
+                    last=published
+                if notice is not None:
+                    result['notices'].append(notice)
+                    result['source_attempts'].append({'url':link,'result':'parsed'})
+                else:
+                    result['source_attempts'].append({'url':link,'result':'no_recent_service_notice'})
+            except Exception as exc:
+                result['source_attempts'].append({'url':link,'result':'fetch_or_parse_error',
+                                                  'error_type':type(exc).__name__})
+        if last:
+            result['latest_published_date']=last.isoformat()
+        if result['notices']:
+            result['status']='ok'
+            result['message']='Comunicados municipales fechados; no confirman un corte actual ni un domicilio afectado.'
+        elif last and last<now.date()-timedelta(days=4):
+            result['status']='stale'
+            result['message']='Solo publicaciones antiguas; no permite determinar el estado actual del agua.'
+        else:
+            result['message']='No hay comunicados recientes suficientemente precisos. No acredita suministro normal.'
+        if any(x['result']=='fetch_or_parse_error' for x in result['source_attempts']):
+            result['message']+=' Algunos articulos no pudieron consultarse.'
+    except Exception as exc:
+        result['message']='No se pudo consultar el portal municipal EDOS: '+type(exc).__name__
+    return result
+
 def collect_one(key,checked_at,fetcher=None):
     if key not in SOURCES:
         raise KeyError(key)
@@ -1107,6 +1226,7 @@ def collect_one(key,checked_at,fetcher=None):
     if key=='aysa_amba':return _collect_aysa(checked_at,now,fetch)
     if key=='aysa_public_bulletins_amba':return _collect_aysa_public(checked_at,now,fetch)
     if key=='sameep_chaco':return _collect_sameep(checked_at,now,fetch)
+    if key=='edos_concordia':return _collect_edos(checked_at,now,fetch)
     return _collect_diagnostic(key,checked_at,now,fetch)
 
 

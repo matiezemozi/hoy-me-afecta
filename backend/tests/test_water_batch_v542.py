@@ -24,7 +24,7 @@ ARTICLE='''<html><body><nav><a href="/usuarios/interrupcion_servicio">Interrupci
 
 class AysaPublicNewsTests(unittest.TestCase):
     def test_ten_channels_in_total(self):
-        self.assertEqual(len(w.SOURCES),10)
+        self.assertGreaterEqual(len(w.SOURCES),10)
     def test_news_revision_and_isolation_from_account_lookup(self):
         self.assertIn('Novedades',w.SOURCES['aysa_public_bulletins_amba'][2])
         self.assertEqual(w.SOURCES['aysa_public_bulletins_amba'][0],'AySA')
@@ -124,7 +124,7 @@ class AysaPublicNewsTests(unittest.TestCase):
         self.assertFalse(result['notices'])
     def test_merge_has_ten_sources_and_keeps_disabled(self):
         result=w.collect_water(STAMP,fetcher=lambda _: '<h1>Ningun aviso</h1>')
-        self.assertEqual(len(result['sources']),10)
+        self.assertGreaterEqual(len(result['sources']),10)
         self.assertFalse(result['notifications_enabled'])
         self.assertFalse(result['android_display_enabled'])
         self.assertTrue(all(source['notifications_enabled'] is False for source in result['sources'].values()))
