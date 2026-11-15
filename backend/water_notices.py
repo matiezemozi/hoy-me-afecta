@@ -1,4 +1,4 @@
-"""Conservative public water-service bulletin collectors for Argentina (v5.44).
+"""Conservative public water-service bulletin collectors for Argentina (v5.45).
 
 No report is a live outage confirmation. No credentials, service identifiers or
 unofficial APIs are used. Completely independent of provincial_electricity.
@@ -11,6 +11,8 @@ from html.parser import HTMLParser
 from urllib.parse import urljoin, urlsplit
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError
+from email.utils import parsedate_to_datetime
+from xml.etree import ElementTree as ET
 from time import sleep
 import calendar
 import re
@@ -59,7 +61,7 @@ def fetch_html(url):
     if urlsplit(url).scheme != 'https':
         raise ValueError('Solo HTTPS')
     req = Request(url, headers={'User-Agent':'HoyMeAfecta/5.37 (public notice reader)',
-                                'Accept':'text/html,application/xhtml+xml'})
+                                'Accept':'text/html,application/xhtml+xml,application/rss+xml,application/xml;q=0.9'})
     with urlopen(req, timeout=13) as response:
         raw = response.read(MAX_PAGE_BYTES + 1)
         if len(raw) > MAX_PAGE_BYTES:
@@ -1214,9 +1216,11 @@ def _collect_edos(checked_at,now,fetch):
         result['message']='No se pudo consultar el portal municipal EDOS: '+type(exc).__name__
     return result
 
-# OSSE (Mar del Plata / Batán) publishes dated water-service articles on its
-# official public website. A news article is never evidence of a live outage.
+# OSSE (Mar del Plata / Batán): official WordPress news index and optional RSS.
+# The list of articles is NOT a live interruption feed. Only specific, recent,
+# geographically supported impact statements may become read-only bulletins.
 _OSSE_HOSTS = ('www.osmgp.gov.ar', 'osmgp.gov.ar')
+_OSSE_RSS = 'https://www.osmgp.gov.ar/osse/feed/'
 _OSSE_ENGLISH_MONTH = {'jan':1,'feb':2,'mar':3,'apr':4,'may':5,'jun':6,
                        'jul':7,'aug':8,'sep':9,'oct':10,'nov':11,'dec':12}
 _OSSE_RELEVANT_HEADLINE = re.compile(
@@ -1243,7 +1247,7 @@ _OSSE_FINISHED = re.compile(
 
 
 def _osse_article_date(text):
-    """Only dated first-article metadata, never article-related or footer dates."""
+    """Only dates near the main article or beside a listing title."""
     m = re.search(r'\b([A-Za-z]{3})\s+(\d{1,2}),\s*(20\d{2})\b', text[:1100])
     if m and m.group(1).lower() in _OSSE_ENGLISH_MONTH:
         try:
@@ -1252,7 +1256,7 @@ def _osse_article_date(text):
             return None
     m = re.search(r'\b(\d{1,2})\s+de\s+([A-Za-zÁÉÍÓÚáéíóú]+)\s+de\s+(20\d{2})\b', text[:1100], re.I)
     if m:
-        month=MONTH.get(folded(m.group(2)))
+        month = MONTH.get(folded(m.group(2)))
         if month:
             try:
                 return date(int(m.group(3)), month, int(m.group(1)))
@@ -1261,103 +1265,208 @@ def _osse_article_date(text):
     return None
 
 
-def _osse_article(html, url, now):
-    dom, visible=page(html)
-    headline=next((h for h in dom.headings if len(h)>22 and folded(h) not in
-                   ('ultimas noticias', 'obras sanitarias', 'noticias')), '')
-    # Publication date must precede the main article, not come from related news.
+def _osse_valid_article_url(url):
+    """Allow only individual HTTPS news articles under the official site."""
+    parsed = urlsplit(url)
+    return (parsed.scheme == 'https' and parsed.hostname in _OSSE_HOSTS
+            and not parsed.username and not parsed.password and not parsed.port
+            and not parsed.query and not parsed.fragment
+            and bool(re.fullmatch(r'/osse/[a-z0-9-]{15,}/?', parsed.path, re.I)))
+
+
+def _osse_rss_index(xml_text):
+    """Read RSS item metadata only; never use its summary as outage evidence."""
+    if not isinstance(xml_text, str) or len(xml_text.encode('utf-8')) > MAX_PAGE_BYTES:
+        raise ValueError('RSS ausente o demasiado grande')
+    if re.search(r'<!\s*(?:DOCTYPE|ENTITY)\b', xml_text, re.I):
+        raise ValueError('RSS con DTD/entidades no admitidas')
+    root = ET.fromstring(xml_text)
+    if root.tag != 'rss':
+        raise ValueError('La respuesta no es un feed RSS')
+    entries = []
+    seen = set()
+    for item in root.findall('./channel/item'):
+        title = clean(item.findtext('title'), 240)
+        link = clean(item.findtext('link'), 1000)
+        if len(title) < 18 or not _osse_valid_article_url(link) or link in seen:
+            continue
+        published = None
+        raw_date = item.findtext('pubDate')
+        if raw_date:
+            try:
+                parsed = parsedate_to_datetime(raw_date)
+                if parsed.tzinfo is not None:
+                    published = parsed.astimezone(ART).date()
+            except (ValueError, TypeError, OverflowError):
+                pass
+        entries.append((link, title, published))
+        seen.add(link)
+    return entries
+
+
+def _osse_html_index(html):
+    """Count real article links, not only headings matching outage keywords."""
+    dom, visible = page(html)
+    headings = {folded(h) for h in dom.headings if len(h) >= 18}
+    entries = []
+    seen = set()
+    for href, label in dom.anchors:
+        link = urljoin(SOURCES['osse_mar_del_plata'][2], href)
+        if (not _osse_valid_article_url(link) or link in seen or
+                len(label) < 18 or folded(label) not in headings):
+            continue
+        # Article-list date follows its heading on OSSE's public news page.
+        nearby = None
+        positions = [m.end() for m in re.finditer(re.escape(label), visible, re.I)]
+        for pos in positions:
+            nearby = _osse_article_date(visible[pos:pos + 125])
+            if nearby:
+                break
+        entries.append((link, label, nearby))
+        seen.add(link)
+    return entries
+
+
+def _osse_article(html, url, now, index_published=None):
+    dom, visible = page(html)
+    headline = next((h for h in dom.headings if len(h) > 22 and folded(h) not in
+                     ('ultimas noticias', 'obras sanitarias', 'noticias')), '')
     if not headline:
-        return None,None
-    before=visible.split(headline,1)[0]
-    lead=(before+' '+visible.split(headline,1)[1][:420])[:1100]
-    published=_osse_article_date(lead)
-    if not published or published>now.date():
-        return None,published
-    if published<now.date()-timedelta(days=4):
-        return None,published
+        return None, None
+    before, after = (visible.split(headline, 1) + [''])[:2]
+    near_headline = _osse_article_date((before[-180:] + ' ' + after[:350]))
+    meta_date = _published_date_from_meta(html)
+    # Prefer the visible article's own date over theme/SEO metadata.
+    published = near_headline or meta_date or index_published
+    if index_published and published and index_published != published:
+        return None, published  # contradictory publication dates: do not guess
+    if not published or published > now.date():
+        return None, published
+    if published < now.date() - timedelta(days=4):
+        return None, published
     if _OSSE_FINISHED.search(folded(headline)):
-        return None,published
+        return None, published
     if not _OSSE_RELEVANT_HEADLINE.search(folded(headline)):
-        return None,published
-    paras=[]
-    for p in dom.paragraphs:
-        norm=folded(p)
+        return None, published
+    paras = []
+    for paragraph in dom.paragraphs:
+        norm = folded(paragraph)
         if 'te puede interesar' in norm or 'noticias relacionadas' in norm:
             break
-        if len(p)>=45:
-            paras.append(p)
-    content=' '.join(paras)
-    if not content or len(content)>12000:
-        return None,published
-    # Company name alone must not be interpreted as proof the entire city is affected.
-    lines=re.split(r'(?<=[.!?])\s+',content)
-    impact=[x for x in lines if _OSSE_IMPACT.search(folded(x)) and
-            not _OSSE_NEGATIVE.search(folded(x))]
+        if len(paragraph) >= 45:
+            paras.append(paragraph)
+    content = ' '.join(paras)
+    if not content or len(content) > 12000:
+        return None, published
+    lines = re.split(r'(?<=[.!?])\s+', content)
+    impact = [sentence for sentence in lines if _OSSE_IMPACT.search(folded(sentence))
+              and not _OSSE_NEGATIVE.search(folded(sentence))]
     if not impact:
-        return None,published
-    context=folded(headline+' '+content)
-    if 'batan' in context and not any(x in context for x in ('mar del plata','plaza mitre','punta mogotes')):
-        loc='Batán'
-    elif any(x in context for x in ('mar del plata','plaza mitre','punta mogotes','constitucion')):
-        loc='Mar del Plata'
+        return None, published
+    # Geographic proof must occur in the title or the impact statement,
+    # not in a generic corporate footer saying 'OSSE Mar del Plata'.
+    affected = folded(headline + ' ' + ' '.join(impact))
+    if 'batan' in affected and 'mar del plata' not in affected:
+        locality = 'Batán'
+    elif any(term in affected for term in ('mar del plata', 'punta mogotes',
+                                          'plaza mitre', 'constitucion', 'camet')):
+        locality = 'Mar del Plata'
     else:
-        return None,published
-    return mk_notice('OSSE Mar del Plata','Buenos Aires',loc,url,
-                     'water_service_bulletin','publication_only_not_live',content,
+        return None, published
+    return mk_notice('OSSE Mar del Plata', 'Buenos Aires', locality, url,
+                     'water_service_bulletin', 'publication_only_not_live', content,
                      published_on=published.isoformat(),
                      area_precision='subzonas_del_partido_segun_comunicado_no_toda_la_ciudad',
-                     scheduled_start=None,scheduled_end=None),published
+                     scheduled_start=None, scheduled_end=None), published
 
 
-def _collect_osse(checked_at,now,fetch):
-    result=_result('osse_mar_del_plata',checked_at)
-    result.update(parser_revision='OSSE-NEWS-v5.44',
+def _collect_osse(checked_at, now, fetch):
+    result = _result('osse_mar_del_plata', checked_at)
+    result.update(parser_revision='OSSE-RSS-HTML-v5.45',
                   coverage_kind='dated_official_municipal_water_bulletins_only',
-                  article_links_seen=0, articles_checked=0,source_attempts=[])
-    newest=None
-    try:
-        dom,_=page(fetch(result['source_url']))
-        urls=[]
-        for href,label in dom.anchors:
-            absolute=urljoin(result['source_url'],href)
-            parsed=urlsplit(absolute)
-            if parsed.scheme!='https' or parsed.hostname not in _OSSE_HOSTS:
+                  index_mode='unavailable', index_attempts=[],
+                  html_news_headings_seen=0, index_warning=None,
+                  article_links_seen=0, candidate_links_selected=0,
+                  articles_skipped_old=0, articles_checked=0, source_attempts=[])
+    entries = []
+    for mode, url, reader in (('rss', _OSSE_RSS, _osse_rss_index),
+                              ('html', result['source_url'], _osse_html_index)):
+        try:
+            payload = fetch(url)
+            parsed = reader(payload)
+            if mode == 'html':
+                dom, _visible = page(payload)
+                result['html_news_headings_seen'] = sum(
+                    len(h) >= 18 and folded(h) not in
+                    ('ultimas noticias', 'obras sanitarias', 'noticias')
+                    for h in dom.headings)
+                if result['html_news_headings_seen'] > 0 and not parsed:
+                    result['index_warning'] = (
+                        'Se reconocen títulos en la página de noticias, pero no '
+                        'sus enlaces individuales. Revisar estructura HTML de OSSE.')
+            result['index_attempts'].append({'url':url, 'result':
+                                             'article_links_found' if parsed else 'no_article_links'})
+            if parsed:
+                entries = parsed
+                result['index_mode'] = mode
+                break
+        except Exception as exc:
+            result['index_attempts'].append({'url':url, 'result':'fetch_or_parse_error',
+                                             'error_type':type(exc).__name__})
+    if result['index_mode'] == 'unavailable':
+        result['message'] = ('OSSE: no se pudieron identificar artículos en el índice oficial. '
+                             'La cobertura es desconocida; no confirma normalidad del servicio.')
+        return result
+    result['article_links_seen'] = len(entries)
+    candidates = []
+    newest = None
+    for link, label, published in entries:
+        if published is not None:
+            newest = max(newest, published) if newest else published
+            if published < now.date() - timedelta(days=4):
+                result['articles_skipped_old'] += 1
                 continue
-            if not re.fullmatch(r'/osse/[a-zA-Z0-9-]+/?',parsed.path):
+            if published > now.date():
                 continue
-            if len(label)<18 or absolute in urls:
-                continue
-            # Avoid unrelated features, institutional news and construction-only items.
-            if not _OSSE_RELEVANT_HEADLINE.search(folded(label)):
-                continue
-            urls.append(absolute)
-        result['article_links_seen']=len(urls)
-        for url in urls[:8]:
-            try:
-                notice,pub=_osse_article(fetch(url),url,now)
-                result['articles_checked']+=1
-                if pub and (newest is None or pub>newest):
-                    newest=pub
-                if notice:
-                    result['notices'].append(notice)
-                result['source_attempts'].append({'url':url,'result':'parsed' if notice else 'no_recent_service_notice'})
-            except Exception as exc:
-                result['source_attempts'].append({'url':url,'result':'fetch_or_parse_error',
-                                                  'error_type':type(exc).__name__})
-        if newest:
-            result['latest_published_date']=newest.isoformat()
-        if result['notices']:
-            result['status']='ok'
-            result['message']='Comunicados oficiales fechados; no confirman cortes actuales ni toda la ciudad afectada.'
-        elif newest and newest<now.date()-timedelta(days=4):
-            result['status']='stale'
-            result['message']='Solo se encontraron artículos antiguos; no implica servicio normal.'
-        else:
-            result['message']='No se recuperaron interrupciones recientes y geográficamente precisas; el estado del servicio es desconocido.'
-        if any(x['result']=='fetch_or_parse_error' for x in result['source_attempts']):
-            result['message']+=' Algunas noticias no pudieron consultarse.'
-    except Exception as exc:
-        result['message']='No se pudo consultar el portal de OSSE: '+type(exc).__name__
+        candidates.append((link, published))
+    result['candidate_links_selected'] = min(len(candidates), 8)
+    if newest:
+        result['latest_published_date'] = newest.isoformat()
+    for link, published_index in candidates[:8]:
+        try:
+            notice, article_date = _osse_article(fetch(link), link, now, published_index)
+            result['articles_checked'] += 1
+            if article_date:
+                newest = max(newest, article_date) if newest else article_date
+            if notice:
+                result['notices'].append(notice)
+            result['source_attempts'].append({'url':link, 'result':
+                                              'parsed' if notice else 'no_precise_recent_impact'})
+        except Exception as exc:
+            attempt = {'url':link, 'result':'fetch_or_parse_error',
+                       'error_type':type(exc).__name__}
+            if isinstance(exc, HTTPError):
+                attempt['http_status'] = exc.code
+            result['source_attempts'].append(attempt)
+            if isinstance(exc, HTTPError) and exc.code == 429:
+                break  # Never retry a rate-limited provider immediately.
+    if newest:
+        result['latest_published_date'] = newest.isoformat()
+    result['notices'] = list({item['id']:item for item in result['notices']}.values())
+    failures = sum(x['result'] == 'fetch_or_parse_error' for x in result['source_attempts'])
+    if result['notices']:
+        result['status'] = 'ok'
+        result['message'] = ('Comunicados fechados con afectación localizada; '
+                             'no confirman cortes activos ni afectación de toda la ciudad.')
+    elif newest and newest < now.date() - timedelta(days=4):
+        result['status'] = 'stale'
+        result['message'] = ('OSSE publica noticias, pero las recuperadas son antiguas. '
+                             'No significa suministro normal.')
+    else:
+        result['message'] = ('OSSE: índice consultado, sin afectaciones recientes '
+                             'y suficientemente localizadas; estado del servicio desconocido.')
+    if failures:
+        result['message'] += f' Consulta parcial: {failures} noticia(s) no pudieron leerse.'
     return result
 
 
