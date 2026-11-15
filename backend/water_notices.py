@@ -1,4 +1,4 @@
-"""Conservative public water-service bulletin collectors for Argentina (v5.43).
+"""Conservative public water-service bulletin collectors for Argentina (v5.44).
 
 No report is a live outage confirmation. No credentials, service identifiers or
 unofficial APIs are used. Completely independent of provincial_electricity.
@@ -30,6 +30,7 @@ SOURCES = {
     'aysa_public_bulletins_amba': ('AySA', 'Buenos Aires / CABA', 'https://www.aysa.com.ar/usuarios/Novedades'),
     'sameep_chaco': ('SAMEEP', 'Chaco', 'https://sameep.gob.ar/noticias/'),
     'edos_concordia': ('EDOS Concordia', 'Entre Ríos', 'https://www.concordia.gob.ar/noticias?area=obras-sanitarias'),
+    'osse_mar_del_plata': ('OSSE Mar del Plata', 'Buenos Aires', 'https://www.osmgp.gov.ar/osse/noticias/'),
 }
 WEEKDAY = {'lunes':0, 'martes':1, 'miercoles':2, 'jueves':3, 'viernes':4,
            'sabado':5, 'domingo':6}
@@ -1213,6 +1214,153 @@ def _collect_edos(checked_at,now,fetch):
         result['message']='No se pudo consultar el portal municipal EDOS: '+type(exc).__name__
     return result
 
+# OSSE (Mar del Plata / Batán) publishes dated water-service articles on its
+# official public website. A news article is never evidence of a live outage.
+_OSSE_HOSTS = ('www.osmgp.gov.ar', 'osmgp.gov.ar')
+_OSSE_ENGLISH_MONTH = {'jan':1,'feb':2,'mar':3,'apr':4,'may':5,'jun':6,
+                       'jul':7,'aug':8,'sep':9,'oct':10,'nov':11,'dec':12}
+_OSSE_RELEVANT_HEADLINE = re.compile(
+    r'(corte|interrupcion|baja presion|menor presion|falta de agua|'
+    r'afectacion del servicio|servicio de agua|estacion elevadora de agua|'
+    r'planta potabilizadora|parada programada)', re.I)
+_OSSE_IMPACT = re.compile(
+    r'(baja\s+(?:temporaria\s+)?(?:(?:en\s+)?(?:la\s+|de\s+)?)presion|'
+    r'falta\s+de\s+agua|corte\s+(?:de\s+)?agua|'
+    r'(?:interrumpir|interrupcion)\s+(?:del\s+)?(?:servicio|suministro)|'
+    r'(?:podria|podran|puede|podra|se vera|se veran|verse)\s+'
+    r'(?:afectad[oa]s?|afectar|alterad[oa]s?|alterar)\s+'
+    r'(?:el\s+)?(?:normal\s+)?(?:suministro|servicio|abastecimiento)|'
+    r'(?:servicio|suministro|abastecimiento)\s+(?:de\s+agua\s+)?'
+    r'(?:afectad[oa]s?|interrumpid[oa]s?|reducid[oa]s?))', re.I)
+_OSSE_NEGATIVE = re.compile(
+    r'(sin\s+afectar\s+el\s+(?:suministro|servicio)|'
+    r'no\s+afectara\s+el\s+(?:suministro|servicio)|'
+    r'no\s+se\s+interrumpira\s+el\s+(?:suministro|servicio)|'
+    r'sin\s+interrupciones|no\s+se\s+veran\s+afectad[oa]s?)', re.I)
+_OSSE_FINISHED = re.compile(
+    r'(finaliz[oó]|finalizaron|se\s+normaliz[oó]|normalizado|'
+    r'se\s+restableci[oó]|restablecido|trabajos\s+concluidos)', re.I)
+
+
+def _osse_article_date(text):
+    """Only dated first-article metadata, never article-related or footer dates."""
+    m = re.search(r'\b([A-Za-z]{3})\s+(\d{1,2}),\s*(20\d{2})\b', text[:1100])
+    if m and m.group(1).lower() in _OSSE_ENGLISH_MONTH:
+        try:
+            return date(int(m.group(3)), _OSSE_ENGLISH_MONTH[m.group(1).lower()], int(m.group(2)))
+        except ValueError:
+            return None
+    m = re.search(r'\b(\d{1,2})\s+de\s+([A-Za-zÁÉÍÓÚáéíóú]+)\s+de\s+(20\d{2})\b', text[:1100], re.I)
+    if m:
+        month=MONTH.get(folded(m.group(2)))
+        if month:
+            try:
+                return date(int(m.group(3)), month, int(m.group(1)))
+            except ValueError:
+                return None
+    return None
+
+
+def _osse_article(html, url, now):
+    dom, visible=page(html)
+    headline=next((h for h in dom.headings if len(h)>22 and folded(h) not in
+                   ('ultimas noticias', 'obras sanitarias', 'noticias')), '')
+    # Publication date must precede the main article, not come from related news.
+    if not headline:
+        return None,None
+    before=visible.split(headline,1)[0]
+    lead=(before+' '+visible.split(headline,1)[1][:420])[:1100]
+    published=_osse_article_date(lead)
+    if not published or published>now.date():
+        return None,published
+    if published<now.date()-timedelta(days=4):
+        return None,published
+    if _OSSE_FINISHED.search(folded(headline)):
+        return None,published
+    if not _OSSE_RELEVANT_HEADLINE.search(folded(headline)):
+        return None,published
+    paras=[]
+    for p in dom.paragraphs:
+        norm=folded(p)
+        if 'te puede interesar' in norm or 'noticias relacionadas' in norm:
+            break
+        if len(p)>=45:
+            paras.append(p)
+    content=' '.join(paras)
+    if not content or len(content)>12000:
+        return None,published
+    # Company name alone must not be interpreted as proof the entire city is affected.
+    lines=re.split(r'(?<=[.!?])\s+',content)
+    impact=[x for x in lines if _OSSE_IMPACT.search(folded(x)) and
+            not _OSSE_NEGATIVE.search(folded(x))]
+    if not impact:
+        return None,published
+    context=folded(headline+' '+content)
+    if 'batan' in context and not any(x in context for x in ('mar del plata','plaza mitre','punta mogotes')):
+        loc='Batán'
+    elif any(x in context for x in ('mar del plata','plaza mitre','punta mogotes','constitucion')):
+        loc='Mar del Plata'
+    else:
+        return None,published
+    return mk_notice('OSSE Mar del Plata','Buenos Aires',loc,url,
+                     'water_service_bulletin','publication_only_not_live',content,
+                     published_on=published.isoformat(),
+                     area_precision='subzonas_del_partido_segun_comunicado_no_toda_la_ciudad',
+                     scheduled_start=None,scheduled_end=None),published
+
+
+def _collect_osse(checked_at,now,fetch):
+    result=_result('osse_mar_del_plata',checked_at)
+    result.update(parser_revision='OSSE-NEWS-v5.44',
+                  coverage_kind='dated_official_municipal_water_bulletins_only',
+                  article_links_seen=0, articles_checked=0,source_attempts=[])
+    newest=None
+    try:
+        dom,_=page(fetch(result['source_url']))
+        urls=[]
+        for href,label in dom.anchors:
+            absolute=urljoin(result['source_url'],href)
+            parsed=urlsplit(absolute)
+            if parsed.scheme!='https' or parsed.hostname not in _OSSE_HOSTS:
+                continue
+            if not re.fullmatch(r'/osse/[a-zA-Z0-9-]+/?',parsed.path):
+                continue
+            if len(label)<18 or absolute in urls:
+                continue
+            # Avoid unrelated features, institutional news and construction-only items.
+            if not _OSSE_RELEVANT_HEADLINE.search(folded(label)):
+                continue
+            urls.append(absolute)
+        result['article_links_seen']=len(urls)
+        for url in urls[:8]:
+            try:
+                notice,pub=_osse_article(fetch(url),url,now)
+                result['articles_checked']+=1
+                if pub and (newest is None or pub>newest):
+                    newest=pub
+                if notice:
+                    result['notices'].append(notice)
+                result['source_attempts'].append({'url':url,'result':'parsed' if notice else 'no_recent_service_notice'})
+            except Exception as exc:
+                result['source_attempts'].append({'url':url,'result':'fetch_or_parse_error',
+                                                  'error_type':type(exc).__name__})
+        if newest:
+            result['latest_published_date']=newest.isoformat()
+        if result['notices']:
+            result['status']='ok'
+            result['message']='Comunicados oficiales fechados; no confirman cortes actuales ni toda la ciudad afectada.'
+        elif newest and newest<now.date()-timedelta(days=4):
+            result['status']='stale'
+            result['message']='Solo se encontraron artículos antiguos; no implica servicio normal.'
+        else:
+            result['message']='No se recuperaron interrupciones recientes y geográficamente precisas; el estado del servicio es desconocido.'
+        if any(x['result']=='fetch_or_parse_error' for x in result['source_attempts']):
+            result['message']+=' Algunas noticias no pudieron consultarse.'
+    except Exception as exc:
+        result['message']='No se pudo consultar el portal de OSSE: '+type(exc).__name__
+    return result
+
+
 def collect_one(key,checked_at,fetcher=None):
     if key not in SOURCES:
         raise KeyError(key)
@@ -1227,6 +1375,7 @@ def collect_one(key,checked_at,fetcher=None):
     if key=='aysa_public_bulletins_amba':return _collect_aysa_public(checked_at,now,fetch)
     if key=='sameep_chaco':return _collect_sameep(checked_at,now,fetch)
     if key=='edos_concordia':return _collect_edos(checked_at,now,fetch)
+    if key=='osse_mar_del_plata':return _collect_osse(checked_at,now,fetch)
     return _collect_diagnostic(key,checked_at,now,fetch)
 
 
@@ -1244,9 +1393,10 @@ def collect_water(checked_at,fetcher=None):
         notices.extend(out[key]['notices'])
     notices.sort(key=lambda x:(x.get('scheduled_date') or x.get('published_on') or '',x['id']))
     return {'schema_version':1,'generated_at':checked_at,
-            'status':'pilot_not_integrated_in_android',
+            'status':'pilot_read_only_in_android',
             'category':'agua','country':'Argentina',
             'coverage_kind':'public_official_notices_not_live_state',
             'notifications_enabled':False,'android_display_enabled':False,
-            'message':'Fuentes públicas de agua. Sin notificaciones hasta validación y nueva APK.',
+            'android_read_only_pilot_available':True,
+            'message':'Comunicados públicos disponibles en Android v5.39+ como lectura piloto. Notificaciones automáticas de agua desactivadas.',
             'sources':out,'notices':notices}
