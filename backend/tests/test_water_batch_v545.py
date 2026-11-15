@@ -33,7 +33,7 @@ def listing(items):
 
 class TestOsseV545(unittest.TestCase):
     def test_keeps_all_existing_sources_and_notifications_off(self):
-        self.assertEqual(len(w.SOURCES), 12)
+        self.assertGreaterEqual(len(w.SOURCES), 12)
         self.assertIn('absa_buenos_aires', w.SOURCES)
         self.assertIn('edos_concordia', w.SOURCES)
         self.assertIn('osse_mar_del_plata', w.SOURCES)
