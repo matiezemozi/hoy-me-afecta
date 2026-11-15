@@ -2425,7 +2425,7 @@
   },
   "water_services": {
     "schema_version": 1,
-    "generated_at": "2026-11-15T20:32:21Z",
+    "generated_at": "2026-11-15T23:22:46Z",
     "status": "pilot_read_only_in_android",
     "category": "agua",
     "country": "Argentina",
@@ -2441,7 +2441,7 @@
         "province": "Buenos Aires",
         "country": "Argentina",
         "source_url": "https://www.aguasbonaerenses.com.ar/noticias/",
-        "checked_at": "2026-11-15T20:32:21Z",
+        "checked_at": "2026-11-15T23:22:46Z",
         "coverage_kind": "public_water_bulletins_only",
         "notifications_enabled": false,
         "parser_revision": "WATER-v5.35",
@@ -2458,7 +2458,7 @@
         "province": "Salta",
         "country": "Argentina",
         "source_url": "https://www.aguasdelnortesalta.com.ar/cortes.php",
-        "checked_at": "2026-11-15T20:32:21Z",
+        "checked_at": "2026-11-15T23:22:46Z",
         "coverage_kind": "public_water_bulletins_only",
         "notifications_enabled": false,
         "parser_revision": "WATER-v5.35",
@@ -2473,7 +2473,7 @@
         "province": "Mendoza",
         "country": "Argentina",
         "source_url": "https://www.aysam.com.ar/cortes/index.html",
-        "checked_at": "2026-11-15T20:32:21Z",
+        "checked_at": "2026-11-15T23:22:46Z",
         "coverage_kind": "public_water_bulletins_only",
         "notifications_enabled": false,
         "parser_revision": "WATER-v5.35",
@@ -2499,7 +2499,7 @@
         "province": "Córdoba",
         "country": "Argentina",
         "source_url": "https://www.aws.aguascordobesas.com.ar/CanalNoticias/NoticiasCategoria/2/servicio",
-        "checked_at": "2026-11-15T20:32:21Z",
+        "checked_at": "2026-11-15T23:22:46Z",
         "coverage_kind": "public_water_bulletins_only",
         "notifications_enabled": false,
         "parser_revision": "WATER-v5.35",
@@ -2512,7 +2512,7 @@
         "province": "Santa Fe",
         "country": "Argentina",
         "source_url": "https://www.aguassantafesinas.com.ar/portal/noticias",
-        "checked_at": "2026-11-15T20:32:21Z",
+        "checked_at": "2026-11-15T23:22:46Z",
         "coverage_kind": "public_water_bulletins_only",
         "notifications_enabled": false,
         "parser_revision": "WATER-v5.35",
@@ -2527,7 +2527,7 @@
         "province": "Río Negro",
         "country": "Argentina",
         "source_url": "https://aguasrionegrinas.com/category/interrupciones/",
-        "checked_at": "2026-11-15T20:32:21Z",
+        "checked_at": "2026-11-15T23:22:46Z",
         "coverage_kind": "public_water_bulletins_only",
         "notifications_enabled": false,
         "parser_revision": "ARSA-ARTICLES-v5.37",
@@ -2584,7 +2584,7 @@
         "province": "Catamarca",
         "country": "Argentina",
         "source_url": "https://www.adcsapem.com.ar/?page_id=240",
-        "checked_at": "2026-11-15T20:32:21Z",
+        "checked_at": "2026-11-15T23:22:46Z",
         "coverage_kind": "public_water_bulletins_only",
         "notifications_enabled": false,
         "parser_revision": "CATAMARCA-STATUS-v5.33",
@@ -2599,7 +2599,7 @@
         "province": "Buenos Aires / CABA",
         "country": "Argentina",
         "source_url": "https://www.aysa.com.ar/usuarios/interrupcion_servicio",
-        "checked_at": "2026-11-15T20:32:21Z",
+        "checked_at": "2026-11-15T23:22:46Z",
         "coverage_kind": "address_account_lookup_only",
         "notifications_enabled": false,
         "parser_revision": "AYSA-ACCOUNT-ONLY-v5.41",
@@ -2616,7 +2616,7 @@
         "province": "Buenos Aires / CABA",
         "country": "Argentina",
         "source_url": "https://www.aysa.com.ar/usuarios/Novedades",
-        "checked_at": "2026-11-15T20:32:21Z",
+        "checked_at": "2026-11-15T23:22:46Z",
         "coverage_kind": "public_dated_articles_only_not_account_status",
         "notifications_enabled": false,
         "parser_revision": "AYSA-NEWS-v5.42",
@@ -2640,7 +2640,7 @@
         "province": "Chaco",
         "country": "Argentina",
         "source_url": "https://sameep.gob.ar/noticias/",
-        "checked_at": "2026-11-15T20:32:21Z",
+        "checked_at": "2026-11-15T23:22:46Z",
         "coverage_kind": "dated_official_public_bulletins_only",
         "notifications_enabled": false,
         "parser_revision": "SAMEEP-ARTICLES-v5.41",
@@ -2670,7 +2670,7 @@
         "province": "Entre Ríos",
         "country": "Argentina",
         "source_url": "https://www.concordia.gob.ar/noticias?area=obras-sanitarias",
-        "checked_at": "2026-11-15T20:32:21Z",
+        "checked_at": "2026-11-15T23:22:46Z",
         "coverage_kind": "dated_municipal_water_bulletins_only",
         "notifications_enabled": false,
         "parser_revision": "EDOS-MUNICIPIO-v5.43",
@@ -2695,7 +2695,7 @@
         "province": "Buenos Aires",
         "country": "Argentina",
         "source_url": "https://www.osmgp.gov.ar/osse/noticias/",
-        "checked_at": "2026-11-15T20:32:21Z",
+        "checked_at": "2026-11-15T23:22:46Z",
         "coverage_kind": "dated_official_municipal_water_bulletins_only",
         "notifications_enabled": false,
         "parser_revision": "OSSE-RSS-HTML-v5.45",
@@ -2721,6 +2721,65 @@
         "articles_checked": 0,
         "source_attempts": [],
         "latest_published_date": "2026-11-02"
+      },
+      "samsa_misiones": {
+        "status": "unverified",
+        "company": "SAMSA",
+        "province": "Misiones",
+        "country": "Argentina",
+        "source_url": "https://samsa.com.ar/noticias/",
+        "checked_at": "2026-11-15T23:22:46Z",
+        "coverage_kind": "dated_company_bulletins_only",
+        "notifications_enabled": false,
+        "parser_revision": "SAMSA-NEWS-v5.46",
+        "notices": [],
+        "message": "Índice accesible sin enlaces de noticias reconocibles; revisar estructura de SAMSA.",
+        "article_links_seen": 0,
+        "articles_checked": 0,
+        "articles_skipped_old": 0,
+        "source_attempts": []
+      },
+      "agua_potable_jujuy_prensa": {
+        "status": "stale",
+        "company": "Agua Potable de Jujuy",
+        "province": "Jujuy",
+        "country": "Argentina",
+        "source_url": "https://prensa.jujuy.gob.ar/agua-potable-a48",
+        "checked_at": "2026-11-15T23:22:46Z",
+        "coverage_kind": "dated_official_government_water_bulletins_only",
+        "notifications_enabled": false,
+        "parser_revision": "JUJUY-PRENSA-v5.46",
+        "notices": [],
+        "message": "Solo publicaciones antiguas; estado actual del suministro desconocido.",
+        "article_links_seen": 10,
+        "articles_checked": 6,
+        "source_attempts": [
+          {
+            "url": "https://prensa.jujuy.gob.ar/agua-potable/agua-potable-se-reunio-vecinos-del-asentamiento-4-agosto-avanzar-soluciones-acceso-al-servicio-n125732",
+            "result": "no_precise_recent_impact"
+          },
+          {
+            "url": "https://prensa.jujuy.gob.ar/agua-potable/agua-potable-concluyo-la-reparacion-del-acueducto-e-investiga-un-hecho-vandalismo-n125401",
+            "result": "no_precise_recent_impact"
+          },
+          {
+            "url": "https://prensa.jujuy.gob.ar/agua-potable/agua-potable-trabaja-restablecer-el-servicio-sectores-alto-comedero-y-los-alisos-n125393",
+            "result": "no_precise_recent_impact"
+          },
+          {
+            "url": "https://prensa.jujuy.gob.ar/sadir/sadir-inauguro-una-red-agua-y-un-nuevo-espacio-emprendedores-pampa-blanca-n124865",
+            "result": "no_precise_recent_impact"
+          },
+          {
+            "url": "https://prensa.jujuy.gob.ar/agua-potable/agua-potable-firmo-un-historico-convenio-la-obra-del-colector-cloacal-alto-comedero-y-palpala-n124812",
+            "result": "no_precise_recent_impact"
+          },
+          {
+            "url": "https://prensa.jujuy.gob.ar/salud/salud-seguridad-y-agua-potable-garantizan-la-respuesta-el-temporal-n124472",
+            "result": "no_precise_recent_impact"
+          }
+        ],
+        "latest_published_date": "2026-10-26"
       }
     },
     "notices": [
