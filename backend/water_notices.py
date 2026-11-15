@@ -1,4 +1,4 @@
-"""Conservative public water-service bulletin collectors for Argentina (v5.45).
+"""Conservative public water-service bulletin collectors for Argentina (v5.46).
 
 No report is a live outage confirmation. No credentials, service identifiers or
 unofficial APIs are used. Completely independent of provincial_electricity.
@@ -33,6 +33,8 @@ SOURCES = {
     'sameep_chaco': ('SAMEEP', 'Chaco', 'https://sameep.gob.ar/noticias/'),
     'edos_concordia': ('EDOS Concordia', 'Entre Ríos', 'https://www.concordia.gob.ar/noticias?area=obras-sanitarias'),
     'osse_mar_del_plata': ('OSSE Mar del Plata', 'Buenos Aires', 'https://www.osmgp.gov.ar/osse/noticias/'),
+    'samsa_misiones': ('SAMSA', 'Misiones', 'https://samsa.com.ar/noticias/'),
+    'agua_potable_jujuy_prensa': ('Agua Potable de Jujuy', 'Jujuy', 'https://prensa.jujuy.gob.ar/agua-potable-a48'),
 }
 WEEKDAY = {'lunes':0, 'martes':1, 'miercoles':2, 'jueves':3, 'viernes':4,
            'sabado':5, 'domingo':6}
@@ -1470,6 +1472,263 @@ def _collect_osse(checked_at, now, fetch):
     return result
 
 
+
+# v5.46: Public company news from SAMSA and official Jujuy government press.
+# These are article archives, NOT live outage-status services. Recent, specific
+# articles may be displayed only as read-only historical/publication bulletins.
+_SAMSA_HOSTS = ('samsa.com.ar', 'www.samsa.com.ar')
+_JUJUY_HOST = 'prensa.jujuy.gob.ar'
+_WATER_IMPACT = re.compile(
+    r'(?:interrupcion\s+(?:del\s+)?(?:servicio|suministro)|'
+    r'(?:interrumpir|interrumpira|interrumpido)\s+(?:el\s+)?(?:servicio|suministro|bombeo)|'
+    r'(?:detener|detuvo|suspender|suspendio)\s+(?:el\s+)?bombeo|'
+    r'corte\s+(?:de\s+)?agua|falta\s+de\s+agua|baja\s+presion|'
+    r'(?:afecta|afectara|afectado|afectada|afectacion)\s+(?:el\s+)?(?:suministro|servicio|abastecimiento)|'
+    r'(?:suministro|servicio|abastecimiento)\s+(?:de\s+agua\s+)?(?:afectad[oa]|interrumpid[oa])|'
+    r'no\s+habra\s+(?:suministro|agua))', re.I)
+_WATER_NEGATED = re.compile(
+    r'(?:sin\s+afectar|no\s+afectara|no\s+se\s+interrumpira|no\s+se\s+suspendera|'
+    r'no\s+habra\s+cortes|sin\s+cortes|sin\s+interrupciones)', re.I)
+_WATER_FINISHED = re.compile(
+    r'(?:concluy[oó]|concluyeron|finaliz[oó]|finalizaron|'
+    r'restableci[oó]|restablecido|normaliz[oó]|normalizado|'
+    r'servicio\s+restaurado|trabajos\s+terminados)', re.I)
+
+
+def _day_spanish(text):
+    """Only an explicit absolute Spanish date (year required)."""
+    m = re.search(r'\b(\d{1,2})\s+(?:de\s+)?([a-z]+),?\s+(?:de\s+)?(20\d{2})\b', folded(text))
+    if not m or m.group(2) not in MONTH:
+        return None
+    try:
+        return date(int(m.group(3)), MONTH[m.group(2)], int(m.group(1)))
+    except ValueError:
+        return None
+
+
+def _article_listing_html(html, base_url, which):
+    """Use linked headings only. Do not follow search tags or unrelated pages."""
+    dom, visible = page(html)
+    headings = {folded(h) for h in dom.headings if len(h) >= 18}
+    collected = []
+    seen = set()
+    for href, label in dom.anchors:
+        absolute = urljoin(base_url, href)
+        parsed = urlsplit(absolute)
+        if parsed.scheme != 'https' or parsed.username or parsed.password or parsed.query or parsed.fragment:
+            continue
+        if which == 'samsa':
+            if parsed.hostname not in _SAMSA_HOSTS or not re.fullmatch(r'/[a-z0-9-]{22,}/?', parsed.path, re.I):
+                continue
+        else:
+            if parsed.hostname != _JUJUY_HOST or not re.fullmatch(r'/[a-z0-9-]+/[a-z0-9-]+-n\d+/?', parsed.path, re.I):
+                continue
+        if (len(label) < 18 or folded(label) not in headings or absolute in seen):
+            continue
+        date_index = None
+        if which == 'samsa':
+            # Listing template: article title immediately followed by "6 noviembre, 2026".
+            # If a date cannot be tied to the title, fetch and validate the article itself.
+            for match in re.finditer(re.escape(label), visible, re.I):
+                date_index = _day_spanish(visible[match.end():match.end()+75])
+                if date_index:
+                    break
+        collected.append((absolute, label, date_index))
+        seen.add(absolute)
+    return collected
+
+
+def _samsa_article(html, url, now, index_published=None):
+    dom, visible = page(html)
+    title = next((h for h in dom.headings if len(h) >= 18 and folded(h) not in ('noticias', 'sobre nosotros')), '')
+    if not title:
+        return None, None
+    before, after = (visible.split(title, 1) + [''])[:2]
+    published = _day_spanish(before[-130:] + ' ' + after[:160]) or _published_date_from_meta(html) or index_published
+    if index_published and published and index_published != published:
+        return None, published
+    if not published or published > now.date() or published < now.date() - timedelta(days=4):
+        return None, published
+    if _WATER_FINISHED.search(folded(title)):
+        return None, published
+    # Headline serves as a relevance filter, but actual service impact MUST
+    # be explicitly in the article's own body, not the sidebar or footer.
+    if not re.search(r'agua|acueducto|bombeo|servicio|suministro|corte|interrupcion|presion', folded(title)):
+        return None, published
+    paragraphs = []
+    for para in dom.paragraphs:
+        f = folded(para)
+        if 'informacion de contacto' in f or 'politica de privacidad' in f:
+            break
+        if len(para) >= 36:
+            paragraphs.append(para)
+    # Prevent unrelated long corporate-footer text from being treated as body.
+    body = ' '.join(paragraphs[:14])[:7000]
+    if not body:
+        return None, published
+    impact_sentences = [sentence for sentence in re.split(r'(?<=[.!?])\s+', body)
+                        if _WATER_IMPACT.search(folded(sentence))
+                        and not _WATER_NEGATED.search(folded(sentence))]
+    if not impact_sentences:
+        return None, published
+    # SAMSA operates in Posadas/Garupa. Require explicit localities in article
+    # title OR affected-service sentences, not inferred from provider address.
+    locations = folded(title + ' ' + ' '.join(impact_sentences))
+    if 'garupa' in locations and 'posadas' not in locations:
+        locality = 'Garupá'
+    elif 'posadas' in locations and 'garupa' not in locations:
+        locality = 'Posadas'
+    elif 'garupa' in locations and 'posadas' in locations:
+        # A multi-town report must not imply that both cities are wholly affected.
+        locality = 'Posadas / Garupá'
+    else:
+        return None, published
+    return mk_notice('SAMSA', 'Misiones', locality, url, 'water_service_bulletin',
+                     'publication_only_not_live', body, published_on=published.isoformat(),
+                     area_precision='zonas_segun_comunicado_no_toda_la_localidad',
+                     scheduled_start=None, scheduled_end=None), published
+
+
+def _collect_samsa(checked_at, now, fetch):
+    result = _result('samsa_misiones', checked_at)
+    result.update(parser_revision='SAMSA-NEWS-v5.46', coverage_kind='dated_company_bulletins_only',
+                  article_links_seen=0, articles_checked=0, articles_skipped_old=0,
+                  source_attempts=[])
+    newest = None
+    try:
+        entries = _article_listing_html(fetch(result['source_url']), result['source_url'], 'samsa')
+        result['article_links_seen'] = len(entries)
+        # Never fetch articles whose dated listing is already older than 4 days.
+        for link, label, index_date in entries[:10]:
+            if index_date:
+                newest = max(newest, index_date) if newest else index_date
+                if index_date < now.date() - timedelta(days=4) or index_date > now.date():
+                    result['articles_skipped_old'] += 1
+                    continue
+            if result['articles_checked'] >= 6:
+                break
+            try:
+                notice, published = _samsa_article(fetch(link), link, now, index_date)
+                result['articles_checked'] += 1
+                if published:
+                    newest = max(newest, published) if newest else published
+                if notice:
+                    result['notices'].append(notice)
+                result['source_attempts'].append({'url':link, 'result':'parsed' if notice else 'no_precise_recent_impact'})
+            except Exception as exc:
+                result['source_attempts'].append({'url':link, 'result':'fetch_or_parse_error',
+                                                  'error_type':type(exc).__name__})
+                if isinstance(exc, HTTPError) and exc.code == 429:
+                    break
+    except Exception as exc:
+        result['message'] = 'No se pudo consultar noticias oficiales de SAMSA: ' + type(exc).__name__
+        return result
+    if newest:
+        result['latest_published_date'] = newest.isoformat()
+    if result['notices']:
+        result.update(status='ok', message='Comunicados de SAMSA fechados, no estado de servicio en tiempo real.')
+    elif newest and newest < now.date() - timedelta(days=4):
+        result.update(status='stale', message='Noticias institucionales antiguas; estado actual del servicio desconocido.')
+    elif result['article_links_seen'] == 0:
+        result['message'] = 'Índice accesible sin enlaces de noticias reconocibles; revisar estructura de SAMSA.'
+    else:
+        result['message'] = 'Sin afectaciones recientes, explícitas y localizadas en las noticias consultadas. No implica servicio normal.'
+    if any(x['result']=='fetch_or_parse_error' for x in result['source_attempts']):
+        result['message'] += ' Algunos artículos no pudieron consultarse.'
+    return result
+
+
+_JUJUY_PLACES = (
+    'Alto Comedero', 'Los Alisos', 'Palpalá', 'Perico', 'San Pedro',
+    'San Salvador de Jujuy', 'La Quiaca', 'Yala', 'Palma Sola',
+    'El Carmen', 'Abra Pampa', 'Humahuaca', 'Libertador General San Martin',
+    'Fraile Pintado', 'Ciudad de Nieva', 'Huaico', 'Monterrico', 'Tilcara',
+    'Susques', 'El Ceibal', 'San Antonio', 'Lozano', 'La Mendieta',
+)
+
+
+def _jujuy_article(html, url, now):
+    dom, visible = page(html)
+    title = next((h for h in dom.headings if len(h) >= 20), '')
+    if not title:
+        return None, None
+    # Strip related articles and the footer before testing service impacts.
+    main = visible.split(title, 1)[-1]
+    footer = re.search(r'\blas m[aá]s le[ií]das\b|\bte puede interesar\b|\bministerios\b',
+                       main, re.I)
+    if footer:
+        main = main[:footer.start()]
+    published = _day_spanish(main[:900]) or _published_date_from_meta(html)
+    if not published or published > now.date() or published < now.date()-timedelta(days=4):
+        return None, published
+    if _WATER_FINISHED.search(folded(title)):
+        return None, published
+    # Check the actual news body; avoid classifying infrastructure investment
+    # announcements or isolated water-meter theft as an area-wide outage.
+    article_text = main[:6000]
+    body = re.sub(r'^.*?\b20\d\d\s*-\s*\d\d:\d\d\b', '', article_text, count=1)
+    sentences = re.split(r'(?<=[.!?])\s+', body)
+    impacts = [x for x in sentences if _WATER_IMPACT.search(folded(x))
+               and not _WATER_NEGATED.search(folded(x))]
+    if not impacts or not re.search(r'agua potable de jujuy|agua potable y saneamiento', folded(title + ' ' + article_text[:500])):
+        return None, published
+    # A location must occur in title or an impact statement, not in the
+    # standard capital-city address at the end of every Government page.
+    localized_text = folded(title + ' ' + ' '.join(impacts))
+    places = [place for place in _JUJUY_PLACES if re.search(
+        r'(?<![a-z])' + re.escape(folded(place)) + r'(?![a-z])', localized_text)]
+    if not places:
+        return None, published
+    locality = ' / '.join(places[:3])
+    return mk_notice('Agua Potable de Jujuy', 'Jujuy', locality, url,
+                     'water_service_bulletin', 'publication_only_not_live',
+                     body, published_on=published.isoformat(),
+                     area_precision='sectores_segun_comunicado_no_toda_la_localidad',
+                     scheduled_start=None, scheduled_end=None), published
+
+
+def _collect_jujuy(checked_at, now, fetch):
+    result = _result('agua_potable_jujuy_prensa', checked_at)
+    result.update(parser_revision='JUJUY-PRENSA-v5.46', coverage_kind='dated_official_government_water_bulletins_only',
+                  article_links_seen=0, articles_checked=0, source_attempts=[])
+    newest = None
+    try:
+        entries = _article_listing_html(fetch(result['source_url']), result['source_url'], 'jujuy')
+        result['article_links_seen'] = len(entries)
+        # Read only a bounded number of articles in the government water topic.
+        for link, title, _idx in entries[:8]:
+            if result['articles_checked'] >= 6:
+                break
+            try:
+                notice, published = _jujuy_article(fetch(link), link, now)
+                result['articles_checked'] += 1
+                if published:
+                    newest = max(newest, published) if newest else published
+                if notice:
+                    result['notices'].append(notice)
+                result['source_attempts'].append({'url':link, 'result':'parsed' if notice else 'no_precise_recent_impact'})
+            except Exception as exc:
+                result['source_attempts'].append({'url':link, 'result':'fetch_or_parse_error',
+                                                  'error_type':type(exc).__name__})
+                if isinstance(exc, HTTPError) and exc.code == 429:
+                    break
+    except Exception as exc:
+        result['message'] = 'No se pudo consultar prensa oficial de Jujuy: ' + type(exc).__name__
+        return result
+    if newest:
+        result['latest_published_date'] = newest.isoformat()
+    if result['notices']:
+        result.update(status='ok', message='Comunicados oficiales fechados; no confirman el corte actual ni un domicilio afectado.')
+    elif newest and newest < now.date() - timedelta(days=4):
+        result.update(status='stale', message='Solo publicaciones antiguas; estado actual del suministro desconocido.')
+    elif result['article_links_seen'] == 0:
+        result['message'] = 'Página oficial accesible sin enlaces de noticias reconocibles; revisar estructura.'
+    else:
+        result['message'] = 'Sin comunicado reciente con afectación explícita y localidad identificada. No implica suministro normal.'
+    if any(x['result']=='fetch_or_parse_error' for x in result['source_attempts']):
+        result['message'] += ' Algunos artículos no pudieron consultarse.'
+    return result
+
 def collect_one(key,checked_at,fetcher=None):
     if key not in SOURCES:
         raise KeyError(key)
@@ -1485,6 +1744,8 @@ def collect_one(key,checked_at,fetcher=None):
     if key=='sameep_chaco':return _collect_sameep(checked_at,now,fetch)
     if key=='edos_concordia':return _collect_edos(checked_at,now,fetch)
     if key=='osse_mar_del_plata':return _collect_osse(checked_at,now,fetch)
+    if key=='samsa_misiones':return _collect_samsa(checked_at,now,fetch)
+    if key=='agua_potable_jujuy_prensa':return _collect_jujuy(checked_at,now,fetch)
     return _collect_diagnostic(key,checked_at,now,fetch)
 
 
