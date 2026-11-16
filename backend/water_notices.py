@@ -1523,7 +1523,24 @@ def _article_listing_html(html, base_url, which):
         else:
             if parsed.hostname != _JUJUY_HOST or not re.fullmatch(r'/[a-z0-9-]+/[a-z0-9-]+-n\d+/?', parsed.path, re.I):
                 continue
-        if (len(label) < 18 or folded(label) not in headings or absolute in seen):
+        if len(label) < 18 or absolute in seen:
+            continue
+        if which == 'samsa':
+            # SAMSA's live WordPress listing may put titles in h4/h5 or
+            # article-card links, which VisiblePage does not list as headings.
+            # A title-to-slug check is safer than requiring a particular tag.
+            title_slug = re.sub(r'[^a-z0-9]+', '-', folded(label)).strip('-')
+            path_slug = parsed.path.strip('/').lower()
+            title_in_heading = folded(label) in headings
+            slug_corresponds = (path_slug == title_slug or
+                                path_slug.startswith(title_slug + '-') or
+                                title_slug.startswith(path_slug + '-'))
+            if (folded(label).startswith(('leer mas', 'read more')) or
+                    len(title_slug) < 22 or
+                    not (title_in_heading or slug_corresponds)):
+                continue
+        elif folded(label) not in headings:
+            # Keep Jujuy's independent government-site filter unchanged.
             continue
         date_index = None
         if which == 'samsa':
@@ -1591,7 +1608,7 @@ def _samsa_article(html, url, now, index_published=None):
 
 def _collect_samsa(checked_at, now, fetch):
     result = _result('samsa_misiones', checked_at)
-    result.update(parser_revision='SAMSA-NEWS-v5.46', coverage_kind='dated_company_bulletins_only',
+    result.update(parser_revision='SAMSA-INDEX-v5.47', coverage_kind='dated_company_bulletins_only',
                   article_links_seen=0, articles_checked=0, articles_skipped_old=0,
                   source_attempts=[])
     newest = None
@@ -1630,7 +1647,8 @@ def _collect_samsa(checked_at, now, fetch):
     elif newest and newest < now.date() - timedelta(days=4):
         result.update(status='stale', message='Noticias institucionales antiguas; estado actual del servicio desconocido.')
     elif result['article_links_seen'] == 0:
-        result['message'] = 'Índice accesible sin enlaces de noticias reconocibles; revisar estructura de SAMSA.'
+        result['message'] = ('Índice accesible sin enlaces de artículos que coincidan con títulos oficiales; '
+                             'estructura no verificada. No significa servicio normal.')
     else:
         result['message'] = 'Sin afectaciones recientes, explícitas y localizadas en las noticias consultadas. No implica servicio normal.'
     if any(x['result']=='fetch_or_parse_error' for x in result['source_attempts']):
