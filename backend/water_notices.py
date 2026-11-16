@@ -2211,6 +2211,37 @@ def _regional_index_date(fragment):
     return _parse_official_day(fragment)
 
 
+# v5.52: some SAT pages expose navigation as routerLink/onclick or
+# serialized route strings instead of ordinary <a href> links. Only exact
+# HTTPS official-domain article paths are accepted. No script is executed.
+_SAT_LITERAL_ROUTE = re.compile(
+    r"""["']((?:https://(?:www\.)?aguasdeltucuman\.com\.ar)?/noticias/[A-Za-z0-9%_.=+\-]{8,}/?)["']""", 
+    re.I)
+
+
+def _sat_embedded_article_routes(html, base):
+    """Read literal SAT article routes from HTML attributes or markup.
+
+    A string containing an external hostname is never re-based onto SAT.
+    No guesses about unpublished dates or affected localities are made.
+    """
+    from html import unescape
+    raw=unescape(html).replace('\\/', '/')
+    # Requiring quote boundaries prevents matching /noticias/... inside an
+    # untrusted full URL such as https://evil.example/noticias/anything.
+    found=[]
+    for match in _SAT_LITERAL_ROUTE.finditer(raw):
+        candidate=urljoin(base,match.group(1))
+        parsed=urlsplit(candidate)
+        if (parsed.scheme=='https' and parsed.hostname in _REGIONAL_HOSTS['sat_tucuman_noticias']
+                and not parsed.username and not parsed.password and parsed.port is None
+                and not parsed.query and not parsed.fragment
+                and re.fullmatch(r'/noticias/[^/]{8,}/?',parsed.path)
+                and candidate not in found):
+            found.append(candidate)
+    return found
+
+
 def _regional_index(html, base, key):
     """Accept only article links at two official hosts, no external shorteners."""
     dom,visible=page(html)
@@ -2240,6 +2271,14 @@ def _regional_index(html, base, key):
                 index_day=_regional_index_date(before) or _regional_index_date(after)
                 if index_day: break
         entries.append((link,label,index_day))
+    if key=='sat_tucuman_noticias':
+        # Article URLs can be stored in HTML attributes/embedded route strings
+        # even when DOM anchors contain no usable href. The article body still
+        # needs its own verified publication date, impact and locality.
+        for candidate in _sat_embedded_article_routes(html,base):
+            if candidate not in seen:
+                seen.add(candidate)
+                entries.append((candidate,'',None))
     return entries
 
 
@@ -2315,8 +2354,41 @@ def _collect_regional_news(key,checked_at,now,fetch):
              article_links_seen=0,articles_checked=0,articles_skipped_old=0,
              source_attempts=[],notices=[])
     newest=None
+    r['index_attempts']=[]
     try:
-        entries=_regional_index(fetch(r['source_url']),r['source_url'],key)
+        index_html=fetch(r['source_url'])
+        entries=_regional_index(index_html,r['source_url'],key)
+        dom,index_visible=page(index_html)
+        r['index_attempts'].append({
+            'url':r['source_url'],
+            'result':'article_links_found' if entries else 'no_recognizable_links',
+            'html_anchors_seen':len(dom.anchors),
+            'visible_text_characters':len(index_visible),
+            'html_bytes':len(index_html.encode('utf-8'))})
+        if key=='sat_tucuman_noticias':
+            r['parser_revision']='SAT-ROUTE-DIAGNOSTIC-v5.52'
+            r['index_mode']='news_index'
+            if not entries:
+                # Homepage is a second official public route, never a search
+                # engine or unofficial service. Limit fallback to one request.
+                homepage='https://aguasdeltucuman.com.ar/'
+                try:
+                    homepage_html=fetch(homepage)
+                    entries=_regional_index(homepage_html,homepage,key)
+                    home_dom,home_visible=page(homepage_html)
+                    r['index_attempts'].append({
+                        'url':homepage,
+                        'result':'article_links_found' if entries else 'no_recognizable_links',
+                        'html_anchors_seen':len(home_dom.anchors),
+                        'visible_text_characters':len(home_visible),
+                        'html_bytes':len(homepage_html.encode('utf-8'))})
+                    r['index_mode']='homepage_fallback'
+                except Exception as exc:
+                    r['index_attempts'].append({
+                        'url':homepage,'result':'fetch_or_parse_error',
+                        'error_type':type(exc).__name__})
+            if not entries:
+                r['index_warning']='SAT no expone rutas de noticias reconocibles en las paginas consultadas; no confirma ausencia de comunicados.'
         r['article_links_seen']=len(entries)
         for link,label,index_day in entries[:12]:
             if index_day:
