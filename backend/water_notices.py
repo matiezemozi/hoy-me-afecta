@@ -1,4 +1,4 @@
-"""Conservative public water-service bulletin collectors for Argentina (v5.46).
+"""Conservative public water-service bulletin collectors for Argentina (v5.48).
 
 No report is a live outage confirmation. No credentials, service identifiers or
 unofficial APIs are used. Completely independent of provincial_electricity.
@@ -203,6 +203,25 @@ def _weekday_date(fragment, published):
     return None
 
 
+def _absa_explicit_weekday_dates(paragraphs, published, now):
+    """Read every explicit weekday/day pair in ABSA's article paragraphs.
+
+    A news item may list several dated work sites. Do not silently select its
+    first date and present it as the date for the entire article. Relative
+    language such as "this week" or "today" is never treated as another date.
+    """
+    pairs = re.compile(
+        r'\b(?:lunes|martes|miercoles|jueves|viernes|sabado|domingo)\s+'
+        r'\d{1,2}(?:\s+de\s+[a-z]+)?\b')
+    found = set()
+    for paragraph in paragraphs:
+        for match in pairs.finditer(folded(paragraph)):
+            d = _weekday_date(match.group(0), published)
+            if d is not None and now.date() <= d <= now.date() + timedelta(days=HORIZON_DAYS):
+                found.add(d)
+    return sorted(found)
+
+
 def _absa_article(html,url,now):
     dom,visible=page(html)
     title=next((x for x in dom.headings if x and x.lower()!='noticias'), '')
@@ -217,8 +236,14 @@ def _absa_article(html,url,now):
         return [],None
     if published<now.date()-timedelta(days=2):
         return [],published
-    content=clean(' '.join(p for p in dom.paragraphs if len(p)>=45),2800)
-    content=content.split('Relacionado')[0]
+    article_paragraphs=[]
+    for paragraph in dom.paragraphs:
+        # Stop at explicit related-content boundaries; news recommendations may
+        # contain unrelated future dates and must not affect this article.
+        if re.search(r'\brelacionad[oa]s?\b|\bte puede interesar\b', folded(paragraph)):
+            break
+        article_paragraphs.append(paragraph)
+    content=clean(' '.join(p for p in article_paragraphs if len(p)>=45),2800)
     f=folded(title+' '+content)
     if not re.search(r'agua|suministro|presion|acueducto|caneria|red',f):
         return [],published
@@ -228,15 +253,31 @@ def _absa_article(html,url,now):
     if folded(locality)=='patagones' and 'carmen de patagones' in f:
         locality='Carmen de Patagones'
     notices=[]
-    # Published schedules without an explicit finish time MUST keep an unknown end.
-    future_day=None
-    for p in dom.paragraphs:
-        d=_weekday_date(p,published)
-        if d is not None and now.date()<=d<=now.date()+timedelta(days=HORIZON_DAYS):
-            future_day=d
-            break
-    if (future_day is not None and re.search(r'programad|se realizaran trabajos|se preve[n ]',f)
-            and re.search(r'afectara|afectar|interrumpir|faltante|interrupcion|suministro',f)):
+    # A multi-day list with different intersections is not a single-day outage.
+    # Keep its explicitly named days, but without an invented continuous period.
+    explicit_days = _absa_explicit_weekday_dates(article_paragraphs, published, now)
+    future_day = explicit_days[0] if len(explicit_days) == 1 else None
+    scheduling_terms = bool(re.search(
+        r'programad|se realizaran trabajos|se llevaran adelante tareas|'
+        r'se preve[n ]|cronograma de tareas|cronograma de trabajos', f))
+    possible_pressure_only = bool(
+        re.search(r'no implican interrupciones|no implica interrupciones|sin cortes de agua', f)
+        and re.search(r'posible|podria|baja presion', f))
+    impact_terms = bool(re.search(
+        r'afectara|afectar|interrumpir|faltante|interrupcion|suministro|baja presion', f))
+    if len(explicit_days) > 1 and scheduling_terms and impact_terms:
+        item = mk_notice(
+            'ABSA', 'Buenos Aires', locality, url,
+            'multi_day_water_works_bulletin', 'publication_only_not_live', content,
+            published_on=published.isoformat(),
+            scheduled_dates=[d.isoformat() for d in explicit_days],
+            scheduled_date=None, scheduled_start=None, scheduled_end=None,
+            time_precision='multiple_explicit_dates_no_continuous_outage',
+            impact_type='possible_low_pressure_only' if possible_pressure_only else 'works_with_reported_possible_impact')
+        item['message'] = ('Cronograma de obras para varias fechas. No presupone corte continuo '
+                           'ni servicio afectado en todas las zonas o fechas.')
+        notices.append(item)
+    elif (future_day is not None and scheduling_terms and impact_terms):
         parts=[]
         if 'general daniel cerri' in f and 'bahia blanca' in folded(title):
             parts=[('General Daniel Cerri', 'En General Daniel Cerri', 'En tanto'),
@@ -263,7 +304,9 @@ def _absa_article(html,url,now):
             notices.append(mk_notice('ABSA','Buenos Aires',loc,url,'planned_water_service_impact',
                                      'scheduled_not_confirmed',zone,scheduled_date=future_day.isoformat(),
                                      scheduled_start=start,scheduled_end=None,time_precision=time_precision,
-                                     published_on=published.isoformat()))
+                                     published_on=published.isoformat(),
+                                     impact_type=('possible_low_pressure_only' if possible_pressure_only
+                                                  else 'works_with_reported_possible_impact')))
     elif re.search(r'\b(se estan registrando|se registra|afecta el suministro|afectando|falta[s]? de agua|baja presion)\b',f):
         # Recent news is not evidence that the problem remains ongoing.
         notices.append(mk_notice('ABSA','Buenos Aires',locality,url,'water_service_bulletin',
@@ -275,6 +318,7 @@ def _absa_article(html,url,now):
 def _collect_absa(checked_at,now,fetch):
     company,province,url=SOURCES['absa_buenos_aires']
     base=_result('absa_buenos_aires',checked_at)
+    base['parser_revision']='ABSA-MULTIDAY-v5.48'
     seen=[];newest=None;article_count=0;errors=[]
     try:
         dom,_=page(fetch(url))
