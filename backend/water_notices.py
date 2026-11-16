@@ -1,4 +1,4 @@
-"""Conservative public water-service bulletin collectors for Argentina (v5.50).
+"""Conservative public water-service bulletin collectors for Argentina (v5.51).
 
 No report is a live outage confirmation. No credentials, service identifiers or
 unofficial APIs are used. Completely independent of provincial_electricity.
@@ -37,6 +37,8 @@ SOURCES = {
     'agua_potable_jujuy_prensa': ('Agua Potable de Jujuy', 'Jujuy', 'https://prensa.jujuy.gob.ar/agua-potable-a48'),
     'scpl_comodoro_chubut': ('SCPL Comodoro Rivadavia', 'Chubut', 'https://scpl.coop/index.php/site/ver-seccion?id=2'),
     'epas_neuquen_noticias': ('EPAS Neuquen', 'Neuquen', 'https://www.epas.gov.ar/comunidad/noticias/'),
+    'sat_tucuman_noticias': ('Sociedad Aguas del Tucumán', 'Tucumán', 'https://aguasdeltucuman.com.ar/noticias'),
+    'aguas_santiago_novedades': ('Aguas de Santiago', 'Santiago del Estero', 'https://aguasdesantiago.com.ar/categoria/4/novedades'),
 }
 WEEKDAY = {'lunes':0, 'martes':1, 'miercoles':2, 'jueves':3, 'viernes':4,
            'sabado':5, 'domingo':6}
@@ -2150,6 +2152,213 @@ def _collect_epas(checked_at, now, fetch):
     return r
 
 
+
+# v5.51: new provider news sections. These are official public bulletins,
+# not real-time supply checks. No user account, cookies or personal data.
+_REGIONAL_HOSTS = {
+    'sat_tucuman_noticias': ('aguasdeltucuman.com.ar', 'www.aguasdeltucuman.com.ar'),
+    'aguas_santiago_novedades': ('aguasdesantiago.com.ar', 'www.aguasdesantiago.com.ar'),
+}
+_REGIONAL_LOCATIONS = {
+    'sat_tucuman_noticias': (
+        'San Miguel de Tucumán', 'Tafí Viejo', 'Yerba Buena',
+        'Banda del Río Salí', 'Las Talitas', 'Alderetes', 'Lules',
+        'Bella Vista', 'Concepción', 'Monteros', 'Aguilares', 'Famaillá',
+        'Ranchillos', 'Trancas',
+    ),
+    'aguas_santiago_novedades': (
+        'Santiago del Estero', 'La Banda', 'Termas de Río Hondo',
+        'Añatuya', 'Clodomira', 'El Simbolar', 'La Cañada',
+        'Los Quiroga', 'Quimilí', 'Suncho Corral', 'Tintina',
+    ),
+}
+_REGIONAL_IMPACT = re.compile(
+    r'(?:corte(?:s)? (?:programad[oa]s? )?(?:de agua|del (?:servicio|suministro))|'
+    r'interrupcion(?:es)? (?:del |de )?(?:servicio|suministro|agua potable)|'
+    r'(?:se )?interrumpira (?:el )?(?:servicio|suministro)|'
+    r'(?:falta de agua|baja presion|disminucion (?:de la )?presion)|'
+    r'(?:sin suministro de agua|suministro (?:se vera|esta) afectado)|'
+    r'(?:afectara|afectado|afectacion) (?:el |del )?(?:servicio|suministro))')
+_REGIONAL_NEGATIVE = re.compile(
+    r'(?:sin (?:afectar|interrumpir) (?:el )?(?:servicio|suministro)|'
+    r'no (?:se )?(?:interrumpira|vera afectado) (?:el )?(?:servicio|suministro)|'
+    r'no (?:habra|se registraran) (?:cortes|interrupciones)|'
+    r'ya (?:se )?(?:normalizo|restablecio)|'
+    r'no implica(?:n)? (?:cortes|interrupciones))')
+_REGIONAL_FINISHED = re.compile(
+    r'\b(?:finaliz[oa]|finalizaron|concluyeron|normaliz[oa]|'
+    r'restablecid[oa]|se restablecio|sin cortes|sin interrupciones)\b')
+_REGIONAL_SANTIAGO_MONTHS = {'ene':1,'feb':2,'mar':3,'abr':4,'may':5,'jun':6,
+                              'jul':7,'ago':8,'sep':9,'oct':10,'nov':11,'dic':12}
+
+
+def _regional_index_date(fragment):
+    """Recognize complete Spanish month abbreviations, never guess years."""
+    f=folded(fragment)
+    match=re.search(r'\b(\d{1,2})\s+(ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)\.?\s+(20\d{2})\b',f)
+    if match:
+        try:
+            return date(int(match.group(3)), _REGIONAL_SANTIAGO_MONTHS[match.group(2)],
+                        int(match.group(1)))
+        except ValueError:
+            return None
+    match=re.search(r'\b(\d{1,2})[/-](\d{1,2})[/-](20\d{2})\b',f)
+    if match:
+        try:
+            return date(int(match.group(3)),int(match.group(2)),int(match.group(1)))
+        except ValueError:
+            return None
+    return _parse_official_day(fragment)
+
+
+def _regional_index(html, base, key):
+    """Accept only article links at two official hosts, no external shorteners."""
+    dom,visible=page(html)
+    entries=[]
+    seen=set()
+    for href,label in dom.anchors:
+        link=urljoin(base, href)
+        parsed=urlsplit(link)
+        if parsed.scheme!='https' or parsed.hostname not in _REGIONAL_HOSTS[key]:
+            continue
+        if key=='sat_tucuman_noticias':
+            # SAT uses both Unicode titles and encoded text as news slugs.
+            valid=(parsed.path.startswith('/noticias/') and len(parsed.path)>len('/noticias/')+5)
+        else:
+            valid=bool(re.fullmatch(r'/nota/\d+/[a-zA-Z0-9_-]+/?',parsed.path))
+        if not valid or link in seen:
+            continue
+        seen.add(link)
+        # Publication date must be linked to the listing title, not to another
+        # story. SAT may not expose index dates: keep those as unknown.
+        index_day=None
+        if key=='aguas_santiago_novedades' and len(label)>14:
+            positions=[m.start() for m in re.finditer(re.escape(label),visible,re.I)]
+            for pos in positions:
+                before=visible[max(0,pos-55):pos]
+                after=visible[pos+len(label):pos+len(label)+75]
+                index_day=_regional_index_date(before) or _regional_index_date(after)
+                if index_day: break
+        entries.append((link,label,index_day))
+    return entries
+
+
+def _regional_article(html,url,now,key,index_published=None):
+    dom,visible=page(html)
+    title=next((h for h in dom.headings if len(h)>18 and folded(h) not in
+                ('noticias','noticias y novedades','novedades')), '')
+    if not title:
+        return None,None,'article_title_missing'
+    published=_published_date_from_meta(html)
+    if not published:
+        # Only use a date immediately adjacent to the main heading.
+        at=visible.find(title)
+        if at>=0:
+            published=(_regional_index_date(visible[max(0,at-65):at]) or
+                       _regional_index_date(visible[at+len(title):at+len(title)+95]))
+    if published and index_published and published!=index_published:
+        return None,None,'index_article_date_mismatch'
+    published=published or index_published
+    if not published:
+        return None,None,'publication_date_not_verified'
+    if published>now.date()+timedelta(days=1):
+        return None,published,'publication_date_in_future'
+    if published<now.date()-timedelta(days=3):
+        return None,published,'old_publication'
+    if _REGIONAL_FINISHED.search(folded(title)):
+        return None,published,'finished_or_negative_headline'
+    paragraphs=[]
+    for p in dom.paragraphs:
+        f=folded(p)
+        if re.search(r'noticias relacionadas|te puede interesar|noticias destacadas|atencion comercial',f):
+            break
+        if len(p)>45:
+            paragraphs.append(p)
+    if not paragraphs:
+        return None,published,'no_article_paragraphs'
+    content=' '.join(paragraphs)
+    if len(content)>12000:
+        return None,published,'article_body_too_large'
+    # An impact has to be mentioned in an actual article sentence, not just
+    # inferred from the company name, historical works or site navigation.
+    impact_sentences=[]
+    for paragraph in paragraphs:
+        for sentence in re.split(r'(?<=[.!?])\s+',paragraph):
+            f=folded(sentence)
+            if _REGIONAL_NEGATIVE.search(f):
+                continue
+            if _REGIONAL_IMPACT.search(f):
+                impact_sentences.append(sentence)
+    if not impact_sentences:
+        return None,published,'no_explicit_water_impact'
+    # Location must be attached to the affected service, or to the headline.
+    scope=folded(title+' '+' '.join(impact_sentences))
+    found=[]
+    for locality in _REGIONAL_LOCATIONS[key]:
+        if re.search(r'(?<![a-z])'+re.escape(folded(locality))+r'(?![a-z])',scope):
+            found.append(locality)
+    if len(found)!=1:
+        return None,published,'location_missing_or_ambiguous'
+    company,province,_=SOURCES[key]
+    notice=mk_notice(company,province,found[0],url,
+                     'water_service_bulletin','publication_only_not_live',
+                     content,published_on=published.isoformat(),
+                     area_precision='zonas_segun_comunicado_no_toda_la_localidad',
+                     scheduled_start=None,scheduled_end=None)
+    return notice,published,'parsed'
+
+
+def _collect_regional_news(key,checked_at,now,fetch):
+    r=_result(key,checked_at)
+    r.update(parser_revision='REGIONAL-NEWS-v5.51',
+             coverage_kind='dated_official_company_news_only_not_live_state',
+             article_links_seen=0,articles_checked=0,articles_skipped_old=0,
+             source_attempts=[],notices=[])
+    newest=None
+    try:
+        entries=_regional_index(fetch(r['source_url']),r['source_url'],key)
+        r['article_links_seen']=len(entries)
+        for link,label,index_day in entries[:12]:
+            if index_day:
+                newest=max(newest,index_day) if newest else index_day
+            if index_day and index_day<now.date()-timedelta(days=3):
+                r['articles_skipped_old']+=1
+                continue
+            if r['articles_checked']>=4:break
+            try:
+                notes,published,reason=_regional_article(fetch(link),link,now,key,index_day)
+                r['articles_checked']+=1
+                if published:
+                    newest=max(newest,published) if newest else published
+                if notes:r['notices'].append(notes)
+                r['source_attempts'].append({'url':link,'result':reason})
+            except Exception as exc:
+                error={'url':link,'result':'fetch_or_parse_error','error_type':type(exc).__name__}
+                if isinstance(exc,HTTPError):error['http_status']=exc.code
+                r['source_attempts'].append(error)
+                if isinstance(exc,HTTPError) and exc.code==429:
+                    r['rate_limited']=True
+                    break
+    except Exception as exc:
+        r['message']='No se pudo verificar el índice oficial: '+type(exc).__name__
+        return r
+    if newest:r['latest_published_date']=newest.isoformat()
+    if r['notices']:
+        r['status']='ok'
+        r['message']='Noticias oficiales fechadas sobre posibles afectaciones; no acreditan servicio actual.'
+    elif newest and newest<now.date()-timedelta(days=3):
+        r['status']='stale'
+        r['message']='Las publicaciones verificadas son antiguas; no implica servicio normal.'
+    elif not entries:
+        r['message']='Índice accesible, sin enlaces de noticias reconocibles; requiere revisar su estructura.'
+    else:
+        r['message']='No se identificaron avisos recientes con fecha, afectación y localidad verificables.'
+    if r.get('rate_limited'):
+        r['message']+=' Consulta parcial por límite HTTP 429.'
+    elif any(a['result']=='fetch_or_parse_error' for a in r['source_attempts']):
+        r['message']+=' Consulta parcial por errores de lectura.'
+    return r
+
 def collect_one(key,checked_at,fetcher=None):
     if key not in SOURCES:
         raise KeyError(key)
@@ -2169,6 +2378,8 @@ def collect_one(key,checked_at,fetcher=None):
     if key=='agua_potable_jujuy_prensa':return _collect_jujuy(checked_at,now,fetch)
     if key=='scpl_comodoro_chubut':return _collect_scpl(checked_at,now,fetch)
     if key=='epas_neuquen_noticias':return _collect_epas(checked_at,now,fetch)
+    if key in ('sat_tucuman_noticias','aguas_santiago_novedades'):
+        return _collect_regional_news(key,checked_at,now,fetch)
     return _collect_diagnostic(key,checked_at,now,fetch)
 
 
