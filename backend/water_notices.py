@@ -1,4 +1,4 @@
-"""Conservative public water-service bulletin collectors for Argentina (v5.49).
+"""Conservative public water-service bulletin collectors for Argentina (v5.50).
 
 No report is a live outage confirmation. No credentials, service identifiers or
 unofficial APIs are used. Completely independent of provincial_electricity.
@@ -747,10 +747,18 @@ def _arsa_article(html,url,now,index_published=None):
 
 
 def _collect_arsa(checked_at,now,fetch):
+    """Limited, conservative ARSA sampling; HTTP 429 stops the entire host.
+
+    Don't claim complete coverage: some items may be deferred by the request
+    budget. Older, explicitly dated index entries need not be fetched again.
+    """
     result=_result('aguas_rionegrinas_arsa',checked_at)
-    result['parser_revision']='ARSA-ARTICLES-v5.37'
+    result['parser_revision']='ARSA-THROTTLED-v5.50'
     result['rate_limited']=False
     result['article_links_skipped_after_rate_limit']=0
+    result['article_links_skipped_old']=0
+    result['articles_deferred_by_budget']=0
+    result['max_article_requests_per_run']=3
     url=result['source_url']
     seen=[];attempts=[];checked=0;newest=None
     index_read=False
@@ -762,7 +770,6 @@ def _collect_arsa(checked_at,now,fetch):
         for href,label in dom.anchors:
             link=urljoin(url,href)
             parsed=urlsplit(link)
-            # Only real articles in the official interruption-category index.
             if parsed.hostname not in ('aguasrionegrinas.com','www.aguasrionegrinas.com'):
                 continue
             if not re.fullmatch(r'/[a-z0-9-]{20,}/?',parsed.path):
@@ -772,21 +779,31 @@ def _collect_arsa(checked_at,now,fetch):
             links.append(link)
             link_dates[link]=_arsa_index_date(index_visible,label)
         result['article_links_seen']=len(links)
-        selected=links[:9]
+        # Keep the same newest-first category window. Only *reliably dated*
+        # articles older than our bulletin horizon can be skipped without an
+        # extra request; undated items still count towards the request budget.
+        candidates=[]
+        for link in links[:9]:
+            day=link_dates.get(link)
+            if day and day < now.date()-timedelta(days=2):
+                result['article_links_skipped_old']+=1
+            else:
+                candidates.append(link)
+        selected=candidates[:result['max_article_requests_per_run']]
+        result['articles_deferred_by_budget']=max(0,len(candidates)-len(selected))
         for position,link in enumerate(selected):
-            # A small delay for production HTTP requests is courteous to the
-            # official host. Fixture-based unit tests do not sleep.
+            # Requests are deliberately spread out for production collection.
+            # Offline fixture-based unit tests do not sleep.
             if position and fetch is fetch_html:
-                sleep(0.65)
+                sleep(2.25)
             checked+=1
             try:
                 transient_retry=False
                 try:
                     article_html=fetch(link)
                 except HTTPError as http_exc:
-                    # HTTP 429 is explicitly NOT retried: a second immediate
-                    # request can extend the site's rate limiting. A short list
-                    # of true server failures may be retried once only.
+                    # Never retry HTTP 429 immediately. A few transient 5xx
+                    # responses may be retried only once, as before.
                     if http_exc.code not in (500,502,503,504):
                         raise
                     transient_retry=True
@@ -807,8 +824,6 @@ def _collect_arsa(checked_at,now,fetch):
                 attempts.append(failed)
                 if isinstance(exc,HTTPError) and exc.code==429:
                     result['rate_limited']=True
-                    # Stop requests to the same provider until the next run.
-                    # Never infer that the unvisited articles contain no news.
                     result['article_links_skipped_after_rate_limit']=len(selected)-position-1
                     break
     except Exception as exc:
@@ -823,12 +838,10 @@ def _collect_arsa(checked_at,now,fetch):
     result['notices']=list({n['id']:n for n in seen}.values())
     if newest:
         result['latest_published_date']=newest.isoformat()
-    # This is the completeness of article FETCHING, not of water service
-    # coverage in the province or confirmation of any ongoing outage.
     error_count=sum(1 for attempt in attempts if attempt['result']=='fetch_or_parse_error')
+    partial=bool(error_count or result['rate_limited'] or result['articles_deferred_by_budget'])
     result['article_fetch_completeness']=(
-        'partial' if error_count or result['rate_limited'] else
-        'selected_articles_checked' if index_read else 'unverified')
+        'partial' if partial else 'selected_articles_checked' if index_read else 'unverified')
     if result['notices']:
         result['status']='ok'
         result['message']='Comunicados de ARSA fechados; no confirman la situación en tiempo real.'
@@ -845,6 +858,9 @@ def _collect_arsa(checked_at,now,fetch):
         result['message']='No se recuperaron artículos recientes con localidad y afectación verificables.'
         if error_count:
             result['message']+=f' {error_count} artículo(s) no pudieron consultarse; no implica servicio normal.'
+    if result['articles_deferred_by_budget']:
+        result['message']+=(' Consulta PARCIAL: se pospusieron '
+                            f"{result['articles_deferred_by_budget']} artículo(s) para reducir el riesgo de HTTP 429.")
     return result
 
 
@@ -1847,7 +1863,10 @@ def _scpl_index(html, root):
         if re.search(r'corte de calzada|corte de energia|saneamiento|red cloacal', title):
             continue
         seen.add(url)
-        result.append((url, label, _scpl_index_date(visible, label)))
+        # SCPL archives can contain hundreds of historic links. Never scan
+        # the entire page repeatedly to date items beyond our first window.
+        published = _scpl_index_date(visible, label) if len(result) < 24 else None
+        result.append((url, label, published))
     return result
 
 
@@ -1915,9 +1934,11 @@ def _scpl_article(html, url, now, index_published=None):
 
 def _collect_scpl(checked_at, now, fetch):
     r = _result('scpl_comodoro_chubut', checked_at)
-    r.update(parser_revision='SCPL-COMUNICADOS-v5.49',
+    r.update(parser_revision='SCPL-INDEX-OPT-v5.50',
              coverage_kind='dated_public_scpl_bulletins_only_not_recurring_schedule',
              article_links_seen=0, articles_checked=0, articles_skipped_old=0,
+             articles_skipped_cancelled=0, index_window_considered=0,
+             article_links_outside_window=0,
              source_attempts=[], index_attempts=[], notices=[])
     newest = None
     try:
@@ -1934,12 +1955,24 @@ def _collect_scpl(checked_at, now, fetch):
                 r['index_attempts'].append({'url': index_url, 'result': 'fetch_or_parse_error',
                                             'error_type': type(index_exc).__name__})
         r['article_links_seen'] = len(entries)
-        # The list is newest-first in the real official index.
-        for link, label, day in entries[:12]:
+        # Only the first window is monitored, NOT the whole 963+ article archive.
+        # Explicitly record that limitation in the feed.
+        window = entries[:12]
+        r['index_window_considered'] = len(window)
+        r['article_links_outside_window'] = max(0, len(entries)-len(window))
+        for link, label, day in window:
             if day:
                 newest = max(newest, day) if newest else day
             if day and day < now.date() - timedelta(days=3):
                 r['articles_skipped_old'] += 1
+                continue
+            # Cancelled and normalized water interruptions can be recognized
+            # from the official headline without re-requesting the article.
+            if _SCPL_CANCEL.search(folded(label)):
+                r['articles_skipped_cancelled'] += 1
+                r['source_attempts'].append({'url':link,
+                    'result':'cancelled_or_restored_announcement',
+                    'not_fetched':True})
                 continue
             if r['articles_checked'] >= 5:
                 break
@@ -1974,6 +2007,8 @@ def _collect_scpl(checked_at, now, fetch):
         r['message'] = 'Sin afectaciones recientes vigentes verificables; los anuncios de suspension no se convierten en cortes.'
     if any(x['result'] == 'fetch_or_parse_error' for x in r['source_attempts']):
         r['message'] += ' Consulta parcial por errores de lectura.'
+    if r['article_links_outside_window']:
+        r['message'] += ' Se revisó solo la ventana reciente del índice; no el archivo histórico completo.'
     return r
 
 
