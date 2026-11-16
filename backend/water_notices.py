@@ -1,4 +1,4 @@
-"""Conservative public water-service bulletin collectors for Argentina (v5.48).
+"""Conservative public water-service bulletin collectors for Argentina (v5.49).
 
 No report is a live outage confirmation. No credentials, service identifiers or
 unofficial APIs are used. Completely independent of provincial_electricity.
@@ -35,6 +35,8 @@ SOURCES = {
     'osse_mar_del_plata': ('OSSE Mar del Plata', 'Buenos Aires', 'https://www.osmgp.gov.ar/osse/noticias/'),
     'samsa_misiones': ('SAMSA', 'Misiones', 'https://samsa.com.ar/noticias/'),
     'agua_potable_jujuy_prensa': ('Agua Potable de Jujuy', 'Jujuy', 'https://prensa.jujuy.gob.ar/agua-potable-a48'),
+    'scpl_comodoro_chubut': ('SCPL Comodoro Rivadavia', 'Chubut', 'https://scpl.coop/index.php/site/ver-seccion?id=2'),
+    'epas_neuquen_noticias': ('EPAS Neuquen', 'Neuquen', 'https://www.epas.gov.ar/comunidad/noticias/'),
 }
 WEEKDAY = {'lunes':0, 'martes':1, 'miercoles':2, 'jueves':3, 'viernes':4,
            'sabado':5, 'domingo':6}
@@ -1791,6 +1793,328 @@ def _collect_jujuy(checked_at, now, fetch):
         result['message'] += ' Algunos artículos no pudieron consultarse.'
     return result
 
+
+
+# The SCPL (Comodoro Rivadavia) publishes individual, dated water-service
+# announcements and cancellations. The old season-wide recurring schedule is
+# NEVER projected into future outages: more recent notices can suspend it.
+_SCPL_HOSTS = ('scpl.coop', 'www.scpl.coop')
+_SCPL_WATER_TITLE = re.compile(r'(?:corte|interrupcion|falta de agua|baja presion|suministro|servicio)', re.I)
+_SCPL_IMPACT = re.compile(
+    r'(?:se interrump(?:e|ira) el (?:suministro|servicio)|'
+    r'(?:interrupcion|corte) (?:del |de )?(?:servicio|suministro|agua)|'
+    r'(?:falta de agua|baja presion|sin suministro|se vera afectad[oa])|'
+    r'(?:se registraran|podran registrarse) (?:baja presion|faltas de suministro))', re.I)
+_SCPL_CANCEL = re.compile(
+    r'(?:se suspende|suspendido|se cancela|se reprograma|no habra corte|'
+    r'no hay corte|no se interrumpira|sin cortes|se normaliza|'
+    r'normalizacion|se restablecio|se restablece|finalizaron)', re.I)
+
+
+def _scpl_index_date(index_text, label):
+    # Date is immediately after the title on the official index.
+    if not label:
+        return None
+    for m in re.finditer(re.escape(label), index_text, re.I):
+        chunk = index_text[m.end():m.end()+100]
+        found = re.search(r'\b(\d{2}-\d{2}-20\d{2})\b', chunk)
+        if found:
+            try:
+                return _ddmmyyyy(found.group(1))
+            except ValueError:
+                continue
+    return None
+
+
+def _scpl_index(html, root):
+    dom, visible = page(html)
+    result = []
+    seen = set()
+    for href, label in dom.anchors:
+        url = urljoin(root, href)
+        parts = urlsplit(url)
+        if parts.scheme != 'https' or parts.hostname not in _SCPL_HOSTS:
+            continue
+        if parts.path != '/index.php/site/ver-nota':
+            continue
+        if not re.search(r'(?:^|&)id=\d{1,7}(?:&|$)', parts.query):
+            continue
+        if url in seen or len(label) < 22:
+            continue
+        title = folded(label)
+        if not _SCPL_WATER_TITLE.search(title) or not re.search(r'agua|suministro', title):
+            continue
+        if re.search(r'corte de calzada|corte de energia|saneamiento|red cloacal', title):
+            continue
+        seen.add(url)
+        result.append((url, label, _scpl_index_date(visible, label)))
+    return result
+
+
+def _scpl_article(html, url, now, index_published=None):
+    dom, visible = page(html)
+    headline = next((h for h in dom.headings
+                     if len(h) >= 22 and _SCPL_WATER_TITLE.search(folded(h))), '')
+    if not headline:
+        return None, None, 'no_water_headline'
+    # A date next to the headline belongs to the article; navigation dates do not.
+    pos = visible.find(headline)
+    block = visible[pos+len(headline):pos+len(headline)+220] if pos >= 0 else ''
+    m = re.search(r'\b(\d{2}-\d{2}-20\d{2})\b', block)
+    published = None
+    if m:
+        try:
+            published = _ddmmyyyy(m.group(1))
+        except ValueError:
+            pass
+    if index_published and published and index_published != published:
+        return None, None, 'index_article_date_mismatch'
+    published = published or index_published
+    if not published or published > now.date() + timedelta(days=1):
+        return None, published, 'missing_or_future_publication_date'
+    if published < now.date() - timedelta(days=3):
+        return None, published, 'old_publication'
+    if _SCPL_CANCEL.search(folded(headline)):
+        return None, published, 'cancelled_or_restored_announcement'
+    # Read the article body only, never the footer or other site announcements.
+    paragraph_list = []
+    for para in dom.paragraphs:
+        if len(para) > 30 and not re.search(r'consejos utiles|atencion al publico', folded(para)):
+            paragraph_list.append(para)
+    body = ' '.join(paragraph_list)
+    if not body and pos >= 0:
+        following = visible[pos+len(headline):]
+        following = re.split(r'CONSEJOS UTILES|GALERIA DE IMAGENES|DATOS IMPORTANTES', following, 1, flags=re.I)[0]
+        body = clean(following, 3000)
+    if not body or len(body) > 12000:
+        return None, published, 'article_body_unavailable'
+    normalized = folded(body)
+    if _SCPL_CANCEL.search(normalized):
+        return None, published, 'cancelled_or_restored_announcement'
+    if not _SCPL_IMPACT.search(normalized):
+        return None, published, 'no_explicit_water_impact'
+    # A past explicitly dated incident must not be republished as a new event.
+    action_day = None
+    for para in paragraph_list or [body]:
+        candidate = _weekday_date(para, published)
+        if candidate:
+            action_day = candidate
+            break
+    if action_day and action_day < now.date():
+        return None, published, 'event_date_already_passed'
+    if 'rada tilly' in folded(headline) and 'comodoro' in folded(headline):
+        return None, published, 'multiple_localities_ambiguous'
+    locality = 'Rada Tilly' if 'rada tilly' in folded(headline) else 'Comodoro Rivadavia'
+    notice = mk_notice('SCPL Comodoro Rivadavia', 'Chubut', locality, url,
+                       'water_service_bulletin', 'publication_only_not_live', body,
+                       published_on=published.isoformat(),
+                       area_precision='barrios_o_zonas_segun_comunicado_no_toda_la_ciudad',
+                       scheduled_start=None, scheduled_end=None)
+    return notice, published, 'parsed'
+
+
+def _collect_scpl(checked_at, now, fetch):
+    r = _result('scpl_comodoro_chubut', checked_at)
+    r.update(parser_revision='SCPL-COMUNICADOS-v5.49',
+             coverage_kind='dated_public_scpl_bulletins_only_not_recurring_schedule',
+             article_links_seen=0, articles_checked=0, articles_skipped_old=0,
+             source_attempts=[], index_attempts=[], notices=[])
+    newest = None
+    try:
+        entries = []
+        for index_url in (r['source_url'], 'https://scpl.coop/'):
+            try:
+                entries = _scpl_index(fetch(index_url), index_url)
+                r['index_attempts'].append({'url': index_url,
+                                            'result': 'article_links_found' if entries else 'no_matching_links'})
+                if entries:
+                    r['index_mode'] = 'official_communications' if index_url == r['source_url'] else 'official_home_fallback'
+                    break
+            except Exception as index_exc:
+                r['index_attempts'].append({'url': index_url, 'result': 'fetch_or_parse_error',
+                                            'error_type': type(index_exc).__name__})
+        r['article_links_seen'] = len(entries)
+        # The list is newest-first in the real official index.
+        for link, label, day in entries[:12]:
+            if day:
+                newest = max(newest, day) if newest else day
+            if day and day < now.date() - timedelta(days=3):
+                r['articles_skipped_old'] += 1
+                continue
+            if r['articles_checked'] >= 5:
+                break
+            try:
+                note, published, reason = _scpl_article(fetch(link), link, now, day)
+                r['articles_checked'] += 1
+                if published:
+                    newest = max(newest, published) if newest else published
+                if note:
+                    r['notices'].append(note)
+                r['source_attempts'].append({'url': link, 'result': reason})
+            except Exception as exc:
+                r['source_attempts'].append({'url': link, 'result': 'fetch_or_parse_error',
+                                             'error_type': type(exc).__name__})
+                if isinstance(exc, HTTPError) and exc.code == 429:
+                    r['rate_limited'] = True
+                    break
+    except Exception as exc:
+        r['message'] = 'Portal SCPL no verificable: ' + type(exc).__name__
+        return r
+    if newest:
+        r['latest_published_date'] = newest.isoformat()
+    if r['notices']:
+        r['status'] = 'ok'
+        r['message'] = 'Comunicados recientes y fechados. No confirman que el corte siga activo.'
+    elif newest and newest < now.date() - timedelta(days=3):
+        r['status'] = 'stale'
+        r['message'] = 'Solo comunicados antiguos. No se proyectan cortes estacionales sin confirmacion reciente.'
+    elif not entries:
+        r['message'] = 'Indice accesible pero no se identificaron articulos de agua.'
+    else:
+        r['message'] = 'Sin afectaciones recientes vigentes verificables; los anuncios de suspension no se convierten en cortes.'
+    if any(x['result'] == 'fetch_or_parse_error' for x in r['source_attempts']):
+        r['message'] += ' Consulta parcial por errores de lectura.'
+    return r
+
+
+_EPAS_HOSTS = ('epas.gov.ar', 'www.epas.gov.ar')
+_EPAS_LOCATIONS = (
+    'Neuqu\u00e9n Capital', 'Chos Malal', 'Centenario', 'Cutral C\u00f3',
+    'Plaza Huincul', 'Andacollo', 'Jun\u00edn de los Andes',
+    'Villa La Angostura', 'Senillosa', 'Loncopu\u00e9',
+    'Villa El Choc\u00f3n', 'Taquimil\u00e1n', 'Caviahue',
+)
+_EPAS_IMPACT = re.compile(
+    r'(?:se vera interrumpid[oa] (?:el )?(?:suministro|servicio)|'
+    r'se interrumpira (?:el )?(?:suministro|servicio)|'
+    r'interrupcion (?:del |de )?(?:servicio|suministro|agua)|'
+    r'corte de agua|falta de agua|baja presion|'
+    r'sin suministro de agua|afectara el suministro)', re.I)
+
+
+def _epas_index(html, root):
+    dom, visible = page(html)
+    entries, seen = [], set()
+    for href, label in dom.anchors:
+        url = urljoin(root, href)
+        parsed = urlsplit(url)
+        if parsed.scheme != 'https' or parsed.hostname not in _EPAS_HOSTS:
+            continue
+        if not re.fullmatch(r'/20\d{2}/\d{2}/\d{2}/[a-z0-9-]+/?', parsed.path):
+            continue
+        if url in seen or len(label) < 23:
+            continue
+        # Find an index date immediately following its title.
+        d = None
+        for m in re.finditer(re.escape(label), visible, re.I):
+            match = re.search(r'\b\d{1,2}\s+(?:de\s+)?[a-z]+,?\s*(?:de\s+)?20\d{2}\b',
+                              folded(visible[m.end():m.end()+160]))
+            if match:
+                d = _parse_official_day(match.group(0))
+                if d:
+                    break
+        seen.add(url)
+        entries.append((url, label, d))
+    return entries
+
+
+def _epas_article(html, url, now, index_published=None):
+    dom, visible = page(html)
+    title = next((h for h in dom.headings if len(h) > 24 and
+                  folded(h) not in ('noticias', 'novedades')), '')
+    if not title:
+        return None, None, 'article_title_missing'
+    published = _published_date_from_meta(html)
+    if not published:
+        pos = visible.find(title)
+        if pos >= 0:
+            published = _parse_official_day(visible[pos+len(title):pos+len(title)+220])
+    if published and index_published and published != index_published:
+        return None, None, 'index_article_date_mismatch'
+    published = published or index_published
+    if not published or published > now.date()+timedelta(days=1):
+        return None, published, 'missing_or_future_publication_date'
+    if published < now.date()-timedelta(days=3):
+        return None, published, 'old_publication'
+    if re.search(r'finaliz|normaliz|restablecid|sin cortes|sin afectar', folded(title)):
+        return None, published, 'finished_or_negative_headline'
+    body = ' '.join(p for p in dom.paragraphs if len(p) > 40)
+    if not body or len(body) > 12000:
+        return None, published, 'no_article_body'
+    normalized = folded(body)
+    if re.search(r'no se interrumpira|sin afectar el servicio|no habra corte', normalized):
+        return None, published, 'negative_impact'
+    if not _EPAS_IMPACT.search(normalized):
+        return None, published, 'no_explicit_water_impact'
+    named = [loc for loc in _EPAS_LOCATIONS if re.search(
+        r'(?<![a-z])' + re.escape(folded(loc)) + r'(?![a-z])', folded(title))]
+    if not named:
+        # A precise article sentence is required; province-wide mention is not enough.
+        for loc in _EPAS_LOCATIONS:
+            patt = r'(?:en|de)\s+(?:la localidad de\s+|la ciudad de\s+)?' + re.escape(folded(loc)) + r'\b'
+            if re.search(patt, normalized):
+                named.append(loc)
+    if len(named) != 1:
+        return None, published, 'locality_not_precise'
+    notice = mk_notice('EPAS Neuquen', 'Neuquen', named[0], url,
+                       'water_service_bulletin', 'publication_only_not_live', body,
+                       published_on=published.isoformat(),
+                       area_precision='zonas_segun_comunicado_no_toda_la_localidad',
+                       scheduled_start=None, scheduled_end=None)
+    return notice, published, 'parsed'
+
+
+def _collect_epas(checked_at, now, fetch):
+    r = _result('epas_neuquen_noticias', checked_at)
+    r.update(parser_revision='EPAS-NEWS-v5.49',
+             coverage_kind='dated_official_epas_public_news_only',
+             article_links_seen=0, articles_checked=0,
+             articles_skipped_old=0, notices=[], source_attempts=[])
+    newest = None
+    try:
+        entries = _epas_index(fetch(r['source_url']), r['source_url'])
+        r['article_links_seen'] = len(entries)
+        for url, title, indexed in entries[:10]:
+            if indexed:
+                newest = max(newest, indexed) if newest else indexed
+            if indexed and indexed < now.date() - timedelta(days=3):
+                r['articles_skipped_old'] += 1
+                continue
+            if r['articles_checked'] >= 5:
+                break
+            try:
+                note, published, reason = _epas_article(fetch(url), url, now, indexed)
+                r['articles_checked'] += 1
+                if published:
+                    newest = max(newest, published) if newest else published
+                if note:
+                    r['notices'].append(note)
+                r['source_attempts'].append({'url': url, 'result': reason})
+            except Exception as exc:
+                r['source_attempts'].append({'url': url, 'result': 'fetch_or_parse_error',
+                                             'error_type': type(exc).__name__})
+                if isinstance(exc, HTTPError) and exc.code == 429:
+                    break
+    except Exception as exc:
+        r['message'] = 'No se pudo consultar noticias EPAS: ' + type(exc).__name__
+        return r
+    if newest:
+        r['latest_published_date'] = newest.isoformat()
+    if r['notices']:
+        r['status'] = 'ok'
+        r['message'] = 'Comunicados oficiales de impacto localizado; no prueban estado actual.'
+    elif newest and newest < now.date() - timedelta(days=3):
+        r['status'] = 'stale'
+        r['message'] = 'Las publicaciones del listado son antiguas; no equivale a suministro normal.'
+    elif not entries:
+        r['message'] = 'Portal accesible sin articulos EPAS reconocibles.'
+    else:
+        r['message'] = 'Sin publicaciones recientes que acrediten afectaciones precisas al suministro.'
+    if any(x['result'] == 'fetch_or_parse_error' for x in r['source_attempts']):
+        r['message'] += ' Consulta parcial por errores de lectura.'
+    return r
+
+
 def collect_one(key,checked_at,fetcher=None):
     if key not in SOURCES:
         raise KeyError(key)
@@ -1808,6 +2132,8 @@ def collect_one(key,checked_at,fetcher=None):
     if key=='osse_mar_del_plata':return _collect_osse(checked_at,now,fetch)
     if key=='samsa_misiones':return _collect_samsa(checked_at,now,fetch)
     if key=='agua_potable_jujuy_prensa':return _collect_jujuy(checked_at,now,fetch)
+    if key=='scpl_comodoro_chubut':return _collect_scpl(checked_at,now,fetch)
+    if key=='epas_neuquen_noticias':return _collect_epas(checked_at,now,fetch)
     return _collect_diagnostic(key,checked_at,now,fetch)
 
 
