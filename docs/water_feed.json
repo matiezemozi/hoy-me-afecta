@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-16T20:37:25Z",
+  "generated_at": "2026-11-16T20:49:38Z",
   "status": "pilot_read_only_in_android",
   "category": "agua",
   "country": "Argentina",
@@ -16,10 +16,10 @@
       "province": "Buenos Aires",
       "country": "Argentina",
       "source_url": "https://www.aguasbonaerenses.com.ar/noticias/",
-      "checked_at": "2026-11-16T20:37:25Z",
+      "checked_at": "2026-11-16T20:49:38Z",
       "coverage_kind": "public_water_bulletins_only",
       "notifications_enabled": false,
-      "parser_revision": "WATER-v5.35",
+      "parser_revision": "ABSA-MULTIDAY-v5.48",
       "notices": [
         {
           "id": "agua-5c138c590823999f49",
@@ -38,26 +38,34 @@
           "scheduled_start": null,
           "scheduled_end": null,
           "time_precision": "date_only",
-          "published_on": "2026-11-16"
+          "published_on": "2026-11-16",
+          "impact_type": "works_with_reported_possible_impact"
         },
         {
-          "id": "agua-43dcb8c3a1d3d66b13",
+          "id": "agua-c12badd42d9f4b0a23",
           "category": "agua",
           "country": "Argentina",
           "province": "Buenos Aires",
           "company": "ABSA",
-          "kind": "planned_water_service_impact",
-          "status": "scheduled_not_confirmed",
+          "kind": "multi_day_water_works_bulletin",
+          "status": "publication_only_not_live",
           "locality_hint": "Punta Alta",
           "zone_detail": "Durante el transcurso de esta semana, una empresa contratista realizará tareas sobre la red de agua de Punta Alta. Si bien los trabajos, sujetos a condiciones climáticas que permitan su progreso, no implican interrupciones en el servicio, es posible que se registre baja presión en zonas aledañas de los sectores a intervenir. A raíz de ello, se detalla el cronograma de tareas: • En el día de la fecha, los trabajos se llevarán a cabo en Patagones y Humbert; y en Patagones y Roca. • Martes 17: trabajos en Urquiza esquina Buchardo; Rosales esquina Buchardo; Rosales esquina Brown; y Rosales esquina Murature. • Miércoles 18: trabajos en Murature esquina Irigoyen; Espora esquina Irigoyen; Paso esquina Villanueva. • Jueves 19: trabajos en Patagones y 25 de Mayo. • Viernes 20: trabajos en Patagones y Paso; San Martín y Colón. Por esta razón, se solicita a las personas usuarias que cuiden las reservas domiciliarias y utilicen el recurso…",
           "source_url": "https://www.aguasbonaerenses.com.ar/noticias/5114",
           "notification_allowed": false,
-          "message": "Comunicado oficial; no acredita el estado del suministro en tiempo real.",
-          "scheduled_date": "2026-11-17",
+          "message": "Cronograma de obras para varias fechas. No presupone corte continuo ni servicio afectado en todas las zonas o fechas.",
+          "published_on": "2026-11-16",
+          "scheduled_dates": [
+            "2026-11-17",
+            "2026-11-18",
+            "2026-11-19",
+            "2026-11-20"
+          ],
+          "scheduled_date": null,
           "scheduled_start": null,
           "scheduled_end": null,
-          "time_precision": "date_only",
-          "published_on": "2026-11-16"
+          "time_precision": "multiple_explicit_dates_no_continuous_outage",
+          "impact_type": "possible_low_pressure_only"
         },
         {
           "id": "agua-f19f3e2bf9769b4cb8",
@@ -89,7 +97,7 @@
       "province": "Salta",
       "country": "Argentina",
       "source_url": "https://www.aguasdelnortesalta.com.ar/cortes.php",
-      "checked_at": "2026-11-16T20:37:25Z",
+      "checked_at": "2026-11-16T20:49:38Z",
       "coverage_kind": "public_water_bulletins_only",
       "notifications_enabled": false,
       "parser_revision": "WATER-v5.35",
@@ -104,7 +112,7 @@
       "province": "Mendoza",
       "country": "Argentina",
       "source_url": "https://www.aysam.com.ar/cortes/index.html",
-      "checked_at": "2026-11-16T20:37:25Z",
+      "checked_at": "2026-11-16T20:49:38Z",
       "coverage_kind": "public_water_bulletins_only",
       "notifications_enabled": false,
       "parser_revision": "WATER-v5.35",
@@ -130,7 +138,7 @@
       "province": "Córdoba",
       "country": "Argentina",
       "source_url": "https://www.aws.aguascordobesas.com.ar/CanalNoticias/NoticiasCategoria/2/servicio",
-      "checked_at": "2026-11-16T20:37:25Z",
+      "checked_at": "2026-11-16T20:49:38Z",
       "coverage_kind": "public_water_bulletins_only",
       "notifications_enabled": false,
       "parser_revision": "WATER-v5.35",
@@ -143,7 +151,7 @@
       "province": "Santa Fe",
       "country": "Argentina",
       "source_url": "https://www.aguassantafesinas.com.ar/portal/noticias",
-      "checked_at": "2026-11-16T20:37:25Z",
+      "checked_at": "2026-11-16T20:49:38Z",
       "coverage_kind": "public_water_bulletins_only",
       "notifications_enabled": false,
       "parser_revision": "WATER-v5.35",
@@ -158,7 +166,7 @@
       "province": "Río Negro",
       "country": "Argentina",
       "source_url": "https://aguasrionegrinas.com/category/interrupciones/",
-      "checked_at": "2026-11-16T20:37:25Z",
+      "checked_at": "2026-11-16T20:49:38Z",
       "coverage_kind": "public_water_bulletins_only",
       "notifications_enabled": false,
       "parser_revision": "ARSA-ARTICLES-v5.37",
@@ -196,11 +204,28 @@
           "published_on": "2026-11-16",
           "scheduled_start": null,
           "scheduled_end": null
+        },
+        {
+          "id": "agua-a4df5af7a6babe6079",
+          "category": "agua",
+          "country": "Argentina",
+          "province": "Río Negro",
+          "company": "Aguas Rionegrinas",
+          "kind": "water_service_bulletin",
+          "status": "publication_only_not_live",
+          "locality_hint": "El Bolsón",
+          "zone_detail": "Aguas Rionegrinas informa que, desde las 6 de la mañana de este lunes, se registra un crecimiento importante de la turbiedad en la captación de El Bolsón, una condición natural que presenta características y variaciones propias del curso de agua. Esta situación dificulta temporalmente el normal proceso de potabilización, por lo que se trabaja con un monitoreo permanente para evaluar su evolución y determinar cuándo estarán dadas las condiciones para reanudar la producción de agua potable. Por este motivo, toda la localidad podrá registrar baja presión y posibles faltas de suministro hasta aproximadamente las 16 horas. Es importante destacar que la turbiedad es un fenómeno natural y que los controles realizados permiten resguardar la calidad del agua antes de su distribución a la comunidad. Ante cualquier consulta, los usuarios pueden comunicarse a través del WhatsApp 2920 402808 o de la línea gratuita 0800 999 24827.",
+          "source_url": "https://aguasrionegrinas.com/el-bolson-arsa-monitorea-la-turbiedad-del-rio-y-realiza-controles-para-garantizar-la-potabilizacion-del-agua/",
+          "notification_allowed": false,
+          "message": "Comunicado oficial; no acredita el estado del suministro en tiempo real.",
+          "published_on": "2026-11-16",
+          "scheduled_start": null,
+          "scheduled_end": null
         }
       ],
-      "message": "Comunicados de ARSA fechados; no confirman la situación en tiempo real. Consulta PARCIAL por límite HTTP 429; no se verificaron todos los artículos.",
-      "rate_limited": true,
-      "article_links_skipped_after_rate_limit": 1,
+      "message": "Comunicados de ARSA fechados; no confirman la situación en tiempo real.",
+      "rate_limited": false,
+      "article_links_skipped_after_rate_limit": 0,
       "article_links_seen": 4,
       "source_attempts": [
         {
@@ -215,15 +240,20 @@
         },
         {
           "url": "https://aguasrionegrinas.com/el-bolson-arsa-monitorea-la-turbiedad-del-rio-y-realiza-controles-para-garantizar-la-potabilizacion-del-agua/",
-          "result": "fetch_or_parse_error",
-          "error_type": "HTTPError",
-          "http_status": 429
+          "result": "parsed",
+          "category_published_on": "2026-11-16"
+        },
+        {
+          "url": "https://aguasrionegrinas.com/bariloche-aguas-rionegrinas-implementa-medidas-preventivas-ante-la-turbiedad-del-rio-nireco/",
+          "result": "no_recent_service_notice",
+          "reason": "water_topic_not_identified",
+          "category_published_on": "2026-11-14"
         }
       ],
-      "articles_checked": 3,
-      "records_checked": 3,
+      "articles_checked": 4,
+      "records_checked": 4,
       "latest_published_date": "2026-11-16",
-      "article_fetch_completeness": "partial"
+      "article_fetch_completeness": "selected_articles_checked"
     },
     "aguas_catamarca": {
       "status": "unverified",
@@ -231,7 +261,7 @@
       "province": "Catamarca",
       "country": "Argentina",
       "source_url": "https://www.adcsapem.com.ar/?page_id=240",
-      "checked_at": "2026-11-16T20:37:25Z",
+      "checked_at": "2026-11-16T20:49:38Z",
       "coverage_kind": "public_water_bulletins_only",
       "notifications_enabled": false,
       "parser_revision": "CATAMARCA-STATUS-v5.33",
@@ -246,7 +276,7 @@
       "province": "Buenos Aires / CABA",
       "country": "Argentina",
       "source_url": "https://www.aysa.com.ar/usuarios/interrupcion_servicio",
-      "checked_at": "2026-11-16T20:37:25Z",
+      "checked_at": "2026-11-16T20:49:38Z",
       "coverage_kind": "address_account_lookup_only",
       "notifications_enabled": false,
       "parser_revision": "AYSA-ACCOUNT-ONLY-v5.41",
@@ -263,7 +293,7 @@
       "province": "Buenos Aires / CABA",
       "country": "Argentina",
       "source_url": "https://www.aysa.com.ar/usuarios/Novedades",
-      "checked_at": "2026-11-16T20:37:25Z",
+      "checked_at": "2026-11-16T20:49:38Z",
       "coverage_kind": "public_dated_articles_only_not_account_status",
       "notifications_enabled": false,
       "parser_revision": "AYSA-NEWS-v5.42",
@@ -287,7 +317,7 @@
       "province": "Chaco",
       "country": "Argentina",
       "source_url": "https://sameep.gob.ar/noticias/",
-      "checked_at": "2026-11-16T20:37:25Z",
+      "checked_at": "2026-11-16T20:49:38Z",
       "coverage_kind": "dated_official_public_bulletins_only",
       "notifications_enabled": false,
       "parser_revision": "SAMEEP-ARTICLES-v5.41",
@@ -317,7 +347,7 @@
       "province": "Entre Ríos",
       "country": "Argentina",
       "source_url": "https://www.concordia.gob.ar/noticias?area=obras-sanitarias",
-      "checked_at": "2026-11-16T20:37:25Z",
+      "checked_at": "2026-11-16T20:49:38Z",
       "coverage_kind": "dated_municipal_water_bulletins_only",
       "notifications_enabled": false,
       "parser_revision": "EDOS-MUNICIPIO-v5.43",
@@ -342,7 +372,7 @@
       "province": "Buenos Aires",
       "country": "Argentina",
       "source_url": "https://www.osmgp.gov.ar/osse/noticias/",
-      "checked_at": "2026-11-16T20:37:25Z",
+      "checked_at": "2026-11-16T20:49:38Z",
       "coverage_kind": "dated_official_municipal_water_bulletins_only",
       "notifications_enabled": false,
       "parser_revision": "OSSE-RSS-HTML-v5.45",
@@ -375,7 +405,7 @@
       "province": "Misiones",
       "country": "Argentina",
       "source_url": "https://samsa.com.ar/noticias/",
-      "checked_at": "2026-11-16T20:37:25Z",
+      "checked_at": "2026-11-16T20:49:38Z",
       "coverage_kind": "dated_company_bulletins_only",
       "notifications_enabled": false,
       "parser_revision": "SAMSA-INDEX-v5.47",
@@ -398,7 +428,7 @@
       "province": "Jujuy",
       "country": "Argentina",
       "source_url": "https://prensa.jujuy.gob.ar/agua-potable-a48",
-      "checked_at": "2026-11-16T20:37:25Z",
+      "checked_at": "2026-11-16T20:49:38Z",
       "coverage_kind": "dated_official_government_water_bulletins_only",
       "notifications_enabled": false,
       "parser_revision": "JUJUY-PRENSA-v5.46",
@@ -436,6 +466,49 @@
     }
   },
   "notices": [
+    {
+      "id": "agua-a4df5af7a6babe6079",
+      "category": "agua",
+      "country": "Argentina",
+      "province": "Río Negro",
+      "company": "Aguas Rionegrinas",
+      "kind": "water_service_bulletin",
+      "status": "publication_only_not_live",
+      "locality_hint": "El Bolsón",
+      "zone_detail": "Aguas Rionegrinas informa que, desde las 6 de la mañana de este lunes, se registra un crecimiento importante de la turbiedad en la captación de El Bolsón, una condición natural que presenta características y variaciones propias del curso de agua. Esta situación dificulta temporalmente el normal proceso de potabilización, por lo que se trabaja con un monitoreo permanente para evaluar su evolución y determinar cuándo estarán dadas las condiciones para reanudar la producción de agua potable. Por este motivo, toda la localidad podrá registrar baja presión y posibles faltas de suministro hasta aproximadamente las 16 horas. Es importante destacar que la turbiedad es un fenómeno natural y que los controles realizados permiten resguardar la calidad del agua antes de su distribución a la comunidad. Ante cualquier consulta, los usuarios pueden comunicarse a través del WhatsApp 2920 402808 o de la línea gratuita 0800 999 24827.",
+      "source_url": "https://aguasrionegrinas.com/el-bolson-arsa-monitorea-la-turbiedad-del-rio-y-realiza-controles-para-garantizar-la-potabilizacion-del-agua/",
+      "notification_allowed": false,
+      "message": "Comunicado oficial; no acredita el estado del suministro en tiempo real.",
+      "published_on": "2026-11-16",
+      "scheduled_start": null,
+      "scheduled_end": null
+    },
+    {
+      "id": "agua-c12badd42d9f4b0a23",
+      "category": "agua",
+      "country": "Argentina",
+      "province": "Buenos Aires",
+      "company": "ABSA",
+      "kind": "multi_day_water_works_bulletin",
+      "status": "publication_only_not_live",
+      "locality_hint": "Punta Alta",
+      "zone_detail": "Durante el transcurso de esta semana, una empresa contratista realizará tareas sobre la red de agua de Punta Alta. Si bien los trabajos, sujetos a condiciones climáticas que permitan su progreso, no implican interrupciones en el servicio, es posible que se registre baja presión en zonas aledañas de los sectores a intervenir. A raíz de ello, se detalla el cronograma de tareas: • En el día de la fecha, los trabajos se llevarán a cabo en Patagones y Humbert; y en Patagones y Roca. • Martes 17: trabajos en Urquiza esquina Buchardo; Rosales esquina Buchardo; Rosales esquina Brown; y Rosales esquina Murature. • Miércoles 18: trabajos en Murature esquina Irigoyen; Espora esquina Irigoyen; Paso esquina Villanueva. • Jueves 19: trabajos en Patagones y 25 de Mayo. • Viernes 20: trabajos en Patagones y Paso; San Martín y Colón. Por esta razón, se solicita a las personas usuarias que cuiden las reservas domiciliarias y utilicen el recurso…",
+      "source_url": "https://www.aguasbonaerenses.com.ar/noticias/5114",
+      "notification_allowed": false,
+      "message": "Cronograma de obras para varias fechas. No presupone corte continuo ni servicio afectado en todas las zonas o fechas.",
+      "published_on": "2026-11-16",
+      "scheduled_dates": [
+        "2026-11-17",
+        "2026-11-18",
+        "2026-11-19",
+        "2026-11-20"
+      ],
+      "scheduled_date": null,
+      "scheduled_start": null,
+      "scheduled_end": null,
+      "time_precision": "multiple_explicit_dates_no_continuous_outage",
+      "impact_type": "possible_low_pressure_only"
+    },
     {
       "id": "agua-ecd34d6144b539452c",
       "category": "agua",
@@ -488,25 +561,6 @@
       "scheduled_end": null
     },
     {
-      "id": "agua-43dcb8c3a1d3d66b13",
-      "category": "agua",
-      "country": "Argentina",
-      "province": "Buenos Aires",
-      "company": "ABSA",
-      "kind": "planned_water_service_impact",
-      "status": "scheduled_not_confirmed",
-      "locality_hint": "Punta Alta",
-      "zone_detail": "Durante el transcurso de esta semana, una empresa contratista realizará tareas sobre la red de agua de Punta Alta. Si bien los trabajos, sujetos a condiciones climáticas que permitan su progreso, no implican interrupciones en el servicio, es posible que se registre baja presión en zonas aledañas de los sectores a intervenir. A raíz de ello, se detalla el cronograma de tareas: • En el día de la fecha, los trabajos se llevarán a cabo en Patagones y Humbert; y en Patagones y Roca. • Martes 17: trabajos en Urquiza esquina Buchardo; Rosales esquina Buchardo; Rosales esquina Brown; y Rosales esquina Murature. • Miércoles 18: trabajos en Murature esquina Irigoyen; Espora esquina Irigoyen; Paso esquina Villanueva. • Jueves 19: trabajos en Patagones y 25 de Mayo. • Viernes 20: trabajos en Patagones y Paso; San Martín y Colón. Por esta razón, se solicita a las personas usuarias que cuiden las reservas domiciliarias y utilicen el recurso…",
-      "source_url": "https://www.aguasbonaerenses.com.ar/noticias/5114",
-      "notification_allowed": false,
-      "message": "Comunicado oficial; no acredita el estado del suministro en tiempo real.",
-      "scheduled_date": "2026-11-17",
-      "scheduled_start": null,
-      "scheduled_end": null,
-      "time_precision": "date_only",
-      "published_on": "2026-11-16"
-    },
-    {
       "id": "agua-5c138c590823999f49",
       "category": "agua",
       "country": "Argentina",
@@ -523,7 +577,8 @@
       "scheduled_start": null,
       "scheduled_end": null,
       "time_precision": "date_only",
-      "published_on": "2026-11-16"
+      "published_on": "2026-11-16",
+      "impact_type": "works_with_reported_possible_impact"
     }
   ]
 }
