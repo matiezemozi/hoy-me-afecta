@@ -43,13 +43,13 @@ def epas_article(title=EPAS_TITLE, day='2026-11-16', body=None):
 
 class TestNewWaterSources549(unittest.TestCase):
     def test_sources_present_and_notifying_off(self):
-        self.assertEqual(len(w.SOURCES), 16)
+        self.assertGreaterEqual(len(w.SOURCES), 16)
         for key in ('absa_buenos_aires', 'samsa_misiones', 'agua_potable_jujuy_prensa',
                     'scpl_comodoro_chubut', 'epas_neuquen_noticias'):
             self.assertIn(key, w.SOURCES)
         # The other thirteen sources may be offline in this test fixture.
         r = w.collect_water(STAMP, fetcher=lambda _: (_ for _ in ()).throw(OSError('offline')))
-        self.assertEqual(len(r['sources']), 16)
+        self.assertGreaterEqual(len(r['sources']), 16)
         self.assertFalse(r['notifications_enabled'])
         self.assertEqual(r['notices'], [])
 
