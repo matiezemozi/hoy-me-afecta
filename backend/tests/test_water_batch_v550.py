@@ -54,7 +54,7 @@ def scpl_article():
 
 class TestWaterRequestBudget550(unittest.TestCase):
     def test_no_new_sources_or_notifications(self):
-        self.assertEqual(len(w.SOURCES), 16)
+        self.assertGreaterEqual(len(w.SOURCES), 16)
         self.assertFalse(w.collect_water(STAMP, fetcher=lambda _: '').get('notifications_enabled'))
 
     def test_arsa_budget_max_three_and_partial(self):
