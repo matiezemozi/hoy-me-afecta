@@ -57,18 +57,18 @@ class TestWaterRequestBudget550(unittest.TestCase):
         self.assertGreaterEqual(len(w.SOURCES), 16)
         self.assertFalse(w.collect_water(STAMP, fetcher=lambda _: '').get('notifications_enabled'))
 
-    def test_arsa_budget_max_three_and_partial(self):
+    def test_arsa_budget_max_two_and_partial(self):
         calls=[]
         def fetch(url):
             calls.append(url)
             return arsa_index(6) if url == ARSA_INDEX else arsa_article()
         result=w.collect_one('aguas_rionegrinas_arsa',STAMP,fetcher=fetch)
-        self.assertEqual(result['parser_revision'],'ARSA-THROTTLED-v5.50')
+        self.assertEqual(result['parser_revision'],'ARSA-ROTATING-v5.54')
         self.assertEqual(result['article_links_seen'],6)
-        self.assertEqual(result['articles_checked'],3)
-        self.assertEqual(result['articles_deferred_by_budget'],3)
+        self.assertEqual(result['articles_checked'],2)
+        self.assertEqual(result['articles_deferred_by_budget'],4)
         self.assertEqual(result['article_fetch_completeness'],'partial')
-        self.assertEqual(len(calls),4)
+        self.assertEqual(len(calls),3)
         self.assertFalse(result['rate_limited'])
         self.assertTrue(all(n['notification_allowed'] is False for n in result['notices']))
 
@@ -84,16 +84,17 @@ class TestWaterRequestBudget550(unittest.TestCase):
 
     def test_arsa_http_429_stops_requests_without_erasing_collected_notice(self):
         calls=[]
+        result_hour=int(w.checked_instant(STAMP).astimezone(w.timezone.utc).timestamp()//3600)
         def fetch(url):
             calls.append(url)
             if url==ARSA_INDEX: return arsa_index(5)
-            if url==arsa_url(1):
+            if url==arsa_url(1 + (result_hour % 4)):
                 raise HTTPError(url,429,'Too Many Requests',None,None)
             return arsa_article()
         result=w.collect_one('aguas_rionegrinas_arsa',STAMP,fetcher=fetch)
         self.assertEqual(result['articles_checked'],2)
-        self.assertEqual(result['article_links_skipped_after_rate_limit'],1)
-        self.assertEqual(result['articles_deferred_by_budget'],2)
+        self.assertEqual(result['article_links_skipped_after_rate_limit'],0)
+        self.assertEqual(result['articles_deferred_by_budget'],3)
         self.assertTrue(result['rate_limited'])
         self.assertEqual(result['article_fetch_completeness'],'partial')
         self.assertEqual(len(calls),3)
