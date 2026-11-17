@@ -1,4 +1,4 @@
-"""Conservative public water-service bulletin collectors for Argentina (v5.51).
+"""Conservative public water-service bulletin collectors for Argentina (v5.54).
 
 No report is a live outage confirmation. No credentials, service identifiers or
 unofficial APIs are used. Completely independent of provincial_electricity.
@@ -749,18 +749,21 @@ def _arsa_article(html,url,now,index_published=None):
 
 
 def _collect_arsa(checked_at,now,fetch):
-    """Limited, conservative ARSA sampling; HTTP 429 stops the entire host.
+    """Rotating, conservative ARSA sampling; HTTP 429 stops this host.
 
     Don't claim complete coverage: some items may be deferred by the request
     budget. Older, explicitly dated index entries need not be fetched again.
     """
     result=_result('aguas_rionegrinas_arsa',checked_at)
-    result['parser_revision']='ARSA-THROTTLED-v5.50'
+    result['parser_revision']='ARSA-ROTATING-v5.54'
     result['rate_limited']=False
     result['article_links_skipped_after_rate_limit']=0
     result['article_links_skipped_old']=0
     result['articles_deferred_by_budget']=0
-    result['max_article_requests_per_run']=3
+    result['max_article_requests_per_run']=2
+    result['sampling_strategy']='newest_plus_hourly_rotating_secondary'
+    result['sampling_rotation_utc_hour']=int(now.astimezone(timezone.utc).timestamp() // 3600)
+    result['article_links_selected']=[]
     url=result['source_url']
     seen=[];attempts=[];checked=0;newest=None
     links=[]
@@ -824,7 +827,18 @@ def _collect_arsa(checked_at,now,fetch):
                 result['article_links_skipped_old']+=1
             else:
                 candidates.append(link)
-        selected=candidates[:result['max_article_requests_per_run']]
+        # Always inspect the newest candidate. If more candidates exist,
+        # rotate the second request by UTC hour to avoid starving the same
+        # article in successive scheduled runs. No persistent data, no extra
+        # requests, and no assumption that skipped items mean service normal.
+        selected=candidates[:1]
+        if len(candidates)>1:
+            second_index=1+(result['sampling_rotation_utc_hour'] % (len(candidates)-1))
+            selected.append(candidates[second_index])
+            result['sampling_secondary_index']=second_index
+        else:
+            result['sampling_secondary_index']=None
+        result['article_links_selected']=list(selected)
         result['articles_deferred_by_budget']=max(0,len(candidates)-len(selected))
         for position,link in enumerate(selected):
             # Requests are deliberately spread out for production collection.
