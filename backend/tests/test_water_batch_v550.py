@@ -63,7 +63,7 @@ class TestWaterRequestBudget550(unittest.TestCase):
             calls.append(url)
             return arsa_index(6) if url == ARSA_INDEX else arsa_article()
         result=w.collect_one('aguas_rionegrinas_arsa',STAMP,fetcher=fetch)
-        self.assertEqual(result['parser_revision'],'ARSA-ROTATING-v5.54')
+        self.assertEqual(result['parser_revision'],'ARSA-FRESH-ROTATION-v5.55')
         self.assertEqual(result['article_links_seen'],6)
         self.assertEqual(result['articles_checked'],2)
         self.assertEqual(result['articles_deferred_by_budget'],4)
