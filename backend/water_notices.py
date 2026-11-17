@@ -763,24 +763,57 @@ def _collect_arsa(checked_at,now,fetch):
     result['max_article_requests_per_run']=3
     url=result['source_url']
     seen=[];attempts=[];checked=0;newest=None
+    links=[]
     index_read=False
+    result['index_attempts']=[]
+    result['index_mode']='category'
+    result['index_warning']=None
     try:
-        dom,index_visible=page(fetch(url))
+        index_html=fetch(url)
+        dom,index_visible=page(index_html)
         index_read=True
         links=[]
         link_dates={}
-        for href,label in dom.anchors:
-            link=urljoin(url,href)
-            parsed=urlsplit(link)
-            if parsed.hostname not in ('aguasrionegrinas.com','www.aguasrionegrinas.com'):
-                continue
-            if not re.fullmatch(r'/[a-z0-9-]{20,}/?',parsed.path):
-                continue
-            if ':' not in label or len(label)<25 or link in links:
-                continue
-            links.append(link)
-            link_dates[link]=_arsa_index_date(index_visible,label)
+        def add_links(dom, visible, root, fallback=False):
+            for href,label in dom.anchors:
+                link=urljoin(root,href)
+                parsed=urlsplit(link)
+                if parsed.scheme!='https' or parsed.hostname not in ('aguasrionegrinas.com','www.aguasrionegrinas.com'):
+                    continue
+                if not re.fullmatch(r'/[a-z0-9-]{20,}/?',parsed.path):
+                    continue
+                if ':' not in label or len(label)<25 or link in links:
+                    continue
+                # The homepage mixes all departments; only read water-related
+                # headings if the category index became unavailable.
+                if fallback and not re.search(r'agua|arsa|suministro|turbiedad|presion|corte|acueducto|bombeo',folded(label)):
+                    continue
+                links.append(link)
+                link_dates[link]=_arsa_index_date(visible,label)
+        add_links(dom,index_visible,url)
+        result['index_attempts'].append({
+            'url':url,'result':'article_links_found' if links else 'no_recognizable_links',
+            'html_anchors_seen':len(dom.anchors),'visible_text_characters':len(index_visible),
+            'html_bytes':len(index_html.encode('utf-8'))})
+        if not links:
+            home='https://aguasrionegrinas.com/'
+            try:
+                home_html=fetch(home)
+                home_dom,home_visible=page(home_html)
+                add_links(home_dom,home_visible,home,fallback=True)
+                result['index_attempts'].append({
+                    'url':home,'result':'article_links_found' if links else 'no_recognizable_links',
+                    'html_anchors_seen':len(home_dom.anchors),
+                    'visible_text_characters':len(home_visible),
+                    'html_bytes':len(home_html.encode('utf-8'))})
+                result['index_mode']='homepage_fallback'
+            except Exception as exc:
+                result['index_attempts'].append({
+                    'url':home,'result':'fetch_or_parse_error','error_type':type(exc).__name__})
+        if not links:
+            result['index_warning']='Ni el indice de interrupciones ni la portada ofrecieron enlaces reconocibles. Lectura sin verificar; no significa suministro normal.'
         result['article_links_seen']=len(links)
+
         # Keep the same newest-first category window. Only *reliably dated*
         # articles older than our bulletin horizon can be skipped without an
         # extra request; undated items still count towards the request budget.
@@ -830,6 +863,7 @@ def _collect_arsa(checked_at,now,fetch):
                     break
     except Exception as exc:
         attempt={'url':url,'result':'fetch_or_parse_error','error_type':type(exc).__name__}
+        result['index_warning']='Fallo el indice de interrupciones; no se pudo verificar su contenido.'
         if isinstance(exc,HTTPError):
             attempt['http_status']=exc.code
             if exc.code==429:result['rate_limited']=True
@@ -841,12 +875,16 @@ def _collect_arsa(checked_at,now,fetch):
     if newest:
         result['latest_published_date']=newest.isoformat()
     error_count=sum(1 for attempt in attempts if attempt['result']=='fetch_or_parse_error')
-    partial=bool(error_count or result['rate_limited'] or result['articles_deferred_by_budget'])
+    partial=bool(error_count or result['rate_limited'] or result['articles_deferred_by_budget']
+                 or result['index_mode']=='homepage_fallback')
     result['article_fetch_completeness']=(
-        'partial' if partial else 'selected_articles_checked' if index_read else 'unverified')
+        'unverified' if not index_read or not links else
+        'partial' if partial else 'selected_articles_checked')
     if result['notices']:
         result['status']='ok'
         result['message']='Comunicados de ARSA fechados; no confirman la situación en tiempo real.'
+        if result['index_mode']=='homepage_fallback':
+            result['message']+=' Indice principal sin enlaces: consulta PARCIAL desde la portada oficial.'
         if result['rate_limited']:
             result['message']+=' Consulta PARCIAL por límite HTTP 429; no se verificaron todos los artículos.'
         elif error_count:
@@ -860,6 +898,8 @@ def _collect_arsa(checked_at,now,fetch):
         result['message']='No se recuperaron artículos recientes con localidad y afectación verificables.'
         if error_count:
             result['message']+=f' {error_count} artículo(s) no pudieron consultarse; no implica servicio normal.'
+    if result.get('index_warning'):
+        result['message']+=' '+result['index_warning']
     if result['articles_deferred_by_budget']:
         result['message']+=(' Consulta PARCIAL: se pospusieron '
                             f"{result['articles_deferred_by_budget']} artículo(s) para reducir el riesgo de HTTP 429.")
@@ -2103,13 +2143,40 @@ def _epas_article(html, url, now, index_published=None):
 
 def _collect_epas(checked_at, now, fetch):
     r = _result('epas_neuquen_noticias', checked_at)
-    r.update(parser_revision='EPAS-NEWS-v5.49',
+    r.update(parser_revision='EPAS-INDEX-FALLBACK-v5.53',
              coverage_kind='dated_official_epas_public_news_only',
              article_links_seen=0, articles_checked=0,
              articles_skipped_old=0, notices=[], source_attempts=[])
     newest = None
+    r['index_attempts']=[]
+    r['index_mode']='news_page'
+    r['index_warning']=None
     try:
-        entries = _epas_index(fetch(r['source_url']), r['source_url'])
+        index_html=fetch(r['source_url'])
+        dom,visible=page(index_html)
+        entries=_epas_index(index_html,r['source_url'])
+        r['index_attempts'].append({
+            'url':r['source_url'],'result':'article_links_found' if entries else 'no_recognizable_links',
+            'html_anchors_seen':len(dom.anchors),'visible_text_characters':len(visible),
+            'html_bytes':len(index_html.encode('utf-8'))})
+        if not entries:
+            fallback='https://www.epas.gov.ar/category/noticias/'
+            try:
+                alternate_html=fetch(fallback)
+                alternate_dom,alternate_visible=page(alternate_html)
+                entries=_epas_index(alternate_html,fallback)
+                r['index_attempts'].append({
+                    'url':fallback,'result':'article_links_found' if entries else 'no_recognizable_links',
+                    'html_anchors_seen':len(alternate_dom.anchors),
+                    'visible_text_characters':len(alternate_visible),
+                    'html_bytes':len(alternate_html.encode('utf-8'))})
+                r['index_mode']='official_category_fallback'
+            except Exception as exc:
+                r['index_attempts'].append({
+                    'url':fallback,'result':'fetch_or_parse_error',
+                    'error_type':type(exc).__name__})
+        if not entries:
+            r['index_warning']='No se detectaron enlaces en los dos indices oficiales. No confirma ausencia de avisos.'
         r['article_links_seen'] = len(entries)
         for url, title, indexed in entries[:10]:
             if indexed:
@@ -2147,6 +2214,8 @@ def _collect_epas(checked_at, now, fetch):
         r['message'] = 'Portal accesible sin articulos EPAS reconocibles.'
     else:
         r['message'] = 'Sin publicaciones recientes que acrediten afectaciones precisas al suministro.'
+    if r.get('index_warning'):
+        r['message'] += ' '+r['index_warning']
     if any(x['result'] == 'fetch_or_parse_error' for x in r['source_attempts']):
         r['message'] += ' Consulta parcial por errores de lectura.'
     return r
@@ -2388,7 +2457,18 @@ def _collect_regional_news(key,checked_at,now,fetch):
                         'url':homepage,'result':'fetch_or_parse_error',
                         'error_type':type(exc).__name__})
             if not entries:
-                r['index_warning']='SAT no expone rutas de noticias reconocibles en las paginas consultadas; no confirma ausencia de comunicados.'
+                tiny_shells=[a for a in r['index_attempts'] if
+                             a.get('result')=='no_recognizable_links' and
+                             a.get('html_anchors_seen')==0 and
+                             a.get('visible_text_characters',99999)<=100 and
+                             a.get('html_bytes',99999)<=3500]
+                if len(tiny_shells)==2:
+                    r['access_mode']='client_rendered_shell_suspected'
+                    r['index_warning']=('SAT no expone rutas de noticias reconocibles. Las dos rutas oficiales entregaron HTML minimo sin noticias ni enlaces. '
+                                        'El contenido probablemente se carga con JavaScript; sin datos publicos verificables no se generan avisos.')
+                else:
+                    r['index_warning']='SAT no expone rutas de noticias reconocibles en las paginas consultadas; no confirma ausencia de comunicados.'
+
         r['article_links_seen']=len(entries)
         for link,label,index_day in entries[:12]:
             if index_day:
