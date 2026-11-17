@@ -1,4 +1,4 @@
-"""Conservative public water-service bulletin collectors for Argentina (v5.54).
+"""Conservative public water-service bulletin collectors for Argentina (v5.56).
 
 No report is a live outage confirmation. No credentials, service identifiers or
 unofficial APIs are used. Completely independent of provincial_electricity.
@@ -207,12 +207,11 @@ def _weekday_date(fragment, published):
     return None
 
 
-def _absa_explicit_weekday_dates(paragraphs, published, now):
-    """Read every explicit weekday/day pair in ABSA's article paragraphs.
+def _absa_explicit_weekday_dates(paragraphs, published, now, include_elapsed=False):
+    """Read independently verified weekday/day pairs, without guessed dates.
 
-    A news item may list several dated work sites. Do not silently select its
-    first date and present it as the date for the entire article. Relative
-    language such as "this week" or "today" is never treated as another date.
+    include_elapsed=True retains elapsed days from an otherwise still-current
+    multi-day schedule. Never mark an elapsed one-day plan as a current event.
     """
     pairs = re.compile(
         r'\b(?:lunes|martes|miercoles|jueves|viernes|sabado|domingo)\s+'
@@ -221,9 +220,31 @@ def _absa_explicit_weekday_dates(paragraphs, published, now):
     for paragraph in paragraphs:
         for match in pairs.finditer(folded(paragraph)):
             d = _weekday_date(match.group(0), published)
-            if d is not None and now.date() <= d <= now.date() + timedelta(days=HORIZON_DAYS):
+            if d is not None and (include_elapsed or d >= now.date()) and d <= now.date() + timedelta(days=HORIZON_DAYS):
                 found.add(d)
     return sorted(found)
+
+
+def _absa_start_clock(paragraph):
+    """Return a *stated* start clock, never infer a time from an end hour.
+
+    Intended for a single confirmed calendar day and its own zone text. If
+    multiple distinct start times occur, leave the time unknown rather than
+    associating an unrelated schedule with the entire locality.
+    """
+    text = folded(paragraph)
+    patterns = (
+        r'\b(?:comenzaran|comenzara|iniciaran|iniciara|arrancaran|arrancara|daran comienzo)'
+        r'\s+(?:a\s+partir\s+de\s+)?(?:a\s+)?las\s+(\d{1,2})(?::(\d{2}))?\b',
+        r'\b(?:desde|a\s+partir\s+de)\s+las\s+(\d{1,2})(?::(\d{2}))?\b',
+    )
+    values = set()
+    for pattern in patterns:
+        for m in re.finditer(pattern, text):
+            hour, minute = int(m.group(1)), int(m.group(2) or '0')
+            if hour < 24 and minute < 60:
+                values.add((hour, minute))
+    return next(iter(values)) if len(values) == 1 else None
 
 
 def _absa_article(html,url,now):
@@ -259,8 +280,10 @@ def _absa_article(html,url,now):
     notices=[]
     # A multi-day list with different intersections is not a single-day outage.
     # Keep its explicitly named days, but without an invented continuous period.
-    explicit_days = _absa_explicit_weekday_dates(article_paragraphs, published, now)
-    future_day = explicit_days[0] if len(explicit_days) == 1 else None
+    full_explicit_days = _absa_explicit_weekday_dates(
+        article_paragraphs, published, now, include_elapsed=True)
+    explicit_days = [d for d in full_explicit_days if d >= now.date()]
+    future_day = explicit_days[0] if len(full_explicit_days) == 1 and explicit_days else None
     scheduling_terms = bool(re.search(
         r'programad|se realizaran trabajos|se llevaran adelante tareas|'
         r'se preve[n ]|cronograma de tareas|cronograma de trabajos', f))
@@ -269,12 +292,16 @@ def _absa_article(html,url,now):
         and re.search(r'posible|podria|baja presion', f))
     impact_terms = bool(re.search(
         r'afectara|afectar|interrumpir|faltante|interrupcion|suministro|baja presion', f))
-    if len(explicit_days) > 1 and scheduling_terms and impact_terms:
+    if full_explicit_days and not explicit_days and scheduling_terms:
+        # A scheduled repair whose entire date range passed is not an outage
+        # currently in progress, even if its old announcement says "afectara".
+        return [], published
+    if len(full_explicit_days) > 1 and scheduling_terms and impact_terms:
         item = mk_notice(
             'ABSA', 'Buenos Aires', locality, url,
             'multi_day_water_works_bulletin', 'publication_only_not_live', content,
             published_on=published.isoformat(),
-            scheduled_dates=[d.isoformat() for d in explicit_days],
+            scheduled_dates=[d.isoformat() for d in full_explicit_days],
             scheduled_date=None, scheduled_start=None, scheduled_end=None,
             time_precision='multiple_explicit_dates_no_continuous_outage',
             impact_type='possible_low_pressure_only' if possible_pressure_only else 'works_with_reported_possible_impact')
@@ -299,12 +326,12 @@ def _absa_article(html,url,now):
             start=None
             time_precision='date_only'
             # Only a time attached to this locality, not a date in the shared intro.
-            time_match=re.search(r'\bdesde\s+las\s+(\d{1,2})(?::(\d{2}))?\b',folded(zone))
-            if time_match:
-                hour=int(time_match.group(1));minute=int(time_match.group(2) or 0)
-                if hour<24 and minute<60:
-                    start=datetime(future_day.year,future_day.month,future_day.day,hour,minute,tzinfo=ART).isoformat(timespec='minutes')
-                    time_precision='start_known_end_unknown'
+            stated_clock = _absa_start_clock(zone)
+            if stated_clock is not None:
+                hour, minute = stated_clock
+                start = datetime(future_day.year, future_day.month, future_day.day,
+                                 hour, minute, tzinfo=ART).isoformat(timespec='minutes')
+                time_precision = 'start_known_end_unknown'
             notices.append(mk_notice('ABSA','Buenos Aires',loc,url,'planned_water_service_impact',
                                      'scheduled_not_confirmed',zone,scheduled_date=future_day.isoformat(),
                                      scheduled_start=start,scheduled_end=None,time_precision=time_precision,
@@ -322,7 +349,7 @@ def _absa_article(html,url,now):
 def _collect_absa(checked_at,now,fetch):
     company,province,url=SOURCES['absa_buenos_aires']
     base=_result('absa_buenos_aires',checked_at)
-    base['parser_revision']='ABSA-MULTIDAY-v5.48'
+    base['parser_revision']='ABSA-TIMES-v5.56'
     seen=[];newest=None;article_count=0;errors=[]
     try:
         dom,_=page(fetch(url))
