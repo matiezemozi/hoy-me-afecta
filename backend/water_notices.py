@@ -621,12 +621,18 @@ def _arsa_index_date(index_visible,label):
     positions=[m.start() for m in re.finditer(re.escape(label),index_visible,re.I)]
     for pos in reversed(positions):
         excerpt=index_visible[max(0,pos-230):pos]
-        # Do not borrow a date from a preceding, different article.
-        if re.search(r'\b[A-ZÁÉÍÓÚÑ][\wÁÉÍÓÚÑáéíóúñ ]{3,45}:',excerpt):
-            continue
-        date_parts=re.findall(r'\b\d{1,2}\s+(?:de\s+)?(?:enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|setiembre|octubre|noviembre|diciembre)\s*,?\s*(?:de\s+)?20\d{2}\b',folded(excerpt))
+        # The date of this item is the last date preceding this title. A
+        # preceding title before the date is harmless; a different title
+        # *after* the date means it belongs to the earlier article instead.
+        # This avoids both false borrowing and missing valid dates in a dense
+        # news index where many titles fit inside the 230-character window.
+        date_parts=list(re.finditer(r'\b\d{1,2}\s+(?:de\s+)?(?:enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|setiembre|octubre|noviembre|diciembre)\s*,?\s*(?:de\s+)?20\d{2}\b',folded(excerpt)))
         if date_parts:
-            return _parse_official_day(date_parts[-1])
+            latest=date_parts[-1]
+            text_after_date=excerpt[latest.end():]
+            if re.search(r'\b[A-ZÁÉÍÓÚÑ][\wÁÉÍÓÚÑáéíóúñ ]{3,45}:',text_after_date):
+                continue
+            return _parse_official_day(latest.group(0))
     return None
 
 def _arsa_times_from_dated_paragraphs(paragraphs, published, scheduled):
@@ -755,13 +761,13 @@ def _collect_arsa(checked_at,now,fetch):
     budget. Older, explicitly dated index entries need not be fetched again.
     """
     result=_result('aguas_rionegrinas_arsa',checked_at)
-    result['parser_revision']='ARSA-ROTATING-v5.54'
+    result['parser_revision']='ARSA-FRESH-ROTATION-v5.55'
     result['rate_limited']=False
     result['article_links_skipped_after_rate_limit']=0
     result['article_links_skipped_old']=0
     result['articles_deferred_by_budget']=0
     result['max_article_requests_per_run']=2
-    result['sampling_strategy']='newest_plus_hourly_rotating_secondary'
+    result['sampling_strategy']='newest_plus_fresh_hourly_rotating_secondary'
     result['sampling_rotation_utc_hour']=int(now.astimezone(timezone.utc).timestamp() // 3600)
     result['article_links_selected']=[]
     url=result['source_url']
@@ -827,17 +833,30 @@ def _collect_arsa(checked_at,now,fetch):
                 result['article_links_skipped_old']+=1
             else:
                 candidates.append(link)
-        # Always inspect the newest candidate. If more candidates exist,
-        # rotate the second request by UTC hour to avoid starving the same
-        # article in successive scheduled runs. No persistent data, no extra
-        # requests, and no assumption that skipped items mean service normal.
+        # Prefer a secondary article with the newest reliable index date.
+        # Older items (even those still inside the two-day bulletin horizon)
+        # need not take turns from newer same-day announcements. Undated
+        # articles remain eligible: an absent date is not proof of staleness.
+        # If all secondaries are older, retain the old rotation as a fallback.
+        # The primary newest-first index item is always checked as before.
         selected=candidates[:1]
-        if len(candidates)>1:
-            second_index=1+(result['sampling_rotation_utc_hour'] % (len(candidates)-1))
+        secondary_indexes=list(range(1,len(candidates)))
+        if secondary_indexes:
+            dated=[link_dates.get(link) for link in candidates]
+            reliable=[d for d in dated if d is not None and d <= now.date()+timedelta(days=1)]
+            newest_day=max(reliable) if reliable else None
+            if newest_day:
+                fresh_indexes=[i for i in secondary_indexes
+                               if dated[i] is None or dated[i]>=newest_day]
+                if fresh_indexes:
+                    secondary_indexes=fresh_indexes
+            second_index=secondary_indexes[result['sampling_rotation_utc_hour'] % len(secondary_indexes)]
             selected.append(candidates[second_index])
             result['sampling_secondary_index']=second_index
         else:
             result['sampling_secondary_index']=None
+        result['sampling_secondary_pool_size']=len(secondary_indexes)
+        result['sampling_older_secondary_deprioritized']=max(0,len(candidates)-1-len(secondary_indexes))
         result['article_links_selected']=list(selected)
         result['articles_deferred_by_budget']=max(0,len(candidates)-len(selected))
         for position,link in enumerate(selected):
