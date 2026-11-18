@@ -1,4 +1,4 @@
-"""Conservative public water-service bulletin collectors for Argentina (v5.57).
+"""Conservative public water-service bulletin collectors for Argentina (v5.58).
 
 No report is a live outage confirmation. No credentials, service identifiers or
 unofficial APIs are used. Completely independent of provincial_electricity.
@@ -10,7 +10,7 @@ from hashlib import sha256
 from html.parser import HTMLParser
 from urllib.parse import urljoin, urlsplit
 from urllib.request import Request, urlopen
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
 from email.utils import parsedate_to_datetime
 from xml.etree import ElementTree as ET
 from time import sleep
@@ -279,6 +279,13 @@ def _absa_article(html,url,now):
     locality=clean(title.split(':')[0],90)
     if folded(locality)=='patagones' and 'carmen de patagones' in f:
         locality='Carmen de Patagones'
+    # A neighbourhood in a headline is not a separate city. Only remap the
+    # known case if the SAME official article names its municipality.
+    absa_area_hint = None
+    if folded(locality) in ('mil viviendas','barrio mil viviendas') and re.search(
+        r'\b(?:barrio mil viviendas de|en) san fernando\b', f):
+        locality='San Fernando'
+        absa_area_hint='Barrio Mil Viviendas'
     notices=[]
     # A multi-day list with different intersections is not a single-day outage.
     # Keep its explicitly named days, but without an invented continuous period.
@@ -345,13 +352,16 @@ def _absa_article(html,url,now):
         notices.append(mk_notice('ABSA','Buenos Aires',locality,url,'water_service_bulletin',
                                   'publication_only_not_live',content,published_on=published.isoformat(),
                                   scheduled_start=None,scheduled_end=None))
+    if absa_area_hint:
+        for notice in notices:
+            notice['area_hint'] = absa_area_hint
     return notices,published
 
 
 def _collect_absa(checked_at,now,fetch):
     company,province,url=SOURCES['absa_buenos_aires']
     base=_result('absa_buenos_aires',checked_at)
-    base['parser_revision']='ABSA-TIMES-v5.56'
+    base['parser_revision']='ABSA-LOCALITY-v5.58'
     seen=[];newest=None;article_count=0;errors=[]
     try:
         dom,_=page(fetch(url))
@@ -733,6 +743,53 @@ def _arsa_times_from_dated_paragraphs(paragraphs, published, scheduled):
     return {'scheduled_start':None,'scheduled_end':None,'time_precision':'date_only'}
 
 
+
+def _arsa_reported_same_day_work_window(paragraphs, published):
+    """Preserve an explicitly dated work window without implying a live outage.
+
+    A press release published on Wednesday may say 'este miércoles' instead
+    of 'miércoles 18'. Accept that ONLY when its weekday agrees with its
+    independently established publication date. Both bounds must be stated
+    together in the same paragraph that describes water works.
+    """
+    weekday = next((name for name, num in WEEKDAY.items() if num == published.weekday()), None)
+    if not weekday:
+        return None
+    for paragraph in paragraphs:
+        f=folded(paragraph)
+        if not re.search(r'\beste\s+'+weekday+r'\b',f):
+            continue
+        if not re.search(r'\btareas\b|\btrabajos\b|\bintervencion\b', f):
+            continue
+        if not re.search(r'\bplanta\b|\bdecantador\b|\bagua\b|\bred\b',f):
+            continue
+        if not re.search(r'\bse realizaran\b|\bse llevaran a cabo\b|\bprevist',f):
+            continue
+        windows=list(re.finditer(
+            r'\bentre\s+las\s+(\d{1,2})(?::(\d{2}))?\s+y\s+las\s+'
+            r'(\d{1,2})(?::(\d{2}))?\s*(?:horas|hs)?\b',f))
+        if len(windows)!=1:
+            continue
+        m=windows[0]
+        before_window=f[max(0,m.start()-120):m.start()]
+        # The work paragraph can also mention a separate office schedule.
+        # Don't attach that schedule to water supply operations.
+        if re.search(r'horario de atencion|atencion al publico|oficina',before_window):
+            continue
+        h1,mi1,h2,mi2=int(m[1]),int(m[2] or 0),int(m[3]),int(m[4] or 0)
+        if h1>23 or h2>23 or mi1>59 or mi2>59:
+            continue
+        a=datetime(published.year,published.month,published.day,h1,mi1,tzinfo=ART)
+        b=datetime(published.year,published.month,published.day,h2,mi2,tzinfo=ART)
+        if not a<b<=a+timedelta(hours=18):
+            continue
+        return {'scheduled_date':published.isoformat(),
+                'scheduled_start':a.isoformat(timespec='minutes'),
+                'scheduled_end':b.isoformat(timespec='minutes'),
+                'time_precision':'published_same_day_work_window_not_live'}
+    return None
+
+
 def _arsa_article(html,url,now,index_published=None):
     dom,visible=page(html)
     title=_arsa_article_title(dom,html,url)
@@ -778,9 +835,14 @@ def _arsa_article(html,url,now,index_published=None):
                   'planned_water_service_impact','scheduled_not_confirmed',content,
                   published_on=published.isoformat(),scheduled_date=scheduled.isoformat(),
                   **times)],published
+    # Same-day planned work may have explicit clock hours but no numeric day.
+    # Preserve them as dated bulletin metadata, NEVER as a live outage status.
+    reported_window = _arsa_reported_same_day_work_window(paragraphs,published)
+    time_fields = (reported_window if reported_window is not None
+                   else {'scheduled_start':None,'scheduled_end':None})
     return [mk_notice('Aguas Rionegrinas','Río Negro',locality,url,
                       'water_service_bulletin','publication_only_not_live',content,
-                      published_on=published.isoformat(),scheduled_start=None,scheduled_end=None)],published
+                      published_on=published.isoformat(),**time_fields)],published
 
 
 def _collect_arsa(checked_at,now,fetch):
@@ -2699,15 +2761,42 @@ def _municipal_article(html,url,now,key,index_day,rss_title=None):
 
 def _collect_municipal_rss(key,checked_at,now,fetch):
     r=_result(key,checked_at)
-    r.update(parser_revision='MUNICIPAL-RSS-v5.57',
+    r.update(parser_revision='MUNICIPAL-RSS-DIAGNOSTIC-v5.58',
         coverage_kind='municipal_official_dated_water_bulletins_not_live',
         notices=[],rss_items_seen=0,article_links_seen=0,
         relevant_titles_seen=0,articles_checked=0,articles_skipped_old=0,
         articles_undated=0,source_attempts=[])
-    try:
-        entries,count=_municipal_rss_index(fetch(r['source_url']),key)
-    except Exception as exc:
-        r['message']='RSS oficial no verificable: '+type(exc).__name__
+    # Santa Rosa's official RSS may reject a particular host in CI. Retry
+    # once on the same municipality's apex host, never on a third-party feed.
+    urls=[r['source_url']]
+    if key=='santa_rosa_municipal_lp':
+        urls.append('https://santarosa.gob.ar/rss.xml')
+    r['index_attempts']=[]
+    entries=None
+    count=0
+    for attempt_no,feed_url in enumerate(urls):
+        try:
+            entries,count=_municipal_rss_index(fetch(feed_url),key)
+            r['index_attempts'].append({'url':feed_url,'result':'rss_parsed',
+                                         'rss_items_seen':count})
+            r['index_mode']=('primary_rss' if attempt_no==0 else 'official_apex_rss_fallback')
+            break
+        except Exception as exc:
+            attempt={'url':feed_url,'result':'fetch_or_parse_error',
+                     'error_type':type(exc).__name__}
+            if isinstance(exc,HTTPError):
+                attempt['http_status']=exc.code
+            r['index_attempts'].append(attempt)
+            # Only access failures justify a second HTTP request. Never retry
+            # during rate limiting or after a structurally invalid document.
+            if not isinstance(exc,(HTTPError,URLError)) or (
+                isinstance(exc,HTTPError) and exc.code==429):
+                break
+    if entries is None:
+        error=r['index_attempts'][-1]
+        r['message']='RSS oficial no verificable: '+error['error_type']
+        if 'http_status' in error:
+            r['message']+=' (HTTP '+str(error['http_status'])+')'
         r['index_status']='fetch_or_parse_error'
         return r
     r['rss_items_seen']=count
