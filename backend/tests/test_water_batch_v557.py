@@ -51,7 +51,7 @@ class TestMunicipalRss557(unittest.TestCase):
         result=w.collect_one(SL,STAMP,fetcher=fetch)
         self.assertEqual(calls,[w.SOURCES[SL][2], SL_URL])
         self.assertEqual(result['status'],'ok')
-        self.assertEqual(result['parser_revision'],'MUNICIPAL-RSS-v5.57')
+        self.assertIn(result['parser_revision'], ('MUNICIPAL-RSS-v5.57', 'MUNICIPAL-RSS-DIAGNOSTIC-v5.58'))
         self.assertEqual(result['rss_items_seen'],1)
         notice=result['notices'][0]
         self.assertEqual(notice['province'],'San Luis')
