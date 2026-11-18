@@ -1,4 +1,4 @@
-"""Conservative public water-service bulletin collectors for Argentina (v5.56).
+"""Conservative public water-service bulletin collectors for Argentina (v5.57).
 
 No report is a live outage confirmation. No credentials, service identifiers or
 unofficial APIs are used. Completely independent of provincial_electricity.
@@ -39,6 +39,8 @@ SOURCES = {
     'epas_neuquen_noticias': ('EPAS Neuquen', 'Neuquen', 'https://www.epas.gov.ar/comunidad/noticias/'),
     'sat_tucuman_noticias': ('Sociedad Aguas del Tucumán', 'Tucumán', 'https://aguasdeltucuman.com.ar/noticias'),
     'aguas_santiago_novedades': ('Aguas de Santiago', 'Santiago del Estero', 'https://aguasdesantiago.com.ar/categoria/4/novedades'),
+    'san_luis_serba_municipal': ('SerBa / Municipio de San Luis', 'San Luis', 'https://sanluislaciudad.gob.ar/feed/'),
+    'santa_rosa_municipal_lp': ('Municipalidad de Santa Rosa', 'La Pampa', 'https://www.santarosa.gob.ar/rss.xml'),
 }
 WEEKDAY = {'lunes':0, 'martes':1, 'miercoles':2, 'jueves':3, 'viernes':4,
            'sabado':5, 'domingo':6}
@@ -2571,6 +2573,193 @@ def _collect_regional_news(key,checked_at,now,fetch):
         r['message']+=' Consulta parcial por errores de lectura.'
     return r
 
+# v5.57: San Luis and Santa Rosa municipality RSS public bulletins. The feeds
+# supply dates and canonical URLs, NOT evidence that a current outage exists.
+# Articles are re-checked on their official domains; no credentials or APIs.
+_MUNICIPAL_RSS_HOSTS = {
+    'san_luis_serba_municipal': {'sanluislaciudad.gob.ar','www.sanluislaciudad.gob.ar'},
+    'santa_rosa_municipal_lp': {'santarosa.gob.ar','www.santarosa.gob.ar'},
+}
+_MUNICIPAL_TITLE_TOPIC = re.compile(
+    r'agua|acueduct|serba|potabiliz|suministro|desabastec|cisterna|saneamiento|'
+    r'perforacion|red hidrica|red de distribucion')
+_MUNICIPAL_WATER = re.compile(
+    r'agua potable|acueducto|red de agua|suministro de agua|servicio de agua|'
+    r'planta potabilizadora|serba|provision de agua|sistema de abastecimiento')
+_MUNICIPAL_IMPACT = re.compile(
+    r'corte(?:s)? (?:de agua|del (?:servicio|suministro))|'
+    r'(?:(?:falta|faltante) de agua)|baja presion|'
+    r'interrupcion (?:del suministro|del servicio|de agua)|'
+    r'(?:servicio|suministro) (?:se vera|se encuentra|esta|resultara) afectad[oa]|'
+    r'(?:se vera|se encuentra|esta) (?:interrumpido|afectado) (?:el )?(?:suministro|servicio)|'
+    r'(?:restricciones|reduccion) (?:en el )?(?:suministro|servicio de agua)|'
+    r'(?:afectara|afectado|afectacion) (?:el |del )?(?:servicio|suministro)')
+
+
+def _municipal_rss_index(xml_text,key):
+    if not isinstance(xml_text,str) or len(xml_text.encode('utf-8'))>MAX_PAGE_BYTES:
+        raise ValueError('RSS vacio o demasiado grande')
+    if re.search(r'<!\s*(?:DOCTYPE|ENTITY)\b',xml_text,re.I):
+        raise ValueError('RSS con entidades no admitidas')
+    root=ET.fromstring(xml_text)
+    if root.tag!='rss':
+        raise ValueError('No es un RSS municipal')
+    entries=[]
+    seen=set()
+    items=root.findall('./channel/item')
+    for item in items:
+        title=clean(item.findtext('title'),240)
+        url=clean(item.findtext('link'),1000)
+        parsed=urlsplit(url)
+        valid=(parsed.scheme=='https' and
+               parsed.hostname in _MUNICIPAL_RSS_HOSTS[key] and
+               parsed.username is None and parsed.password is None and parsed.port is None and
+               not parsed.query and not parsed.fragment and
+               len(parsed.path.strip('/'))>18 and
+               re.fullmatch(r'/[a-zA-Z0-9%_./-]+/?',parsed.path))
+        if not valid or len(title)<17 or url in seen:
+            continue
+        seen.add(url)
+        pub=None
+        if item.findtext('pubDate'):
+            try:
+                dt=parsedate_to_datetime(item.findtext('pubDate'))
+                if dt.tzinfo is not None:
+                    pub=dt.astimezone(ART).date()
+            except (ValueError,TypeError,OverflowError):
+                pass
+        entries.append((url,title,pub))
+    return entries,len(items)
+
+
+def _municipal_article(html,url,now,key,index_day,rss_title=None):
+    dom,visible=page(html)
+    title=next((h for h in dom.headings if len(h)>22 and
+                not re.match(r'^(?:novedades|noticias|inicio)$',folded(h))), '')
+    if not title:
+        return None,'article_title_missing'
+    if rss_title and not (folded(title) in folded(rss_title) or folded(rss_title) in folded(title)):
+        return None,'rss_article_title_mismatch'
+    pub=_published_date_from_meta(html)
+    if not pub:
+        at=visible.find(title)
+        if at>=0:
+            pub=(_regional_index_date(visible[max(0,at-80):at]) or
+                 _regional_index_date(visible[at+len(title):at+len(title)+90]))
+    if not index_day:
+        return None,'rss_publication_date_missing'
+    # Publisher might show UTC publication timestamp a day apart from ART.
+    # Larger differences indicate conflicting metadata; never infer an outage.
+    if pub and abs((pub-index_day).days)>1:
+        return None,'publication_date_mismatch'
+    if index_day>now.date() or index_day<now.date()-timedelta(days=3):
+        return None,'outside_publication_window'
+    if _REGIONAL_FINISHED.search(folded(title)):
+        return None,'restoration_or_finished_announcement'
+    paragraphs=[]
+    for para in dom.paragraphs:
+        f=folded(para)
+        if re.search(r'novedades relacionadas|noticias relacionadas|te puede interesar',f):
+            break
+        if len(para)>40:
+            paragraphs.append(para)
+    content=' '.join(paragraphs)
+    if not content or len(content)>12000:
+        return None,'article_body_absent_or_too_long'
+    title_content=folded(title+' '+content)
+    if not _MUNICIPAL_WATER.search(title_content):
+        return None,'water_topic_not_verified'
+    impact=[]
+    for para in paragraphs:
+        for sentence in re.split(r'(?<=[.!?])\s+',para):
+            f=folded(sentence)
+            if _REGIONAL_NEGATIVE.search(f) or _REGIONAL_FINISHED.search(f):
+                continue
+            if _MUNICIPAL_IMPACT.search(f):
+                impact.append(sentence)
+    if not impact:
+        return None,'no_current_or_planned_service_impact'
+    scope=folded(title+' '+' '.join(impact))
+    if key=='san_luis_serba_municipal':
+        # SerBa is the municipal water provider in San Luis city.
+        if not re.search(r'\bsan luis\b|\bserba\b',scope):
+            return None,'municipal_service_scope_not_verified'
+        locality='San Luis'
+    else:
+        if not re.search(r'\bsanta rosa\b|\banguil\b',scope):
+            return None,'municipal_service_scope_not_verified'
+        locality='Santa Rosa'
+    company,province,_=SOURCES[key]
+    notice=mk_notice(company,province,locality,url,'water_service_bulletin',
+        'publication_only_not_live',content,published_on=index_day.isoformat(),
+        area_precision='solo_zonas_mencionadas_en_publicacion',
+        scheduled_start=None,scheduled_end=None)
+    return notice,'parsed'
+
+
+def _collect_municipal_rss(key,checked_at,now,fetch):
+    r=_result(key,checked_at)
+    r.update(parser_revision='MUNICIPAL-RSS-v5.57',
+        coverage_kind='municipal_official_dated_water_bulletins_not_live',
+        notices=[],rss_items_seen=0,article_links_seen=0,
+        relevant_titles_seen=0,articles_checked=0,articles_skipped_old=0,
+        articles_undated=0,source_attempts=[])
+    try:
+        entries,count=_municipal_rss_index(fetch(r['source_url']),key)
+    except Exception as exc:
+        r['message']='RSS oficial no verificable: '+type(exc).__name__
+        r['index_status']='fetch_or_parse_error'
+        return r
+    r['rss_items_seen']=count
+    r['article_links_seen']=len(entries)
+    if not entries:
+        r['message']='RSS sin articulos oficiales con URL y fecha comprobables; no implica normalidad.'
+        r['index_status']='no_official_article_links'
+        return r
+    dates=[d for _,_,d in entries if d]
+    if dates:r['latest_published_date']=max(dates).isoformat()
+    for link,title,published in entries:
+        if published is None:
+            r['articles_undated']+=1
+            continue
+        if published>now.date():
+            continue
+        if published<now.date()-timedelta(days=3):
+            r['articles_skipped_old']+=1
+            continue
+        if not _MUNICIPAL_TITLE_TOPIC.search(folded(title)):
+            continue
+        if _REGIONAL_FINISHED.search(folded(title)):
+            r['source_attempts'].append({'url':link,'result':'restoration_or_finished_title','not_fetched':True})
+            continue
+        r['relevant_titles_seen']+=1
+        if r['articles_checked']>=3:
+            break
+        try:
+            notice,reason=_municipal_article(fetch(link),link,now,key,published,title)
+            r['articles_checked']+=1
+            r['source_attempts'].append({'url':link,'result':reason})
+            if notice:r['notices'].append(notice)
+        except Exception as exc:
+            a={'url':link,'result':'fetch_or_parse_error','error_type':type(exc).__name__}
+            if isinstance(exc,HTTPError):a['http_status']=exc.code
+            r['source_attempts'].append(a)
+            if isinstance(exc,HTTPError) and exc.code==429:
+                r['rate_limited']=True
+                break
+    if r['notices']:
+        r['status']='ok'
+        r['message']='Comunicados municipales fechados; ninguna noticia verifica un corte en tiempo real.'
+    elif dates and max(dates)<now.date()-timedelta(days=3):
+        r['status']='stale'
+        r['message']='El RSS contiene publicaciones antiguas; no equivale a suministro normal.'
+    else:
+        r['message']='RSS consultado sin impacto reciente, localizado y verificable; no confirma servicio normal.'
+    if r.get('rate_limited') or any(x['result']=='fetch_or_parse_error' for x in r['source_attempts']):
+        r['message']+=' Consulta parcial por problema de acceso.'
+    return r
+
+
 def collect_one(key,checked_at,fetcher=None):
     if key not in SOURCES:
         raise KeyError(key)
@@ -2590,6 +2779,8 @@ def collect_one(key,checked_at,fetcher=None):
     if key=='agua_potable_jujuy_prensa':return _collect_jujuy(checked_at,now,fetch)
     if key=='scpl_comodoro_chubut':return _collect_scpl(checked_at,now,fetch)
     if key=='epas_neuquen_noticias':return _collect_epas(checked_at,now,fetch)
+    if key in _MUNICIPAL_RSS_HOSTS:
+        return _collect_municipal_rss(key,checked_at,now,fetch)
     if key in ('sat_tucuman_noticias','aguas_santiago_novedades'):
         return _collect_regional_news(key,checked_at,now,fetch)
     return _collect_diagnostic(key,checked_at,now,fetch)
