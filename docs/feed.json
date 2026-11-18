@@ -2425,7 +2425,7 @@
   },
   "water_services": {
     "schema_version": 1,
-    "generated_at": "2026-11-17T22:27:23Z",
+    "generated_at": "2026-11-18T20:00:38Z",
     "status": "pilot_read_only_in_android",
     "category": "agua",
     "country": "Argentina",
@@ -2441,11 +2441,28 @@
         "province": "Buenos Aires",
         "country": "Argentina",
         "source_url": "https://www.aguasbonaerenses.com.ar/noticias/",
-        "checked_at": "2026-11-17T22:27:23Z",
+        "checked_at": "2026-11-18T20:00:38Z",
         "coverage_kind": "public_water_bulletins_only",
         "notifications_enabled": false,
         "parser_revision": "ABSA-TIMES-v5.56",
         "notices": [
+          {
+            "id": "agua-1d6041e60fff63ec55",
+            "category": "agua",
+            "country": "Argentina",
+            "province": "Buenos Aires",
+            "company": "ABSA",
+            "kind": "water_service_bulletin",
+            "status": "publication_only_not_live",
+            "locality_hint": "Mil Viviendas",
+            "zone_detail": "En la jornada de hoy se trabaja sobre la cañería de agua en calle Carlos Casares entre Italia y Lugones, en el Barrio Mil Viviendas de San Fernando. La intervención genera baja presión en la red de agua del sector hasta las 15.00 horas, aproximadamente. Por esta razón, se solicita a las personas usuarias que cuiden las reservas domiciliarias y utilicen el recurso únicamente para aquellos usos que sean impostergables, hasta tanto se normalice el suministro. Se recuerda que, ante dificultades en el servicio, la empresa cuenta con la línea telefónica de Asistencia Técnica 0800-999-2272.",
+            "source_url": "https://www.aguasbonaerenses.com.ar/noticias/5120",
+            "notification_allowed": false,
+            "message": "Comunicado oficial; no acredita el estado del suministro en tiempo real.",
+            "published_on": "2026-11-18",
+            "scheduled_start": null,
+            "scheduled_end": null
+          },
           {
             "id": "agua-c4a3857b9a2d9c8f07",
             "category": "agua",
@@ -2488,26 +2505,6 @@
             "scheduled_start": null,
             "scheduled_end": null,
             "time_precision": "multiple_explicit_dates_no_continuous_outage",
-            "impact_type": "works_with_reported_possible_impact"
-          },
-          {
-            "id": "agua-5c138c590823999f49",
-            "category": "agua",
-            "country": "Argentina",
-            "province": "Buenos Aires",
-            "company": "ABSA",
-            "kind": "planned_water_service_impact",
-            "status": "scheduled_not_confirmed",
-            "locality_hint": "Bahía Blanca",
-            "zone_detail": "Mañana, martes 17, se llevarán adelante tareas en la intersección de las calles Juan Molina y Vieytes, en el marco de la obra Recambios de cañerías que lleva adelante la Dirección Provincial de Agua y Cloacas en Bahía Blanca. Hasta la finalización de las tareas estará afectado el suministro para los usuarios ubicados en calle Vieytes desde Holdich hasta Charlone y los de Juan Molina- Salta entre Vieytes y Zelarrayán. Por esta razón, se solicita a las personas usuarias de los sectores mencionados que realicen las reservas de agua para cuando se produzca la afectación, y durante ese período se utilice el recurso solo para hidratación y tareas impostergables, hasta que se normalice el suministro. Se recuerda que, ante dificultades en el servicio, la empresa cuenta con la línea telefónica de Asistencia Técnica 0800-999-2272.",
-            "source_url": "https://www.aguasbonaerenses.com.ar/noticias/5116",
-            "notification_allowed": false,
-            "message": "Comunicado oficial; no acredita el estado del suministro en tiempo real.",
-            "scheduled_date": "2026-11-17",
-            "scheduled_start": null,
-            "scheduled_end": null,
-            "time_precision": "date_only",
-            "published_on": "2026-11-16",
             "impact_type": "works_with_reported_possible_impact"
           },
           {
@@ -2558,7 +2555,7 @@
         "article_links_seen": 10,
         "articles_checked": 10,
         "records_checked": 10,
-        "latest_published_date": "2026-11-17"
+        "latest_published_date": "2026-11-18"
       },
       "aguas_del_norte_salta": {
         "status": "ok",
@@ -2566,7 +2563,7 @@
         "province": "Salta",
         "country": "Argentina",
         "source_url": "https://www.aguasdelnortesalta.com.ar/cortes.php",
-        "checked_at": "2026-11-17T22:27:23Z",
+        "checked_at": "2026-11-18T20:00:38Z",
         "coverage_kind": "public_water_bulletins_only",
         "notifications_enabled": false,
         "parser_revision": "WATER-v5.35",
@@ -2581,7 +2578,7 @@
         "province": "Mendoza",
         "country": "Argentina",
         "source_url": "https://www.aysam.com.ar/cortes/index.html",
-        "checked_at": "2026-11-17T22:27:23Z",
+        "checked_at": "2026-11-18T20:00:38Z",
         "coverage_kind": "public_water_bulletins_only",
         "notifications_enabled": false,
         "parser_revision": "WATER-v5.35",
@@ -2607,7 +2604,7 @@
         "province": "Córdoba",
         "country": "Argentina",
         "source_url": "https://www.aws.aguascordobesas.com.ar/CanalNoticias/NoticiasCategoria/2/servicio",
-        "checked_at": "2026-11-17T22:27:23Z",
+        "checked_at": "2026-11-18T20:00:38Z",
         "coverage_kind": "public_water_bulletins_only",
         "notifications_enabled": false,
         "parser_revision": "WATER-v5.35",
@@ -2620,7 +2617,7 @@
         "province": "Santa Fe",
         "country": "Argentina",
         "source_url": "https://www.aguassantafesinas.com.ar/portal/noticias",
-        "checked_at": "2026-11-17T22:27:23Z",
+        "checked_at": "2026-11-18T20:00:38Z",
         "coverage_kind": "public_water_bulletins_only",
         "notifications_enabled": false,
         "parser_revision": "WATER-v5.35",
@@ -2635,11 +2632,28 @@
         "province": "Río Negro",
         "country": "Argentina",
         "source_url": "https://aguasrionegrinas.com/category/interrupciones/",
-        "checked_at": "2026-11-17T22:27:23Z",
+        "checked_at": "2026-11-18T20:00:38Z",
         "coverage_kind": "public_water_bulletins_only",
         "notifications_enabled": false,
         "parser_revision": "ARSA-FRESH-ROTATION-v5.55",
         "notices": [
+          {
+            "id": "agua-29f19c6dbdad582cd3",
+            "category": "agua",
+            "country": "Argentina",
+            "province": "Río Negro",
+            "company": "Aguas Rionegrinas",
+            "kind": "water_service_bulletin",
+            "status": "publication_only_not_live",
+            "locality_hint": "Bariloche",
+            "zone_detail": "Aguas Rionegrinas informa que este miércoles se realizarán tareas de limpieza de un decantador en la Planta Potabilizadora Pilar de Bariloche, entre las 13 y las 17 horas. Durante el desarrollo de los trabajos podría registrarse baja presión o servicio intermitente en los barrios Reina Mora, Entre Cerros y Lomas del Cauquén. Una vez finalizadas las tareas, el servicio comenzará a normalizarse progresivamente. Se solicita a los vecinos hacer un uso responsable del agua y priorizar su utilización para actividades esenciales. Ante cualquier consulta, los usuarios pueden comunicarse a través del WhatsApp 2920 402808 o de la línea gratuita 0800 999 24827.",
+            "source_url": "https://aguasrionegrinas.com/bariloche-arsa-realizara-tareas-en-planta-pilar-y-podria-registrarse-baja-presion-en-algunos-sectores/",
+            "notification_allowed": false,
+            "message": "Comunicado oficial; no acredita el estado del suministro en tiempo real.",
+            "published_on": "2026-11-18",
+            "scheduled_start": null,
+            "scheduled_end": null
+          },
           {
             "id": "agua-f7abb55bb19c0ab512",
             "category": "agua",
@@ -2656,67 +2670,50 @@
             "published_on": "2026-11-16",
             "scheduled_start": null,
             "scheduled_end": null
-          },
-          {
-            "id": "agua-ecd34d6144b539452c",
-            "category": "agua",
-            "country": "Argentina",
-            "province": "Río Negro",
-            "company": "Aguas Rionegrinas",
-            "kind": "water_service_bulletin",
-            "status": "publication_only_not_live",
-            "locality_hint": "Catriel",
-            "zone_detail": "Aguas Rionegrinas informa que, desde las 7 de la mañana de este lunes, se registra una elevada turbiedad en el río Colorado, una condición natural que puede presentar variaciones propias de las características del curso de agua. Esta situación dificultara temporalmente el proceso de potabilización durante la jornada, por lo que se realizan controles para evaluar la evolución de los niveles de turbiedad y su incidencia en el sistema. Por este motivo, la ciudad de Catriel podrá registrar baja presión en el suministro de agua potable durante la jornada, hasta las 23 horas. En caso de extenderse esta situación, se informará oportunamente a los usuarios. Es importante destacar que la turbiedad es un fenómeno natural y que el monitoreo permanente permite evaluar las condiciones del agua para resguardar su calidad antes de ser distribuida a la comunidad. Ante cualquier consulta, los usuarios pueden comunicarse a través del WhatsApp 2920…",
-            "source_url": "https://aguasrionegrinas.com/catriel-por-elevada-turbiedad-en-el-rio-arsa-intensifica-controles-en-el-sistema-de-potabilizacion/",
-            "notification_allowed": false,
-            "message": "Comunicado oficial; no acredita el estado del suministro en tiempo real.",
-            "published_on": "2026-11-16",
-            "scheduled_start": null,
-            "scheduled_end": null
           }
         ],
-        "message": "Comunicados de ARSA fechados; no confirman la situación en tiempo real. Consulta PARCIAL: se pospusieron 1 artículo(s) para reducir el riesgo de HTTP 429.",
+        "message": "Comunicados de ARSA fechados; no confirman la situación en tiempo real. Consulta PARCIAL: se pospusieron 2 artículo(s) para reducir el riesgo de HTTP 429.",
         "rate_limited": false,
         "article_links_skipped_after_rate_limit": 0,
-        "article_links_skipped_old": 1,
-        "articles_deferred_by_budget": 1,
+        "article_links_skipped_old": 0,
+        "articles_deferred_by_budget": 2,
         "max_article_requests_per_run": 2,
         "sampling_strategy": "newest_plus_fresh_hourly_rotating_secondary",
-        "sampling_rotation_utc_hour": 498598,
+        "sampling_rotation_utc_hour": 498620,
         "article_links_selected": [
-          "https://aguasrionegrinas.com/bariloche-la-turbiedad-del-rio-nireco-condiciona-temporalmente-la-produccion-de-agua-potable/",
-          "https://aguasrionegrinas.com/catriel-por-elevada-turbiedad-en-el-rio-arsa-intensifica-controles-en-el-sistema-de-potabilizacion/"
+          "https://aguasrionegrinas.com/bariloche-arsa-realizara-tareas-en-planta-pilar-y-podria-registrarse-baja-presion-en-algunos-sectores/",
+          "https://aguasrionegrinas.com/bariloche-la-turbiedad-del-rio-nireco-condiciona-temporalmente-la-produccion-de-agua-potable/"
         ],
         "index_attempts": [
           {
             "url": "https://aguasrionegrinas.com/category/interrupciones/",
             "result": "article_links_found",
             "html_anchors_seen": 111,
-            "visible_text_characters": 2932,
-            "html_bytes": 252165
+            "visible_text_characters": 2957,
+            "html_bytes": 252199
           }
         ],
         "index_mode": "category",
         "index_warning": null,
         "article_links_seen": 4,
-        "sampling_secondary_index": 1,
-        "sampling_secondary_pool_size": 2,
+        "sampling_secondary_index": 3,
+        "sampling_secondary_pool_size": 3,
         "sampling_older_secondary_deprioritized": 0,
         "source_attempts": [
           {
-            "url": "https://aguasrionegrinas.com/bariloche-la-turbiedad-del-rio-nireco-condiciona-temporalmente-la-produccion-de-agua-potable/",
+            "url": "https://aguasrionegrinas.com/bariloche-arsa-realizara-tareas-en-planta-pilar-y-podria-registrarse-baja-presion-en-algunos-sectores/",
             "result": "parsed",
-            "category_published_on": "2026-11-16"
+            "category_published_on": "2026-11-18"
           },
           {
-            "url": "https://aguasrionegrinas.com/catriel-por-elevada-turbiedad-en-el-rio-arsa-intensifica-controles-en-el-sistema-de-potabilizacion/",
+            "url": "https://aguasrionegrinas.com/bariloche-la-turbiedad-del-rio-nireco-condiciona-temporalmente-la-produccion-de-agua-potable/",
             "result": "parsed",
             "category_published_on": "2026-11-16"
           }
         ],
         "articles_checked": 2,
         "records_checked": 2,
-        "latest_published_date": "2026-11-16",
+        "latest_published_date": "2026-11-18",
         "article_fetch_completeness": "partial"
       },
       "aguas_catamarca": {
@@ -2725,7 +2722,7 @@
         "province": "Catamarca",
         "country": "Argentina",
         "source_url": "https://www.adcsapem.com.ar/?page_id=240",
-        "checked_at": "2026-11-17T22:27:23Z",
+        "checked_at": "2026-11-18T20:00:38Z",
         "coverage_kind": "public_water_bulletins_only",
         "notifications_enabled": false,
         "parser_revision": "CATAMARCA-STATUS-v5.33",
@@ -2740,7 +2737,7 @@
         "province": "Buenos Aires / CABA",
         "country": "Argentina",
         "source_url": "https://www.aysa.com.ar/usuarios/interrupcion_servicio",
-        "checked_at": "2026-11-17T22:27:23Z",
+        "checked_at": "2026-11-18T20:00:38Z",
         "coverage_kind": "address_account_lookup_only",
         "notifications_enabled": false,
         "parser_revision": "AYSA-ACCOUNT-ONLY-v5.41",
@@ -2757,7 +2754,7 @@
         "province": "Buenos Aires / CABA",
         "country": "Argentina",
         "source_url": "https://www.aysa.com.ar/usuarios/Novedades",
-        "checked_at": "2026-11-17T22:27:23Z",
+        "checked_at": "2026-11-18T20:00:38Z",
         "coverage_kind": "public_dated_articles_only_not_account_status",
         "notifications_enabled": false,
         "parser_revision": "AYSA-NEWS-v5.42",
@@ -2781,7 +2778,7 @@
         "province": "Chaco",
         "country": "Argentina",
         "source_url": "https://sameep.gob.ar/noticias/",
-        "checked_at": "2026-11-17T22:27:23Z",
+        "checked_at": "2026-11-18T20:00:38Z",
         "coverage_kind": "dated_official_public_bulletins_only",
         "notifications_enabled": false,
         "parser_revision": "SAMEEP-ARTICLES-v5.41",
@@ -2811,7 +2808,7 @@
         "province": "Entre Ríos",
         "country": "Argentina",
         "source_url": "https://www.concordia.gob.ar/noticias?area=obras-sanitarias",
-        "checked_at": "2026-11-17T22:27:23Z",
+        "checked_at": "2026-11-18T20:00:38Z",
         "coverage_kind": "dated_municipal_water_bulletins_only",
         "notifications_enabled": false,
         "parser_revision": "EDOS-MUNICIPIO-v5.43",
@@ -2831,17 +2828,17 @@
         ]
       },
       "osse_mar_del_plata": {
-        "status": "stale",
+        "status": "unverified",
         "company": "OSSE Mar del Plata",
         "province": "Buenos Aires",
         "country": "Argentina",
         "source_url": "https://www.osmgp.gov.ar/osse/noticias/",
-        "checked_at": "2026-11-17T22:27:23Z",
+        "checked_at": "2026-11-18T20:00:38Z",
         "coverage_kind": "dated_official_municipal_water_bulletins_only",
         "notifications_enabled": false,
         "parser_revision": "OSSE-RSS-HTML-v5.45",
         "notices": [],
-        "message": "OSSE publica noticias, pero las recuperadas son antiguas. No significa suministro normal.",
+        "message": "OSSE: índice consultado, sin afectaciones recientes y suficientemente localizadas; estado del servicio desconocido.",
         "index_mode": "html",
         "index_attempts": [
           {
@@ -2857,11 +2854,16 @@
         "html_news_headings_seen": 7,
         "index_warning": null,
         "article_links_seen": 6,
-        "candidate_links_selected": 0,
-        "articles_skipped_old": 6,
-        "articles_checked": 0,
-        "source_attempts": [],
-        "latest_published_date": "2026-11-02"
+        "candidate_links_selected": 1,
+        "articles_skipped_old": 5,
+        "articles_checked": 1,
+        "source_attempts": [
+          {
+            "url": "https://www.osmgp.gov.ar/osse/acueducto-oeste-osse-avanza-con-una-obra-clave-para-fortalecer-el-abastecimiento-de-agua/",
+            "result": "no_precise_recent_impact"
+          }
+        ],
+        "latest_published_date": "2026-11-18"
       },
       "samsa_misiones": {
         "status": "unverified",
@@ -2869,7 +2871,7 @@
         "province": "Misiones",
         "country": "Argentina",
         "source_url": "https://samsa.com.ar/noticias/",
-        "checked_at": "2026-11-17T22:27:23Z",
+        "checked_at": "2026-11-18T20:00:38Z",
         "coverage_kind": "dated_company_bulletins_only",
         "notifications_enabled": false,
         "parser_revision": "SAMSA-INDEX-v5.47",
@@ -2887,20 +2889,24 @@
         "latest_published_date": "2026-11-16"
       },
       "agua_potable_jujuy_prensa": {
-        "status": "stale",
+        "status": "unverified",
         "company": "Agua Potable de Jujuy",
         "province": "Jujuy",
         "country": "Argentina",
         "source_url": "https://prensa.jujuy.gob.ar/agua-potable-a48",
-        "checked_at": "2026-11-17T22:27:23Z",
+        "checked_at": "2026-11-18T20:00:38Z",
         "coverage_kind": "dated_official_government_water_bulletins_only",
         "notifications_enabled": false,
         "parser_revision": "JUJUY-PRENSA-v5.46",
         "notices": [],
-        "message": "Solo publicaciones antiguas; estado actual del suministro desconocido.",
+        "message": "Sin comunicado reciente con afectación explícita y localidad identificada. No implica suministro normal.",
         "article_links_seen": 10,
         "articles_checked": 6,
         "source_attempts": [
+          {
+            "url": "https://prensa.jujuy.gob.ar/agua-potable/gestion-integral-garantizar-el-abastecimiento-agua-potable-la-escuela-coraya-n126018",
+            "result": "no_precise_recent_impact"
+          },
           {
             "url": "https://prensa.jujuy.gob.ar/agua-potable/agua-potable-se-reunio-vecinos-del-asentamiento-4-agosto-avanzar-soluciones-acceso-al-servicio-n125732",
             "result": "no_precise_recent_impact"
@@ -2920,13 +2926,9 @@
           {
             "url": "https://prensa.jujuy.gob.ar/agua-potable/agua-potable-firmo-un-historico-convenio-la-obra-del-colector-cloacal-alto-comedero-y-palpala-n124812",
             "result": "no_precise_recent_impact"
-          },
-          {
-            "url": "https://prensa.jujuy.gob.ar/salud/salud-seguridad-y-agua-potable-garantizan-la-respuesta-el-temporal-n124472",
-            "result": "no_precise_recent_impact"
           }
         ],
-        "latest_published_date": "2026-10-26"
+        "latest_published_date": "2026-11-17"
       },
       "scpl_comodoro_chubut": {
         "status": "unverified",
@@ -2934,27 +2936,27 @@
         "province": "Chubut",
         "country": "Argentina",
         "source_url": "https://scpl.coop/index.php/site/ver-seccion?id=2",
-        "checked_at": "2026-11-17T22:27:23Z",
+        "checked_at": "2026-11-18T20:00:38Z",
         "coverage_kind": "dated_public_scpl_bulletins_only_not_recurring_schedule",
         "notifications_enabled": false,
         "parser_revision": "SCPL-INDEX-OPT-v5.50",
         "notices": [],
         "message": "Sin afectaciones recientes vigentes verificables; los anuncios de suspension no se convierten en cortes. Se revisó solo la ventana reciente del índice; no el archivo histórico completo.",
-        "article_links_seen": 964,
+        "article_links_seen": 965,
         "articles_checked": 1,
         "articles_skipped_old": 6,
         "articles_skipped_cancelled": 5,
         "index_window_considered": 12,
-        "article_links_outside_window": 952,
+        "article_links_outside_window": 953,
         "source_attempts": [
+          {
+            "url": "https://scpl.coop/index.php/site/ver-nota?id=2931",
+            "result": "no_explicit_water_impact"
+          },
           {
             "url": "https://scpl.coop/index.php/site/ver-nota?id=2928",
             "result": "cancelled_or_restored_announcement",
             "not_fetched": true
-          },
-          {
-            "url": "https://scpl.coop/index.php/site/ver-nota?id=2927",
-            "result": "event_date_already_passed"
           },
           {
             "url": "https://scpl.coop/index.php/site/ver-nota?id=2923",
@@ -2984,7 +2986,7 @@
           }
         ],
         "index_mode": "official_communications",
-        "latest_published_date": "2026-11-17"
+        "latest_published_date": "2026-11-18"
       },
       "epas_neuquen_noticias": {
         "status": "stale",
@@ -2992,7 +2994,7 @@
         "province": "Neuquen",
         "country": "Argentina",
         "source_url": "https://www.epas.gov.ar/comunidad/noticias/",
-        "checked_at": "2026-11-17T22:27:23Z",
+        "checked_at": "2026-11-18T20:00:38Z",
         "coverage_kind": "dated_official_epas_public_news_only",
         "notifications_enabled": false,
         "parser_revision": "EPAS-INDEX-FALLBACK-v5.53",
@@ -3042,7 +3044,7 @@
         "province": "Tucumán",
         "country": "Argentina",
         "source_url": "https://aguasdeltucuman.com.ar/noticias",
-        "checked_at": "2026-11-17T22:27:23Z",
+        "checked_at": "2026-11-18T20:00:38Z",
         "coverage_kind": "dated_official_company_news_only_not_live_state",
         "notifications_enabled": false,
         "parser_revision": "SAT-ROUTE-DIAGNOSTIC-v5.52",
@@ -3078,7 +3080,7 @@
         "province": "Santiago del Estero",
         "country": "Argentina",
         "source_url": "https://aguasdesantiago.com.ar/categoria/4/novedades",
-        "checked_at": "2026-11-17T22:27:23Z",
+        "checked_at": "2026-11-18T20:00:38Z",
         "coverage_kind": "dated_official_company_news_only_not_live_state",
         "notifications_enabled": false,
         "parser_revision": "REGIONAL-NEWS-v5.51",
@@ -3107,6 +3109,48 @@
           }
         ],
         "latest_published_date": "2026-11-02"
+      },
+      "san_luis_serba_municipal": {
+        "status": "unverified",
+        "company": "SerBa / Municipio de San Luis",
+        "province": "San Luis",
+        "country": "Argentina",
+        "source_url": "https://sanluislaciudad.gob.ar/feed/",
+        "checked_at": "2026-11-18T20:00:38Z",
+        "coverage_kind": "municipal_official_dated_water_bulletins_not_live",
+        "notifications_enabled": false,
+        "parser_revision": "MUNICIPAL-RSS-v5.57",
+        "notices": [],
+        "message": "RSS consultado sin impacto reciente, localizado y verificable; no confirma servicio normal.",
+        "rss_items_seen": 10,
+        "article_links_seen": 10,
+        "relevant_titles_seen": 0,
+        "articles_checked": 0,
+        "articles_skipped_old": 8,
+        "articles_undated": 0,
+        "source_attempts": [],
+        "latest_published_date": "2026-11-16"
+      },
+      "santa_rosa_municipal_lp": {
+        "status": "unverified",
+        "company": "Municipalidad de Santa Rosa",
+        "province": "La Pampa",
+        "country": "Argentina",
+        "source_url": "https://www.santarosa.gob.ar/rss.xml",
+        "checked_at": "2026-11-18T20:00:38Z",
+        "coverage_kind": "municipal_official_dated_water_bulletins_not_live",
+        "notifications_enabled": false,
+        "parser_revision": "MUNICIPAL-RSS-v5.57",
+        "notices": [],
+        "message": "RSS oficial no verificable: HTTPError",
+        "rss_items_seen": 0,
+        "article_links_seen": 0,
+        "relevant_titles_seen": 0,
+        "articles_checked": 0,
+        "articles_skipped_old": 0,
+        "articles_undated": 0,
+        "source_attempts": [],
+        "index_status": "fetch_or_parse_error"
       }
     },
     "notices": [
@@ -3135,23 +3179,6 @@
         "scheduled_end": null,
         "time_precision": "multiple_explicit_dates_no_continuous_outage",
         "impact_type": "possible_low_pressure_only"
-      },
-      {
-        "id": "agua-ecd34d6144b539452c",
-        "category": "agua",
-        "country": "Argentina",
-        "province": "Río Negro",
-        "company": "Aguas Rionegrinas",
-        "kind": "water_service_bulletin",
-        "status": "publication_only_not_live",
-        "locality_hint": "Catriel",
-        "zone_detail": "Aguas Rionegrinas informa que, desde las 7 de la mañana de este lunes, se registra una elevada turbiedad en el río Colorado, una condición natural que puede presentar variaciones propias de las características del curso de agua. Esta situación dificultara temporalmente el proceso de potabilización durante la jornada, por lo que se realizan controles para evaluar la evolución de los niveles de turbiedad y su incidencia en el sistema. Por este motivo, la ciudad de Catriel podrá registrar baja presión en el suministro de agua potable durante la jornada, hasta las 23 horas. En caso de extenderse esta situación, se informará oportunamente a los usuarios. Es importante destacar que la turbiedad es un fenómeno natural y que el monitoreo permanente permite evaluar las condiciones del agua para resguardar su calidad antes de ser distribuida a la comunidad. Ante cualquier consulta, los usuarios pueden comunicarse a través del WhatsApp 2920…",
-        "source_url": "https://aguasrionegrinas.com/catriel-por-elevada-turbiedad-en-el-rio-arsa-intensifica-controles-en-el-sistema-de-potabilizacion/",
-        "notification_allowed": false,
-        "message": "Comunicado oficial; no acredita el estado del suministro en tiempo real.",
-        "published_on": "2026-11-16",
-        "scheduled_start": null,
-        "scheduled_end": null
       },
       {
         "id": "agua-f19f3e2bf9769b4cb8",
@@ -3212,24 +3239,38 @@
         "impact_type": "works_with_reported_possible_impact"
       },
       {
-        "id": "agua-5c138c590823999f49",
+        "id": "agua-1d6041e60fff63ec55",
         "category": "agua",
         "country": "Argentina",
         "province": "Buenos Aires",
         "company": "ABSA",
-        "kind": "planned_water_service_impact",
-        "status": "scheduled_not_confirmed",
-        "locality_hint": "Bahía Blanca",
-        "zone_detail": "Mañana, martes 17, se llevarán adelante tareas en la intersección de las calles Juan Molina y Vieytes, en el marco de la obra Recambios de cañerías que lleva adelante la Dirección Provincial de Agua y Cloacas en Bahía Blanca. Hasta la finalización de las tareas estará afectado el suministro para los usuarios ubicados en calle Vieytes desde Holdich hasta Charlone y los de Juan Molina- Salta entre Vieytes y Zelarrayán. Por esta razón, se solicita a las personas usuarias de los sectores mencionados que realicen las reservas de agua para cuando se produzca la afectación, y durante ese período se utilice el recurso solo para hidratación y tareas impostergables, hasta que se normalice el suministro. Se recuerda que, ante dificultades en el servicio, la empresa cuenta con la línea telefónica de Asistencia Técnica 0800-999-2272.",
-        "source_url": "https://www.aguasbonaerenses.com.ar/noticias/5116",
+        "kind": "water_service_bulletin",
+        "status": "publication_only_not_live",
+        "locality_hint": "Mil Viviendas",
+        "zone_detail": "En la jornada de hoy se trabaja sobre la cañería de agua en calle Carlos Casares entre Italia y Lugones, en el Barrio Mil Viviendas de San Fernando. La intervención genera baja presión en la red de agua del sector hasta las 15.00 horas, aproximadamente. Por esta razón, se solicita a las personas usuarias que cuiden las reservas domiciliarias y utilicen el recurso únicamente para aquellos usos que sean impostergables, hasta tanto se normalice el suministro. Se recuerda que, ante dificultades en el servicio, la empresa cuenta con la línea telefónica de Asistencia Técnica 0800-999-2272.",
+        "source_url": "https://www.aguasbonaerenses.com.ar/noticias/5120",
         "notification_allowed": false,
         "message": "Comunicado oficial; no acredita el estado del suministro en tiempo real.",
-        "scheduled_date": "2026-11-17",
+        "published_on": "2026-11-18",
         "scheduled_start": null,
-        "scheduled_end": null,
-        "time_precision": "date_only",
-        "published_on": "2026-11-16",
-        "impact_type": "works_with_reported_possible_impact"
+        "scheduled_end": null
+      },
+      {
+        "id": "agua-29f19c6dbdad582cd3",
+        "category": "agua",
+        "country": "Argentina",
+        "province": "Río Negro",
+        "company": "Aguas Rionegrinas",
+        "kind": "water_service_bulletin",
+        "status": "publication_only_not_live",
+        "locality_hint": "Bariloche",
+        "zone_detail": "Aguas Rionegrinas informa que este miércoles se realizarán tareas de limpieza de un decantador en la Planta Potabilizadora Pilar de Bariloche, entre las 13 y las 17 horas. Durante el desarrollo de los trabajos podría registrarse baja presión o servicio intermitente en los barrios Reina Mora, Entre Cerros y Lomas del Cauquén. Una vez finalizadas las tareas, el servicio comenzará a normalizarse progresivamente. Se solicita a los vecinos hacer un uso responsable del agua y priorizar su utilización para actividades esenciales. Ante cualquier consulta, los usuarios pueden comunicarse a través del WhatsApp 2920 402808 o de la línea gratuita 0800 999 24827.",
+        "source_url": "https://aguasrionegrinas.com/bariloche-arsa-realizara-tareas-en-planta-pilar-y-podria-registrarse-baja-presion-en-algunos-sectores/",
+        "notification_allowed": false,
+        "message": "Comunicado oficial; no acredita el estado del suministro en tiempo real.",
+        "published_on": "2026-11-18",
+        "scheduled_start": null,
+        "scheduled_end": null
       },
       {
         "id": "agua-c4a3857b9a2d9c8f07",
