@@ -1,4 +1,4 @@
-"""Conservative public water-service bulletin collectors for Argentina (v5.59).
+"""Conservative public water-service bulletin collectors for Argentina (v5.60).
 
 No report is a live outage confirmation. No credentials, service identifiers or
 unofficial APIs are used. Completely independent of provincial_electricity.
@@ -250,6 +250,98 @@ def _absa_start_clock(paragraph):
     return next(iter(values)) if len(values) == 1 else None
 
 
+def _absa_stated_end_after_start(paragraph, stated_start, day):
+    """Read an end tied to the *same* stated start, without inventing one.
+
+    In official ABSA releases like 'a partir de las 8:00 y hasta las
+    11:00 horas, aproximadamente', the published end is an ESTIMATE.
+    An estimated upper bound must not be treated as confirmed restoration.
+    Return an empty dict when the wording is not locally unambiguous.
+    """
+    if stated_start is None:
+        return {}
+    text=folded(paragraph)
+    pattern=(r'\b(?:desde|a\s+partir\s+de)\s+las\s+'
+             r'(\d{1,2})(?::(\d{2}))?\s+(?:y\s+)?hasta\s+las\s+'
+             r'(\d{1,2})(?::(\d{2}))?\b')
+    matches=list(re.finditer(pattern,text))
+    if len(matches)!=1:
+        return {}
+    m=matches[0]
+    h1,mi1,h2,mi2=int(m[1]),int(m[2] or 0),int(m[3]),int(m[4] or 0)
+    if ((h1,mi1)!=stated_start or h2>23 or mi2>59):
+        return {}
+    a=datetime(day.year,day.month,day.day,h1,mi1,tzinfo=ART)
+    b=datetime(day.year,day.month,day.day,h2,mi2,tzinfo=ART)
+    if not a<b<=a+timedelta(hours=18):
+        return {}
+    # Do not mistake office hours for work or supply impact hours.
+    near=text[max(0,m.start()-115):m.end()+60]
+    if re.search(r'horario de atencion|atencion al publico|\boficina\b',near):
+        return {}
+    after=text[m.end():m.end()+70]
+    if re.search(r'\baproximad|\bestimad|\bprevist',after):
+        return {'scheduled_end':None,
+                'scheduled_end_estimate':b.isoformat(timespec='minutes'),
+                'time_precision':'start_known_end_estimated'}
+    return {'scheduled_end':b.isoformat(timespec='minutes'),
+            'time_precision':'start_and_end_published'}
+
+
+def _absa_shared_street_address(zone):
+    """Require the exact three-part street reference for cross-release matching."""
+    m=re.search(r'\bcalle\s+([a-z]+(?:\s+[a-z]+){0,3})\s+'
+                r'entre\s+([a-z]+(?:\s+[a-z]+){0,2})\s+y\s+([a-z]+)\b',
+                folded(zone))
+    return m.groups() if m else None
+
+
+def _absa_cross_reference_city(notices):
+    """Resolve a neighborhood only from ANOTHER fetched official ABSA notice.
+
+    A later bulletin can omit the municipality, although an independently
+    retrieved official bulletin identifies the same neighborhood AND the
+    identical three-street location. Without both matches, do not guess.
+    """
+    for target in notices:
+        named=folded(target['locality_hint'])
+        if not named.startswith('barrio '):
+            continue
+        address=_absa_shared_street_address(target['zone_detail'])
+        if not address:
+            continue
+        matches=[]
+        for ref in notices:
+            if ref is target or ref['source_url']==target['source_url']:
+                continue
+            area=ref.get('area_hint')
+            if (not area or folded(area)!=named or
+                    _absa_shared_street_address(ref['zone_detail'])!=address):
+                continue
+            try:
+                dd=abs((date.fromisoformat(ref['published_on'])-
+                        date.fromisoformat(target['published_on'])).days)
+            except (KeyError,ValueError,TypeError):
+                continue
+            if dd<=2 and folded(ref['locality_hint'])!=named:
+                matches.append(ref)
+        distinct={folded(r['locality_hint']) for r in matches}
+        if len(distinct)!=1:
+            continue
+        ref=matches[0]
+        city=ref['locality_hint']
+        target['locality_hint']=city
+        target['area_hint']=ref['area_hint']
+        target['locality_resolution']='matched_official_absa_article_same_address'
+        target['locality_evidence_source_url']=ref['source_url']
+        # The stable notice ID is defined by company, city, article, kind,
+        # scheduled or publication date. Recompute it after resolving city.
+        key='|'.join([target['company'],city,target['source_url'],target['kind'],
+                      str(target.get('scheduled_date') or target.get('published_on'))])
+        target['id']='agua-'+sha256(key.encode('utf-8')).hexdigest()[:18]
+    return notices
+
+
 def _absa_article(html,url,now):
     dom,visible=page(html)
     title=next((x for x in dom.headings if x and x.lower()!='noticias'), '')
@@ -262,7 +354,10 @@ def _absa_article(html,url,now):
     published=_ddmmyyyy(match.group(1))
     if published>now.date()+timedelta(days=1):
         return [],None
-    if published<now.date()-timedelta(days=2):
+    # General news expires quickly, but an older official multi-day work
+    # schedule may still contain verifiable future dates. Defer the short
+    # freshness check until those dates are parsed, with a bounded lookback.
+    if published<now.date()-timedelta(days=7):
         return [],published
     article_paragraphs=[]
     for paragraph in dom.paragraphs:
@@ -287,6 +382,11 @@ def _absa_article(html,url,now):
         r'\b(?:barrio mil viviendas de|en) san fernando\b', f):
         locality='San Fernando'
         absa_area_hint='Barrio Mil Viviendas'
+    # Same-article identification of the city (not a city guessed from a title).
+    if folded(locality) in ('lubo','barrio lubo') and re.search(
+        r'\bbarrio lubo\s*,\s*en campana\b', f):
+        locality='Campana'
+        absa_area_hint='Barrio Lubo'
     notices=[]
     # A multi-day list with different intersections is not a single-day outage.
     # Keep its explicitly named days, but without an invented continuous period.
@@ -302,6 +402,12 @@ def _absa_article(html,url,now):
         and re.search(r'posible|podria|baja presion', f))
     impact_terms = bool(re.search(
         r'afectara|afectar|interrumpir|faltante|interrupcion|suministro|baja presion', f))
+    if published<now.date()-timedelta(days=2) and not (
+            len(full_explicit_days)>1 and explicit_days and scheduling_terms and impact_terms):
+        # Do not revive ordinary historical news or old one-day plans. Only
+        # multi-day schedules with independently verified dates may outlive the
+        # two-day publication freshness period, up to seven days of lookback.
+        return [],published
     if full_explicit_days and not explicit_days and scheduling_terms:
         # A scheduled repair whose entire date range passed is not an outage
         # currently in progress, even if its old announcement says "afectara".
@@ -334,20 +440,33 @@ def _absa_article(html,url,now):
             if not zone.strip():
                 continue
             start=None
-            time_precision='date_only'
+            end_fields={'scheduled_end':None,'time_precision':'date_only'}
             # Only a time attached to this locality, not a date in the shared intro.
             stated_clock = _absa_start_clock(zone)
             if stated_clock is not None:
                 hour, minute = stated_clock
                 start = datetime(future_day.year, future_day.month, future_day.day,
                                  hour, minute, tzinfo=ART).isoformat(timespec='minutes')
-                time_precision = 'start_known_end_unknown'
-            notices.append(mk_notice('ABSA','Buenos Aires',loc,url,'planned_water_service_impact',
-                                     'scheduled_not_confirmed',zone,scheduled_date=future_day.isoformat(),
-                                     scheduled_start=start,scheduled_end=None,time_precision=time_precision,
-                                     published_on=published.isoformat(),
-                                     impact_type=('possible_low_pressure_only' if possible_pressure_only
-                                                  else 'works_with_reported_possible_impact')))
+                end_fields={'scheduled_end':None,'time_precision':'start_known_end_unknown'}
+                end_fields.update(_absa_stated_end_after_start(zone,stated_clock,future_day))
+            # A published estimate in the past does not verify restoration.
+            # It does make the original *future plan* historical rather than
+            # a still-pending scheduled event. Keep it as read-only evidence.
+            status='scheduled_not_confirmed'
+            recorded_end=(end_fields.get('scheduled_end_estimate') or
+                          end_fields.get('scheduled_end'))
+            if recorded_end and datetime.fromisoformat(recorded_end)<now:
+                status='publication_only_not_live'
+            item=mk_notice('ABSA','Buenos Aires',loc,url,'planned_water_service_impact',
+                           status,zone,scheduled_date=future_day.isoformat(),
+                           scheduled_start=start,**end_fields,
+                           published_on=published.isoformat(),
+                           impact_type=('possible_low_pressure_only' if possible_pressure_only
+                                        else 'works_with_reported_possible_impact'))
+            if status=='publication_only_not_live':
+                item['message']=('El horario publicado ya transcurrió. '
+                                 'No confirma finalización de obras ni normalización del suministro.')
+            notices.append(item)
     elif re.search(r'\b(se estan registrando|se registra|afecta el suministro|afectando|falta[s]? de agua|baja presion)\b',f):
         # Recent news is not evidence that the problem remains ongoing.
         notices.append(mk_notice('ABSA','Buenos Aires',locality,url,'water_service_bulletin',
@@ -362,7 +481,7 @@ def _absa_article(html,url,now):
 def _collect_absa(checked_at,now,fetch):
     company,province,url=SOURCES['absa_buenos_aires']
     base=_result('absa_buenos_aires',checked_at)
-    base['parser_revision']='ABSA-LOCALITY-v5.58'
+    base['parser_revision']='ABSA-CROSSREF-TIMES-v5.60'
     seen=[];newest=None;article_count=0;errors=[]
     try:
         dom,_=page(fetch(url))
@@ -387,6 +506,7 @@ def _collect_absa(checked_at,now,fetch):
         base['articles_checked']=article_count
     except Exception as exc:
         errors.append(type(exc).__name__)
+    seen=_absa_cross_reference_city(seen)
     unique={x['id']:x for x in seen}
     base['notices']=list(unique.values())
     base['records_checked']=article_count
