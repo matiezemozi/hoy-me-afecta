@@ -1,4 +1,4 @@
-"""Conservative public water-service bulletin collectors for Argentina (v5.58).
+"""Conservative public water-service bulletin collectors for Argentina (v5.59).
 
 No report is a live outage confirmation. No credentials, service identifiers or
 unofficial APIs are used. Completely independent of provincial_electricity.
@@ -41,6 +41,7 @@ SOURCES = {
     'aguas_santiago_novedades': ('Aguas de Santiago', 'Santiago del Estero', 'https://aguasdesantiago.com.ar/categoria/4/novedades'),
     'san_luis_serba_municipal': ('SerBa / Municipio de San Luis', 'San Luis', 'https://sanluislaciudad.gob.ar/feed/'),
     'santa_rosa_municipal_lp': ('Municipalidad de Santa Rosa', 'La Pampa', 'https://www.santarosa.gob.ar/rss.xml'),
+    'dposs_tierra_del_fuego_reparaciones': ('DPOSS Tierra del Fuego', 'Tierra del Fuego', 'https://dposs.gob.ar/reparaciones/'),
 }
 WEEKDAY = {'lunes':0, 'martes':1, 'miercoles':2, 'jueves':3, 'viernes':4,
            'sabado':5, 'domingo':6}
@@ -2849,11 +2850,154 @@ def _collect_municipal_rss(key,checked_at,now,fetch):
     return r
 
 
+
+# v5.59: Public DPOSS repair records (Ushuaia / Tolhuin). The official page
+# includes completed historical repairs; a label 'Tipo de corte' is NOT live
+# state verification. Only date/time-localized windows with explicit possible
+# drinking-water impact may become publication-only pilot bulletins. No push.
+_DPOSS_ENTRY = re.compile(r'\bPublicada\s+el\s*:\s*', re.I)
+_DPOSS_HEADER = re.compile(r'^\s*(\d{2}/\d{2}/\d{4})\s+(\d{1,2}):(\d{2})\b')
+_DPOSS_TYPE = re.compile(r'\bTipo\s+de\s+corte\s*:\s*(Programado|Imprevisto)\b', re.I)
+_DPOSS_LOCALITY = re.compile(r'\bLocalidad\s*:\s*(Ushuaia|Tolhuin)\b', re.I)
+_DPOSS_ADDRESS = re.compile(r'\bDirecci[oó]n\s+aproximada\s*:\s*(.*?)\s+(?=Fecha\s*:\s*El\s+)', re.I|re.S)
+_DPOSS_WINDOW = re.compile(
+    r'\bFecha\s*:\s*El\s+(\d{2}/\d{2}/\d{4})\s+de\s+'
+    r'(\d{1,2}):(\d{2})\s+a\s+(\d{1,2}):(\d{2})\b', re.I)
+_DPOSS_IMPACT = re.compile(
+    r'\bbaja presion\b|\bfalta de (?:agua|suministro)\b|'
+    r'\bcorte(?:s)? de agua\b|\binterrupcion del (?:servicio|suministro)\b|'
+    r'\bpodra (?:registrarse|experimentar) (?:baja presion|falta de suministro)\b')
+
+
+def _dposs_structured_records(html, now):
+    """Return grounded records, total visible records and discard diagnostics.
+
+    HTML is parsed as visible text, not arbitrary script/JSON. Each record must
+    contain its own labels; adjacent records must never donate dates or places.
+    The website may report *completed* repairs; ended windows are not alerts.
+    """
+    _,visible=page(html)
+    chunks=_DPOSS_ENTRY.split(visible)
+    records=[]
+    diagnostics={'records_seen':max(0,len(chunks)-1),'records_skipped_old':0,
+                 'records_skipped_invalid':0,'records_skipped_without_water_impact':0,
+                 'records_completed_today':0}
+    for chunk in chunks[1:26]:
+        block=chunk[:6500]
+        pub=_DPOSS_HEADER.match(block)
+        work_type=_DPOSS_TYPE.search(block)
+        loc=_DPOSS_LOCALITY.search(block)
+        window=_DPOSS_WINDOW.search(block)
+        address=_DPOSS_ADDRESS.search(block)
+        if not (pub and work_type and loc and window and address):
+            diagnostics['records_skipped_invalid']+=1
+            continue
+        try:
+            pub_day=_ddmmyyyy(pub.group(1))
+            day=_ddmmyyyy(window.group(1))
+            hour1,min1,hour2,min2=map(int,window.groups()[1:])
+            if max(hour1,hour2)>23 or max(min1,min2)>59:
+                raise ValueError('invalid clock')
+            start=datetime(day.year,day.month,day.day,hour1,min1,tzinfo=ART)
+            end=datetime(day.year,day.month,day.day,hour2,min2,tzinfo=ART)
+            if end<=start or end-start>timedelta(hours=18):
+                raise ValueError('invalid work window')
+        except (ValueError,TypeError):
+            diagnostics['records_skipped_invalid']+=1
+            continue
+        if (pub_day>now.date() or pub_day<day-timedelta(days=14) or
+            day<now.date()-timedelta(days=1) or
+            day>now.date()+timedelta(days=HORIZON_DAYS)):
+            diagnostics['records_skipped_old']+=1
+            continue
+        # Public repairs list may describe works already concluded today.
+        if end <= now:
+            diagnostics['records_completed_today']+=1
+            continue
+        narrative=block[window.end():].strip()
+        normalized=folded(narrative)
+        if not re.search(r'\bagua\b|\bsuministro\b|\bred de distribucion\b|\bpotable\b',normalized):
+            diagnostics['records_skipped_without_water_impact']+=1
+            continue
+        sentences=re.split(r'(?<=[.!?])\s+',narrative)
+        possible_impact=False
+        for sentence in sentences:
+            f=folded(sentence)
+            if _DPOSS_IMPACT.search(f) and not re.search(
+                r'\bno (?:habra|habran|se registrara|se registraran|afectara|afectaran)\b|'
+                r'\bsin (?:afectacion|interrupcion|corte)\b',f):
+                possible_impact=True
+                break
+        if not possible_impact:
+            diagnostics['records_skipped_without_water_impact']+=1
+            continue
+        if work_type.group(1).lower()=='imprevisto' and day>now.date():
+            diagnostics['records_skipped_invalid']+=1
+            continue
+        locality=loc.group(1)
+        approximate=clean(address.group(1),180)
+        if len(approximate)<5:
+            diagnostics['records_skipped_invalid']+=1
+            continue
+        company,province,url=SOURCES['dposs_tierra_del_fuego_reparaciones']
+        upcoming=(start>now and work_type.group(1).lower()=='programado')
+        note=mk_notice(company,province,locality,url,
+            'planned_water_service_impact' if upcoming else 'water_service_bulletin',
+            'scheduled_not_confirmed' if upcoming else 'publication_only_not_live',
+            narrative,published_on=pub_day.isoformat(),
+            scheduled_date=day.isoformat(),
+            scheduled_start=start.isoformat(timespec='minutes'),
+            scheduled_end=end.isoformat(timespec='minutes'),
+            time_precision='official_work_window_not_live',
+            repair_category=work_type.group(1).lower(),
+            reported_work_location=approximate)
+        # Multiple DPOSS repair notices can share the exact page, city and day.
+        # Each gets its own stable ID from the separately documented location.
+        distinct='|'.join([url,locality,day.isoformat(),
+                           start.isoformat(timespec='minutes'),approximate])
+        note['id']='agua-'+sha256(distinct.encode('utf-8')).hexdigest()[:18]
+        records.append(note)
+    return records,diagnostics
+
+
+def _collect_dposs(checked_at,now,fetch):
+    key='dposs_tierra_del_fuego_reparaciones'
+    r=_result(key,checked_at)
+    r.update(parser_revision='DPOSS-REPAIRS-v5.59',
+             coverage_kind='official_dated_public_repair_records_not_live',
+             records_seen=0,records_checked=0,notices=[],source_attempts=[])
+    url=r['source_url']
+    try:
+        records,details=_dposs_structured_records(fetch(url),now)
+        r.update(details)
+        r['records_checked']=len(records)
+        r['notices']=records[:12]
+        r['source_attempts'].append({'url':url,'result':'structured_records_read',
+                                     'records_seen':r['records_seen']})
+        if r['notices']:
+            r['status']='ok'
+            r['message']='Registros DPOSS con fecha y horarios: no verifican estado del suministro en tiempo real.'
+        elif r['records_seen']:
+            if r['records_skipped_old'] or r['records_completed_today']:
+                r['status']='stale'
+                r['message']='La página contiene reparaciones finalizadas o históricas. No implica suministro normal.'
+            else:
+                r['message']='No hay registros completos con impacto de agua verificable; estado actual desconocido.'
+        else:
+            r['message']='La página DPOSS no expuso reparaciones estructuradas reconocibles; estado desconocido.'
+    except Exception as exc:
+        r['message']='No se pudo verificar la página de reparaciones DPOSS: '+type(exc).__name__
+        attempt={'url':url,'result':'fetch_or_parse_error','error_type':type(exc).__name__}
+        if isinstance(exc,HTTPError):attempt['http_status']=exc.code
+        r['source_attempts'].append(attempt)
+    return r
+
 def collect_one(key,checked_at,fetcher=None):
     if key not in SOURCES:
         raise KeyError(key)
     now=checked_instant(checked_at)
     fetch=fetcher or fetch_html
+    if key=='dposs_tierra_del_fuego_reparaciones':return _collect_dposs(checked_at,now,fetch)
     if key=='absa_buenos_aires':return _collect_absa(checked_at,now,fetch)
     if key=='aysam_mendoza':return _collect_aysam(checked_at,now,fetch)
     if key=='aguas_del_norte_salta':return _collect_salta(checked_at,now,fetch)
