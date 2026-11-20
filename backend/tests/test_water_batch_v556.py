@@ -115,7 +115,7 @@ class AbsaTimesV556(unittest.TestCase):
         self.assertGreaterEqual(len(result['sources']), 18)
         self.assertFalse(result['notifications_enabled'])
         self.assertFalse(result['android_display_enabled'])
-        self.assertIn(result['sources']['absa_buenos_aires']['parser_revision'], ('ABSA-TIMES-v5.56', 'ABSA-LOCALITY-v5.58'))
+        self.assertIn(result['sources']['absa_buenos_aires']['parser_revision'], ('ABSA-TIMES-v5.56', 'ABSA-LOCALITY-v5.58', 'ABSA-CROSSREF-TIMES-v5.60'))
 
 
 if __name__ == '__main__':
