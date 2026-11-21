@@ -1,4 +1,4 @@
-"""Conservative public water-service bulletin collectors for Argentina (v5.60).
+"""Conservative public water-service bulletin collectors for Argentina (v5.61).
 
 No report is a live outage confirmation. No credentials, service identifiers or
 unofficial APIs are used. Completely independent of provincial_electricity.
@@ -911,6 +911,62 @@ def _arsa_reported_same_day_work_window(paragraphs, published):
     return None
 
 
+
+def _arsa_reported_hours_without_confirmed_day(paragraphs):
+    """Preserve reported work hours when the article does not establish a day.
+
+    Example from an official Bariloche release: the article states repairs
+    have begun and that *desde las 12 y hasta aproximadamente las 19* water
+    supply may be affected. Its publication date alone does NOT prove the
+    work took place that date. Keep only local clock values, not scheduled
+    timestamps or a claim of an active outage.
+
+    The hours and explicit impact must occur in the SAME paragraph, supported
+    by water-repair context in that or its immediately preceding paragraph.
+    Never borrow office hours, unrelated article hours, or a second window.
+    """
+    candidates=[]
+    pattern=re.compile(
+        r'\bdesde\s+las\s+(\d{1,2})(?::(\d{2}))?\s+'
+        r'(?:y\s+)?hasta\s+(?:(aproximadamente|aprox\.?|cerca de)\s+)?'
+        r'(?:las\s+)?(\d{1,2})(?::(\d{2}))?\b'
+    )
+    for i, paragraph in enumerate(paragraphs):
+        text=folded(paragraph)
+        if re.search(r'horario de atencion|atencion al publico|\boficina\b|horario comercial',text):
+            continue
+        if not re.search(r'\bbaja presion\b|\bfalta (?:de agua|de suministro)\b|'
+                         r'\bfaltas de suministro\b|\bservicio intermitente\b|'
+                         r'\binterrupcion del suministro\b',text):
+            continue
+        prev=folded(paragraphs[i-1]) if i>0 else ''
+        work=r'\btrabajos\b|\btareas\b|\breparacion\b|\bintervencion\b'
+        infrastructure=r'\bcaneria\b|\bplanta\b|\bpotabiliz|\bred de agua\b'
+        # The work and the water infrastructure must be identified together
+        # in one paragraph; do not combine a municipal plaza construction
+        # from the previous paragraph with water-impact hours here.
+        if not ((re.search(work,text) and re.search(infrastructure,text)) or
+                (re.search(work,prev) and re.search(infrastructure,prev))):
+            continue
+        for m in pattern.finditer(text):
+            h1,mi1,approx,h2,mi2=int(m[1]),int(m[2] or 0),m[3],int(m[4]),int(m[5] or 0)
+            if h1>23 or mi1>59 or h2>23 or mi2>59:
+                continue
+            if not (0 < ((h2*60+mi2)-(h1*60+mi1)) <= 18*60):
+                continue
+            # Approximation after the time is equally authoritative as before it.
+            right=text[m.end():m.end()+40]
+            estimated=bool(approx or re.match(r'\s*(?:horas\s*,?\s*)?(?:aproximadamente|aprox\.?)\b',right))
+            candidates.append((f'{h1:02d}:{mi1:02d}',f'{h2:02d}:{mi2:02d}',estimated))
+    if len(candidates)!=1:
+        return None
+    start,end,estimated=candidates[0]
+    result={'scheduled_start':None,'scheduled_end':None,
+            'reported_start_local_time':start,
+            'time_precision':'reported_hours_day_unverified_not_live'}
+    result['reported_end_local_time_estimate' if estimated else 'reported_end_local_time']=end
+    return result
+
 def _arsa_article(html,url,now,index_published=None):
     dom,visible=page(html)
     title=_arsa_article_title(dom,html,url)
@@ -960,7 +1016,8 @@ def _arsa_article(html,url,now,index_published=None):
     # Preserve them as dated bulletin metadata, NEVER as a live outage status.
     reported_window = _arsa_reported_same_day_work_window(paragraphs,published)
     time_fields = (reported_window if reported_window is not None
-                   else {'scheduled_start':None,'scheduled_end':None})
+                   else _arsa_reported_hours_without_confirmed_day(paragraphs)
+                   or {'scheduled_start':None,'scheduled_end':None})
     return [mk_notice('Aguas Rionegrinas','Río Negro',locality,url,
                       'water_service_bulletin','publication_only_not_live',content,
                       published_on=published.isoformat(),**time_fields)],published
@@ -973,7 +1030,7 @@ def _collect_arsa(checked_at,now,fetch):
     budget. Older, explicitly dated index entries need not be fetched again.
     """
     result=_result('aguas_rionegrinas_arsa',checked_at)
-    result['parser_revision']='ARSA-FRESH-ROTATION-v5.55'
+    result['parser_revision']='ARSA-HOURS-CONTEXT-v5.61'
     result['rate_limited']=False
     result['article_links_skipped_after_rate_limit']=0
     result['article_links_skipped_old']=0
