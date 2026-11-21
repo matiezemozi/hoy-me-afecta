@@ -3543,6 +3543,58 @@ def _adc_locality(headline):
     return matches[0] if len(matches)==1 else None
 
 
+# v5.67: A numeric date is a publication date only if it is explicitly
+# labelled as such in the ARTICLE heading area. The /NNNN story identifier,
+# dates mentioned in the story body, and the crawl time are NEVER dates.
+_ADC_PUBLISHED_NUMERIC = re.compile(
+    r'\b(?:publicad[oa](?:\s+el)?|fecha\s+de\s+publicacion)'
+    r'\s*[:\-]?\s*(\d{1,2})\s*[/\-]\s*(\d{1,2})\s*[/\-]\s*(20\d{2})\b')
+_ADC_PUBLISHED_TEXTUAL = re.compile(
+    r'\b(?:publicad[oa](?:\s+el)?|fecha\s+de\s+publicacion)'
+    r'\s*[:\-]?\s*(\d{1,2})\s+(?:de\s+)?'
+    r'(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|setiembre|octubre|noviembre|diciembre)'
+    r'\s*,?\s*(?:de\s+)?(20\d{2})\b')
+
+
+def _adc_publication_day(html,visible,title):
+    # The ordinary article:published_time / datePublished / time[datetime]
+    # source already covers many official publication-date formats.
+    metadata=_published_date_from_meta(html)
+    if metadata:
+        return metadata
+    visible_folded=folded(visible)
+    title_folded=folded(title)
+    if not title_folded:
+        return None
+    # A repeated story title may occur in navigation. Inspect each occurrence
+    # without scanning unrelated page content. Require a publication marker
+    # for numeric dates; otherwise a future scheduled work date might be read
+    # as the publication date.
+    positions=[m.start() for m in re.finditer(re.escape(title_folded),visible_folded)]
+    for at in reversed(positions):
+        before=visible[max(0,at-95):at]
+        after=visible[at+len(title):at+len(title)+145]
+        for nearby in (after,before):
+            compact=folded(nearby)
+            match=_ADC_PUBLISHED_NUMERIC.search(compact)
+            if match:
+                try:
+                    return date(int(match.group(3)),int(match.group(2)),int(match.group(1)))
+                except ValueError:
+                    continue
+        # An unlabelled textual date may describe a PLANNED work day, not
+        # publication. Accept the full-month form only with the same explicit
+        # publication marker; no guessing from the article body.
+        for nearby in (after,before):
+            match=_ADC_PUBLISHED_TEXTUAL.search(folded(nearby))
+            if match:
+                try:
+                    return date(int(match.group(3)),MONTH[match.group(2)],int(match.group(1)))
+                except ValueError:
+                    continue
+    return None
+
+
 def _adc_article(html,url,now,listing_title):
     dom,visible=page(html)
     candidate_headings=[h for h in dom.headings if len(h)>15 and
@@ -3563,13 +3615,9 @@ def _adc_article(html,url,now,listing_title):
     city=_adc_locality(title)
     if not city:
         return None,None,'locality_not_explicit_in_title'
-    # No guessed date: articles on this official website can omit dates.
-    # Meta/JSON-LD is acceptable; otherwise require date close to the H1.
-    published=_published_date_from_meta(html)
-    if not published:
-        at=folded(visible).find(folded(title))
-        if at>=0:
-            published=_parse_official_day(visible[max(0,at-55):at+len(title)+95])
+    # Publication date must be explicit; never infer from /NNNN article ID.
+    # Keep report-only status if no official publication date can be checked.
+    published=_adc_publication_day(html,visible,title)
     if not published:
         return None,None,'publication_date_not_verified'
     if published>now.date() or published<now.date()-timedelta(days=3):
@@ -3606,7 +3654,7 @@ def _adc_article(html,url,now,listing_title):
 
 def _collect_adc(checked_at,now,fetch):
     r=_result(_ADC_KEY,checked_at)
-    r.update(parser_revision='ADC-NUMERIC-PUBLIC-NEWS-v5.66',
+    r.update(parser_revision='ADC-HEADING-PUBLISHED-DATE-v5.67',
              coverage_kind='dated_official_company_news_not_live',
              notices=[],article_links_seen=0,articles_checked=0,
              source_attempts=[],index_attempts=[],
@@ -3632,6 +3680,8 @@ def _collect_adc(checked_at,now,fetch):
         try:
             n,d,reason=_adc_article(fetch(article_url),article_url,now,label)
             attempt={'url':article_url,'result':reason}
+            if reason=='publication_date_not_verified':
+                attempt['publication_date_check']='no_explicit_date_in_article_metadata_or_heading'
             if d:
                 attempt['published_on']=d.isoformat();dates.append(d)
             r['source_attempts'].append(attempt)
