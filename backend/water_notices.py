@@ -1,4 +1,4 @@
-"""Conservative public water-service bulletin collectors for Argentina (v5.62).
+"""Conservative public water-service bulletin collectors for Argentina (v5.63).
 
 No report is a live outage confirmation. No credentials, service identifiers or
 unofficial APIs are used. Completely independent of provincial_electricity.
@@ -43,7 +43,7 @@ SOURCES = {
     'santa_rosa_municipal_lp': ('Municipalidad de Santa Rosa', 'La Pampa', 'https://www.santarosa.gob.ar/rss.xml'),
     'dposs_tierra_del_fuego_reparaciones': ('DPOSS Tierra del Fuego', 'Tierra del Fuego', 'https://dposs.gob.ar/reparaciones/'),
     'aosc_corrientes_regulador': ('AOSC / Ente Regulador', 'Corrientes', 'https://aosc.gob.ar/noticias'),
-    'parana_radio_municipal_agua': ('Radio Costa Parana / Municipalidad', 'Entre Rios', 'https://costa.parana.gob.ar/category/locales/'),
+    'parana_radio_municipal_agua': ('Radio Costa Parana / Municipalidad', 'Entre Rios', 'https://costa.parana.gob.ar/noticias/'),
 }
 WEEKDAY = {'lunes':0, 'martes':1, 'miercoles':2, 'jueves':3, 'viernes':4,
            'sabado':5, 'domingo':6}
@@ -3204,17 +3204,57 @@ def _public_news_valid_url(url,key):
     return bool(re.fullmatch(r'/[a-zA-Z0-9%_-]{14,}/?',path))
 
 
-def _public_news_index(html,base,key):
+# v5.63: The municipality radio's /category/locales/ archive showed October
+# stories on 21 November despite having 40 HTML anchors. Its official /noticias/
+# index, independently checked, is current. The labels contain a dated/category
+# prefix ("20/11/2026 | Locales | (1) Headline") which must be removed before
+# comparing with the article's H1. An index date is only a *fetch filter*;
+# the article itself must still independently verify its publication date.
+_PUBLIC_PARANA_OLD_INDEX='https://costa.parana.gob.ar/category/locales/'
+
+
+def _public_news_index_label(label,key):
+    label=clean(label,450)
+    if key!='parana_radio_municipal_agua':
+        return label,None
+    observed=None
+    m=re.match(r'^\s*(\d{1,2})/(\d{1,2})/(20\d{2})\b',label)
+    if m:
+        try:observed=date(int(m.group(3)),int(m.group(2)),int(m.group(1)))
+        except ValueError:pass
+        label=label[m.end():].lstrip(' |:-')
+    # The category and thumbnail counter are not part of the H1 title.
+    label=re.sub(r'^(?:[^|]{2,55}\|\s*)?\(\d{1,3}\)\s*','',label).strip()
+    return label,observed
+
+
+def _public_news_index(html,base,key,now=None,stats=None):
     dom,visible=page(html)
     items=[];seen=set()
+    stats=stats if stats is not None else {}
+    stats.update(valid_article_links_seen=0,relevant_titles_seen=0,
+                 older_headlines_skipped=0,future_headlines_skipped=0,
+                 index_dated_headlines_seen=0)
     for href,label in dom.anchors:
         url=urljoin(base,href)
         if not _public_news_valid_url(url,key) or url in seen:
             continue
         seen.add(url)
-        if key=='parana_radio_municipal_agua' and not _PUBLIC_WATER_TITLE.search(folded(label)):
-            continue
-        items.append((url,label))
+        stats['valid_article_links_seen']+=1
+        title,listing_day=_public_news_index_label(label,key)
+        if key=='parana_radio_municipal_agua':
+            if not _PUBLIC_WATER_TITLE.search(folded(title)):
+                continue
+            stats['relevant_titles_seen']+=1
+            if listing_day:
+                stats['index_dated_headlines_seen']+=1
+                if now and listing_day<now.date()-timedelta(days=3):
+                    stats['older_headlines_skipped']+=1
+                    continue
+                if now and listing_day>now.date():
+                    stats['future_headlines_skipped']+=1
+                    continue
+        items.append((url,title))
     return items[:12],len(dom.anchors),visible
 
 
@@ -3300,20 +3340,54 @@ def _public_news_article(html,url,now,key,index_title=''):
 
 def _collect_public_news(key,checked_at,now,fetch):
     r=_result(key,checked_at)
-    r.update(parser_revision='PUBLIC-OFFICIAL-NEWS-v5.62',
+    r.update(parser_revision='PUBLIC-OFFICIAL-NEWS-v5.63',
              coverage_kind='dated_official_public_news_not_live',
              article_links_seen=0,articles_checked=0,
-             source_attempts=[],notices=[],articles_deferred_by_budget=0)
-    try:
-        items,anchors,visible=_public_news_index(fetch(r['source_url']),r['source_url'],key)
-        r['index_status']='article_links_found' if items else 'no_relevant_links'
-        r['html_anchors_seen']=anchors
-        r['article_links_seen']=len(items)
-    except Exception as exc:
-        r['index_status']='fetch_or_parse_error'
-        r['message']='No se pudo verificar el portal oficial: '+type(exc).__name__
-        if isinstance(exc,HTTPError):r['http_status']=exc.code
-        return r
+             source_attempts=[],notices=[],articles_deferred_by_budget=0,
+             index_attempts=[])
+    original=r['source_url']
+    indices=[original]
+    if key=='parana_radio_municipal_agua':
+        indices.append(_PUBLIC_PARANA_OLD_INDEX)
+    items=[]
+    for index_no,index_url in enumerate(indices):
+        try:
+            html=fetch(index_url)
+            stats={}
+            candidates,anchors,visible=_public_news_index(html,index_url,key,now,stats)
+            r['html_anchors_seen']=anchors
+            for field,value in stats.items():r[field]=value
+            r['index_attempts'].append({'url':index_url,
+                 'result':'recent_water_links_found' if candidates else 'no_recent_water_headlines',
+                 'html_anchors_seen':anchors,
+                 'valid_article_links_seen':stats['valid_article_links_seen'],
+                 'relevant_titles_seen':stats['relevant_titles_seen'],
+                 'older_headlines_skipped':stats['older_headlines_skipped']})
+            items=candidates
+            r['index_mode']='current_news_index' if index_no==0 else 'official_category_fallback'
+            # A successfully read, article-bearing index with no recent water
+            # titles is not an access error; don't retry an outdated archive.
+            if items or stats['valid_article_links_seen']:
+                break
+        except Exception as exc:
+            attempt={'url':index_url,'result':'fetch_or_parse_error',
+                     'error_type':type(exc).__name__}
+            if isinstance(exc,HTTPError):attempt['http_status']=exc.code
+            r['index_attempts'].append(attempt)
+            r['index_status']='fetch_or_parse_error'
+            if isinstance(exc,HTTPError):r['http_status']=exc.code
+            # Explicit 403 is a refusal from the site, not a zero-results list;
+            # do not probe alternate routes after an explicit access denial.
+            if isinstance(exc,HTTPError) and exc.code in (403,429):
+                r['access_mode']='official_site_rejected_automated_request'
+                r['message']='El sitio oficial rechazó la consulta (HTTP %s). No se pudieron verificar avisos.'%exc.code
+                return r
+            if index_no==len(indices)-1:
+                r['message']='No se pudo verificar el portal oficial: '+type(exc).__name__
+                return r
+            continue
+    r['index_status']='recent_water_links_found' if items else 'no_recent_water_headlines'
+    r['article_links_seen']=len(items)
     limit=3 if key=='aosc_corrientes_regulador' else 2
     chosen=items[:limit]
     r['articles_deferred_by_budget']=max(0,len(items)-len(chosen))
@@ -3339,6 +3413,8 @@ def _collect_public_news(key,checked_at,now,fetch):
     elif dates and all(d<now.date()-timedelta(days=3) for d in dates):
         r['status']='stale'
         r['message']='Noticias consultadas antiguas; no implica suministro normal.'
+    elif key=='parana_radio_municipal_agua' and not items and r.get('valid_article_links_seen'):
+        r['message']='Índice oficial consultado sin titulares recientes sobre afectaciones del agua potable; no confirma servicio normal.'
     else:
         r['message']='No se verificaron avisos recientes con localidad e impacto concreto. Estado desconocido.'
     if r['articles_deferred_by_budget'] or r.get('rate_limited') or any(
