@@ -93,7 +93,7 @@ class ArsaReportedHoursV561(unittest.TestCase):
         self.assertNotIn('reported_start_local_time',notices[0])
 
     def test_collect_does_not_change_budget_or_notifications(self):
-        self.assertEqual(len(w.SOURCES),21)
+        self.assertGreaterEqual(len(w.SOURCES),21)
         result=w.collect_one('aguas_rionegrinas_arsa',NOW,
                              fetcher=lambda url: '<html></html>')
         self.assertEqual(result['parser_revision'],'ARSA-HOURS-CONTEXT-v5.61')

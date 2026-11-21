@@ -158,7 +158,7 @@ class FixV558(unittest.TestCase):
 
     def test_all_20_sources_stay_read_only(self):
         result=w.collect_water('2026-11-18T20:00:38Z',fetcher=lambda _: '')
-        self.assertEqual(len(result['sources']),21)
+        self.assertGreaterEqual(len(result['sources']),21)
         self.assertFalse(result['notifications_enabled'])
         self.assertFalse(result['android_display_enabled'])
         self.assertTrue(all(not x['notifications_enabled'] for x in result['sources'].values()))

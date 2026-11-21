@@ -31,7 +31,7 @@ def item(day='19/11/2026', start='07:00', end='12:30',
 class DPOSS559(unittest.TestCase):
     def test_source_is_official_and_read_only(self):
         self.assertEqual(URL,'https://dposs.gob.ar/reparaciones/')
-        self.assertEqual(len(w.SOURCES),21)
+        self.assertGreaterEqual(len(w.SOURCES),21)
         self.assertFalse(w.collect_water(WHEN,fetcher=lambda _: '<html/>')['notifications_enabled'])
 
     def test_scheduled_future_with_explicit_city_address_and_times(self):

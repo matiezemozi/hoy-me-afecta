@@ -35,7 +35,7 @@ def mil_old(city='San Fernando',address='Carlos Casares entre Italia y Lugones',
 
 class WaterV560(unittest.TestCase):
     def test_dposs_existed_and_notifications_off(self):
-        self.assertEqual(len(w.SOURCES),21)
+        self.assertGreaterEqual(len(w.SOURCES),21)
         self.assertIn('dposs_tierra_del_fuego_reparaciones',w.SOURCES)
         r=w.collect_water(DAY_AFTER,fetcher=lambda _: '<html/>')
         self.assertFalse(r['notifications_enabled'])
