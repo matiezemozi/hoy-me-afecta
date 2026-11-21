@@ -10,7 +10,7 @@ import water_notices as w
 NOW='2026-11-21T03:23:08Z'
 AOSC_INDEX='https://aosc.gob.ar/noticias'
 AOSC_ART='https://aosc.gob.ar/noticias/TEST20261119'
-PNA_INDEX='https://costa.parana.gob.ar/category/locales/'
+PNA_INDEX='https://costa.parana.gob.ar/noticias/'
 PNA_ART='https://costa.parana.gob.ar/corte-de-suministro-de-agua-en-parana-por-reparaciones/'
 
 def index(key,title='Corte de suministro de agua en Parana por reparaciones'):
