@@ -76,7 +76,7 @@ class WaterV566(unittest.TestCase):
             return html if url==INDEX else article()
         result=w.collect_one('aguas_corrientes_prestador',NOW,fetch)
         self.assertEqual(fetched,[INDEX,IMPACT_URL])
-        self.assertEqual(result['parser_revision'],'ADC-NUMERIC-PUBLIC-NEWS-v5.66')
+        self.assertEqual(result['parser_revision'],'ADC-HEADING-PUBLISHED-DATE-v5.67')
         self.assertEqual(result['status'],'ok')
         self.assertEqual(result['article_links_seen'],1)
         self.assertEqual(len(result['notices']),1)
