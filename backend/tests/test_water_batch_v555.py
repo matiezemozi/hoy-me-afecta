@@ -45,7 +45,7 @@ class FreshRotation555(unittest.TestCase):
         for hour in range(6):
             stamp=(datetime(2026,11,16,18,tzinfo=timezone.utc)+timedelta(hours=hour)).isoformat()
             r,calls=simulate(stamp,days)
-            self.assertEqual(r['parser_revision'],'ARSA-FRESH-ROTATION-v5.55')
+            self.assertEqual(r['parser_revision'],'ARSA-HOURS-CONTEXT-v5.61')
             self.assertEqual(r['article_links_seen'],4)
             self.assertEqual(r['article_links_skipped_old'],0)
             self.assertEqual(r['sampling_secondary_pool_size'],2)
