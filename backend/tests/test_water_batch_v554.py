@@ -42,7 +42,7 @@ class RotatingBudget554(unittest.TestCase):
 
     def test_budget_never_exceeds_two_article_requests(self):
         r,calls=run(self.STAMP,8)
-        self.assertEqual(r['parser_revision'],'ARSA-FRESH-ROTATION-v5.55')
+        self.assertEqual(r['parser_revision'],'ARSA-HOURS-CONTEXT-v5.61')
         self.assertEqual(r['max_article_requests_per_run'],2)
         self.assertEqual(r['article_links_seen'],8)
         self.assertEqual(r['articles_checked'],2)
