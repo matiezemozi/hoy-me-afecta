@@ -1,4 +1,4 @@
-"""Conservative public water-service bulletin collectors for Argentina (v5.61).
+"""Conservative public water-service bulletin collectors for Argentina (v5.62).
 
 No report is a live outage confirmation. No credentials, service identifiers or
 unofficial APIs are used. Completely independent of provincial_electricity.
@@ -42,6 +42,8 @@ SOURCES = {
     'san_luis_serba_municipal': ('SerBa / Municipio de San Luis', 'San Luis', 'https://sanluislaciudad.gob.ar/feed/'),
     'santa_rosa_municipal_lp': ('Municipalidad de Santa Rosa', 'La Pampa', 'https://www.santarosa.gob.ar/rss.xml'),
     'dposs_tierra_del_fuego_reparaciones': ('DPOSS Tierra del Fuego', 'Tierra del Fuego', 'https://dposs.gob.ar/reparaciones/'),
+    'aosc_corrientes_regulador': ('AOSC / Ente Regulador', 'Corrientes', 'https://aosc.gob.ar/noticias'),
+    'parana_radio_municipal_agua': ('Radio Costa Parana / Municipalidad', 'Entre Rios', 'https://costa.parana.gob.ar/category/locales/'),
 }
 WEEKDAY = {'lunes':0, 'martes':1, 'miercoles':2, 'jueves':3, 'viernes':4,
            'sabado':5, 'domingo':6}
@@ -3169,11 +3171,188 @@ def _collect_dposs(checked_at,now,fetch):
         r['source_attempts'].append(attempt)
     return r
 
+# v5.62: Corrientes regulator news and Parana municipal-radio news.
+# Both are OFFICIAL PUBLIC NEWS, not live service status and not a utility API.
+# The articles are only sampled if their dates, official URLs and concrete
+# effect on potable-water service are separately verifiable. No notifications.
+_PUBLIC_NEWS_HOSTS = {
+    'aosc_corrientes_regulador': 'aosc.gob.ar',
+    'parana_radio_municipal_agua': 'costa.parana.gob.ar',
+}
+_PUBLIC_WATER_TITLE = re.compile(
+    r'agua potable|servicio de agua|suministro de agua|corte de agua|'
+    r'falta de agua|baja presion|caneria|acueducto|red de agua|'
+    r'planta potabilizadora|obras sanitarias')
+_PUBLIC_REGULATOR_LOCALITIES = (
+    'Curuzu Cuatia', 'Goya', 'Mercedes', 'Paso de los Libres',
+    'Monte Caseros', 'Santo Tome', 'Ituzaingo', 'Bella Vista',
+    'Empedrado', 'Esquina', 'Saladas', 'San Roque', 'Alvear',
+    'San Luis del Palmar', 'San Cosme', 'Santa Lucia', 'Virasoro',
+    'Yapeyu', 'Mburucuya', 'San Miguel',
+)
+
+
+def _public_news_valid_url(url,key):
+    parsed=urlsplit(url)
+    if (parsed.scheme!='https' or parsed.hostname!=_PUBLIC_NEWS_HOSTS[key]
+        or parsed.username is not None or parsed.password is not None
+        or parsed.port is not None or parsed.query or parsed.fragment):
+        return False
+    path=parsed.path
+    if key=='aosc_corrientes_regulador':
+        return bool(re.fullmatch(r'/noticias/[A-Za-z0-9_-]{6,}/?',path))
+    return bool(re.fullmatch(r'/[a-zA-Z0-9%_-]{14,}/?',path))
+
+
+def _public_news_index(html,base,key):
+    dom,visible=page(html)
+    items=[];seen=set()
+    for href,label in dom.anchors:
+        url=urljoin(base,href)
+        if not _public_news_valid_url(url,key) or url in seen:
+            continue
+        seen.add(url)
+        if key=='parana_radio_municipal_agua' and not _PUBLIC_WATER_TITLE.search(folded(label)):
+            continue
+        items.append((url,label))
+    return items[:12],len(dom.anchors),visible
+
+
+def _public_news_date(dom,visible,html,title,key):
+    d=_published_date_from_meta(html)
+    if d:
+        return d
+    # Only an article's own visible publication date, adjacent to its title.
+    # Never read dates from unrelated page navigation or other articles.
+    at=folded(visible).find(folded(title))
+    if at<0:
+        return None
+    nearby=visible[max(0,at-85):at+len(title)+150]
+    d=_parse_official_day(nearby)
+    if d:
+        return d
+    # Corrientes AOSC displays e.g. 02-02-2023 on article pages.
+    if key=='aosc_corrientes_regulador':
+        m=re.search(r'\b(\d{2})-(\d{2})-(20\d{2})\b',nearby)
+        if m:
+            try:
+                return date(int(m[3]),int(m[2]),int(m[1]))
+            except ValueError:
+                pass
+    return None
+
+
+def _public_news_locality(title,key):
+    if key=='parana_radio_municipal_agua':
+        return 'Parana'
+    f=folded(title)
+    possible=[loc for loc in _PUBLIC_REGULATOR_LOCALITIES
+              if re.search(r'(?<!\w)'+re.escape(folded(loc))+r'(?!\w)',f)]
+    return possible[0] if len(possible)==1 else None
+
+
+def _public_news_article(html,url,now,key,index_title=''):
+    dom,visible=page(html)
+    title=next((h for h in dom.headings if len(h)>=19 and
+                folded(h) not in ('noticias','inicio','aosc','locales')),'')
+    if not title:
+        return None,None,'article_title_missing'
+    if index_title and folded(index_title) not in ('leer mas','leer mas...'):
+        if not (folded(index_title) in folded(title) or folded(title) in folded(index_title)):
+            return None,None,'article_title_mismatch'
+    published=_public_news_date(dom,visible,html,title,key)
+    if not published:
+        return None,None,'publication_date_not_verified'
+    if published>now.date() or published<now.date()-timedelta(days=3):
+        return None,published,'outside_publication_window'
+    locality=_public_news_locality(title,key)
+    if not locality:
+        return None,published,'locality_not_grounded_in_title'
+    if _REGIONAL_FINISHED.search(folded(title)):
+        return None,published,'completed_or_restored_title'
+    paragraphs=[p for p in dom.paragraphs if len(p)>25][:24]
+    if not paragraphs:
+        return None,published,'no_article_body'
+    relevant=[]
+    for p in paragraphs:
+        # Keep negation local to its paragraph; a statement that works do
+        # NOT affect supply must never be turned into a water outage.
+        f=folded(p)
+        if _REGIONAL_NEGATIVE.search(f) or _REGIONAL_FINISHED.search(f):
+            continue
+        sentences=re.split(r'(?<=[.!?])\s+',p)
+        for i,sentence in enumerate(sentences):
+            sf=folded(sentence)
+            if not _MUNICIPAL_IMPACT.search(sf) or _REGIONAL_NEGATIVE.search(sf):
+                continue
+            local_context=sf+' '+(folded(sentences[i-1]) if i else '')
+            if not _MUNICIPAL_WATER.search(local_context):
+                continue
+            relevant.append(sentence)
+    if not relevant:
+        return None,published,'no_explicit_potable_water_service_impact'
+    company,province,_=SOURCES[key]
+    return mk_notice(company,province,locality,url,'water_service_bulletin',
+        'publication_only_not_live',' '.join(paragraphs),published_on=published.isoformat(),
+        scheduled_start=None,scheduled_end=None,
+        coverage_kind='dated_official_public_news_not_live'),published,'parsed'
+
+
+def _collect_public_news(key,checked_at,now,fetch):
+    r=_result(key,checked_at)
+    r.update(parser_revision='PUBLIC-OFFICIAL-NEWS-v5.62',
+             coverage_kind='dated_official_public_news_not_live',
+             article_links_seen=0,articles_checked=0,
+             source_attempts=[],notices=[],articles_deferred_by_budget=0)
+    try:
+        items,anchors,visible=_public_news_index(fetch(r['source_url']),r['source_url'],key)
+        r['index_status']='article_links_found' if items else 'no_relevant_links'
+        r['html_anchors_seen']=anchors
+        r['article_links_seen']=len(items)
+    except Exception as exc:
+        r['index_status']='fetch_or_parse_error'
+        r['message']='No se pudo verificar el portal oficial: '+type(exc).__name__
+        if isinstance(exc,HTTPError):r['http_status']=exc.code
+        return r
+    limit=3 if key=='aosc_corrientes_regulador' else 2
+    chosen=items[:limit]
+    r['articles_deferred_by_budget']=max(0,len(items)-len(chosen))
+    dates=[]
+    for url,label in chosen:
+        try:
+            notice,d,reason=_public_news_article(fetch(url),url,now,key,label)
+            r['articles_checked']+=1
+            r['source_attempts'].append({'url':url,'result':reason})
+            if d:dates.append(d)
+            if notice:r['notices'].append(notice)
+        except Exception as exc:
+            a={'url':url,'result':'fetch_or_parse_error','error_type':type(exc).__name__}
+            if isinstance(exc,HTTPError):a['http_status']=exc.code
+            r['source_attempts'].append(a)
+            if isinstance(exc,HTTPError) and exc.code==429:
+                r['rate_limited']=True
+                break
+    if dates:r['latest_published_date']=max(dates).isoformat()
+    if r['notices']:
+        r['status']='ok'
+        r['message']='Noticias oficiales fechadas; no acreditan el estado del suministro en tiempo real.'
+    elif dates and all(d<now.date()-timedelta(days=3) for d in dates):
+        r['status']='stale'
+        r['message']='Noticias consultadas antiguas; no implica suministro normal.'
+    else:
+        r['message']='No se verificaron avisos recientes con localidad e impacto concreto. Estado desconocido.'
+    if r['articles_deferred_by_budget'] or r.get('rate_limited') or any(
+            a['result']=='fetch_or_parse_error' for a in r['source_attempts']):
+        r['message']+=' Lectura parcial; no se revisaron todas las publicaciones.'
+    return r
+
+
 def collect_one(key,checked_at,fetcher=None):
     if key not in SOURCES:
         raise KeyError(key)
     now=checked_instant(checked_at)
     fetch=fetcher or fetch_html
+    if key in _PUBLIC_NEWS_HOSTS:return _collect_public_news(key,checked_at,now,fetch)
     if key=='dposs_tierra_del_fuego_reparaciones':return _collect_dposs(checked_at,now,fetch)
     if key=='absa_buenos_aires':return _collect_absa(checked_at,now,fetch)
     if key=='aysam_mendoza':return _collect_aysam(checked_at,now,fetch)
