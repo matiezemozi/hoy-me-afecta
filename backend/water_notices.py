@@ -1,4 +1,4 @@
-"""Conservative public water-service bulletin collectors for Argentina (v5.63).
+"""Conservative public water-service bulletin collectors for Argentina (v5.64).
 
 No report is a live outage confirmation. No credentials, service identifiers or
 unofficial APIs are used. Completely independent of provincial_electricity.
@@ -44,6 +44,7 @@ SOURCES = {
     'dposs_tierra_del_fuego_reparaciones': ('DPOSS Tierra del Fuego', 'Tierra del Fuego', 'https://dposs.gob.ar/reparaciones/'),
     'aosc_corrientes_regulador': ('AOSC / Ente Regulador', 'Corrientes', 'https://aosc.gob.ar/noticias'),
     'parana_radio_municipal_agua': ('Radio Costa Parana / Municipalidad', 'Entre Rios', 'https://costa.parana.gob.ar/noticias/'),
+    'aguas_corrientes_prestador': ('Aguas de Corrientes S.A.', 'Corrientes', 'https://www.aguasdecorrientes.com/noticias'),
 }
 WEEKDAY = {'lunes':0, 'martes':1, 'miercoles':2, 'jueves':3, 'viernes':4,
            'sabado':5, 'domingo':6}
@@ -3423,11 +3424,185 @@ def _collect_public_news(key,checked_at,now,fetch):
     return r
 
 
+
+# v5.64: official concessionaire news (separate from AOSC, which responds 403).
+# The public /estado-del-servicio page can be an empty/dynamic shell; a reachable
+# page is not proof of normal water service. Only dated, localised, affirmative
+# potable-water impacts in the concessionaire's own articles can be notices.
+_ADC_KEY='aguas_corrientes_prestador'
+_ADC_HOST='www.aguasdecorrientes.com'
+_ADC_IMPACT_HEADLINE=re.compile(
+    r'\b(?:corte|cortes|interrupcion|interrupciones|suspension|'
+    r'baja presion|falta de agua|sin agua|sin suministro|'
+    r'suministro interrumpido|afectara el suministro)\b')
+_ADC_CITIES=(
+    'Corrientes', 'Goya', 'Curuzu Cuatia', 'Paso de los Libres',
+    'Mercedes', 'Monte Caseros', 'Santo Tome', 'Ituzaingo',
+    'Bella Vista', 'Empedrado', 'Esquina', 'Saladas',
+    'San Luis del Palmar', 'Santa Lucia', 'Yapeyu', 'Virasoro',
+    'Alvear', 'San Roque', 'San Cosme', 'Mburucuya',
+)
+
+
+def _adc_article_url(url):
+    p=urlsplit(url)
+    return bool(p.scheme=='https' and p.hostname==_ADC_HOST and
+                not p.username and not p.password and p.port is None and
+                not p.query and not p.fragment and
+                re.fullmatch(r'/[0-9]{1,8}/[a-z0-9-]{12,160}/?',p.path))
+
+
+def _adc_index(html,base):
+    dom,visible=page(html)
+    unique={};valid=0
+    for href,label in dom.anchors:
+        url=urljoin(base,href)
+        if not _adc_article_url(url):
+            continue
+        if url in unique:
+            continue
+        label=clean(label,260)
+        unique[url]=label
+        valid+=1
+    # Never fetch articles only because they mention 'agua' or 'cañería':
+    # infrastructure investment articles are not proof of supply impacts.
+    likely=[(u,t) for u,t in unique.items()
+            if _ADC_IMPACT_HEADLINE.search(folded(t))]
+    return likely[:3],{'html_anchors_seen':len(dom.anchors),
+                       'valid_article_links_seen':valid,
+                       'impact_title_candidates_seen':len(likely),
+                       'articles_deferred_by_budget':max(0,len(likely)-3)}
+
+
+def _adc_locality(headline):
+    f=folded(headline)
+    matches=[city for city in _ADC_CITIES
+             if re.search(r'(?<!\w)'+re.escape(folded(city))+r'(?!\w)',f)]
+    return matches[0] if len(matches)==1 else None
+
+
+def _adc_article(html,url,now,listing_title):
+    dom,visible=page(html)
+    candidate_headings=[h for h in dom.headings if len(h)>15 and
+                        folded(h) not in ('ultimas noticias','noticias','empresa')]
+    # Official pages can have unrelated 'Agua y Saneamiento' headings above
+    # the actual story. Match the verified listing title, not the first H tag.
+    if listing_title:
+        match=folded(listing_title)
+        title=next((h for h in candidate_headings if
+                    match in folded(h) or folded(h) in match),None)
+    else:
+        title=next(iter(candidate_headings),None)
+    if not title:
+        return None,None,('article_title_mismatch' if candidate_headings
+                          else 'article_title_missing')
+    if _REGIONAL_FINISHED.search(folded(title)):
+        return None,None,'completed_or_restored_title'
+    city=_adc_locality(title)
+    if not city:
+        return None,None,'locality_not_explicit_in_title'
+    # No guessed date: articles on this official website can omit dates.
+    # Meta/JSON-LD is acceptable; otherwise require date close to the H1.
+    published=_published_date_from_meta(html)
+    if not published:
+        at=folded(visible).find(folded(title))
+        if at>=0:
+            published=_parse_official_day(visible[max(0,at-55):at+len(title)+95])
+    if not published:
+        return None,None,'publication_date_not_verified'
+    if published>now.date() or published<now.date()-timedelta(days=3):
+        return None,published,'outside_publication_window'
+    paragraphs=[p for p in dom.paragraphs if len(p)>28][:20]
+    if not paragraphs:
+        return None,published,'no_article_body'
+    found=False
+    for p in paragraphs:
+        # Negated announcements and restored service never produce alerts.
+        f=folded(p)
+        if _REGIONAL_NEGATIVE.search(f) or _REGIONAL_FINISHED.search(f):
+            continue
+        for line in re.split(r'(?<=[.!?])\s+',p):
+            linef=folded(line)
+            if (_MUNICIPAL_IMPACT.search(linef) and
+                ('agua potable' in linef or 'suministro de agua' in linef or
+                 'servicio de agua' in linef) and
+                not _REGIONAL_NEGATIVE.search(linef)):
+                found=True
+                break
+        if found:break
+    if not found:
+        return None,published,'no_explicit_potable_water_impact'
+    company,province,_=SOURCES[_ADC_KEY]
+    n=mk_notice(company,province,city,url,'water_service_bulletin',
+                'publication_only_not_live',' '.join(paragraphs),
+                published_on=published.isoformat(),scheduled_start=None,
+                scheduled_end=None)
+    return n,published,'parsed'
+
+
+def _collect_adc(checked_at,now,fetch):
+    r=_result(_ADC_KEY,checked_at)
+    r.update(parser_revision='ADC-OFFICIAL-NEWS-v5.64',
+             coverage_kind='dated_official_company_news_not_live',
+             notices=[],article_links_seen=0,articles_checked=0,
+             source_attempts=[],index_attempts=[],
+             articles_deferred_by_budget=0)
+    url=r['source_url']
+    try:
+        html=fetch(url)
+        chosen,stats=_adc_index(html,url)
+        r.update(stats)
+        r['article_links_seen']=stats['valid_article_links_seen']
+        r['index_attempts'].append({'url':url,'result':'official_news_index_read',
+                                    'valid_article_links_seen':stats['valid_article_links_seen']})
+    except Exception as exc:
+        attempt={'url':url,'result':'fetch_or_parse_error',
+                 'error_type':type(exc).__name__}
+        if isinstance(exc,HTTPError):attempt['http_status']=exc.code
+        r['index_attempts'].append(attempt)
+        r['message']='No se pudo verificar el portal oficial de Aguas de Corrientes: '+type(exc).__name__
+        if isinstance(exc,HTTPError):r['http_status']=exc.code
+        return r
+    dates=[]
+    for article_url,label in chosen:
+        try:
+            n,d,reason=_adc_article(fetch(article_url),article_url,now,label)
+            attempt={'url':article_url,'result':reason}
+            if d:
+                attempt['published_on']=d.isoformat();dates.append(d)
+            r['source_attempts'].append(attempt)
+            r['articles_checked']+=1
+            if n:r['notices'].append(n)
+        except HTTPError as exc:
+            r['source_attempts'].append({'url':article_url,'result':'fetch_or_parse_error',
+                                         'error_type':'HTTPError','http_status':exc.code})
+            if exc.code==429:
+                r['rate_limited']=True
+                break
+        except Exception as exc:
+            r['source_attempts'].append({'url':article_url,'result':'fetch_or_parse_error',
+                                         'error_type':type(exc).__name__})
+    if r['notices']:
+        r['status']='ok'
+        r['message']='Comunicados fechados de la prestadora; no certifican cortes en tiempo real.'
+    elif dates and all(d<now.date()-timedelta(days=3) for d in dates):
+        r['status']='stale'
+        r['message']='Publicaciones antiguas de la prestadora; estado actual desconocido.'
+    elif r['article_links_seen'] and not r['impact_title_candidates_seen']:
+        r['message']='Noticias oficiales revisadas sin titulares sobre cortes de agua; estado del servicio desconocido.'
+    else:
+        r['message']='No se verificó afectación reciente, fechada y localizada en el portal de la prestadora; estado desconocido.'
+    if r.get('rate_limited') or any(x['result']=='fetch_or_parse_error' for x in r['source_attempts']):
+        r['message']+=' Consulta parcial.'
+    return r
+
+
 def collect_one(key,checked_at,fetcher=None):
     if key not in SOURCES:
         raise KeyError(key)
     now=checked_instant(checked_at)
     fetch=fetcher or fetch_html
+    if key==_ADC_KEY:return _collect_adc(checked_at,now,fetch)
     if key in _PUBLIC_NEWS_HOSTS:return _collect_public_news(key,checked_at,now,fetch)
     if key=='dposs_tierra_del_fuego_reparaciones':return _collect_dposs(checked_at,now,fetch)
     if key=='absa_buenos_aires':return _collect_absa(checked_at,now,fetch)
