@@ -1,4 +1,4 @@
-"""Conservative public water-service bulletin collectors for Argentina (v5.65).
+"""Conservative public water-service bulletin collectors for Argentina (v5.66).
 
 No report is a live outage confirmation. No credentials, service identifiers or
 unofficial APIs are used. Completely independent of provincial_electricity.
@@ -3451,6 +3451,13 @@ _ADC_IMPACT_HEADLINE=re.compile(
     r'\b(?:corte|cortes|interrupcion|interrupciones|suspension|'
     r'baja presion|falta de agua|sin agua|sin suministro|'
     r'suministro interrumpido|afectara el suministro)\b')
+# Concessionaire-specific negations not fully covered by shared news filters.
+# A news title mentioning a cut is not enough when its BODY denies impact.
+_ADC_NO_IMPACT=re.compile(
+    r'\b(?:no se afectara (?:el )?(?:servicio|suministro)|'
+    r'no (?:se )?(?:registrara|producira) (?:baja presion|falta de agua|faltante de agua)|'
+    r'no habra (?:baja presion|falta de agua|cortes|interrupciones)|'
+    r'no se vera afectad[oa] (?:el )?(?:servicio|suministro))\b')
 _ADC_CITIES=(
     'Corrientes', 'Goya', 'Curuzu Cuatia', 'Paso de los Libres',
     'Mercedes', 'Monte Caseros', 'Santo Tome', 'Ituzaingo',
@@ -3476,9 +3483,11 @@ def _adc_article_url(url):
         return False
     path=urlsplit(url).path
     # Route shapes are candidate PUBLIC ARTICLES only, not proof of an impact.
-    # v5.64 assumed the first shape exclusively; actual index had 104 anchors
-    # but none matched. Strictly scoped news paths allow safe variants.
+    # v5.65 confirmed 69 same-site /NNNN public news links on the real
+    # /noticias index. Recognize root-level numeric story IDs, but ONLY when
+    # discovered via that index and independently verified as dated impacts.
     return bool(
+        re.fullmatch(r'/[0-9]{1,8}/?',path) or
         re.fullmatch(r'/[0-9]{1,8}/[a-z0-9-]{12,160}/?',path) or
         re.fullmatch(r'/(?:noticias|noticia|novedades|novedad)/[a-z0-9-]{12,160}/?',path) or
         re.fullmatch(r'/(?:noticias|noticia|novedades|novedad)/[0-9]{1,8}(?:/[a-z0-9-]{12,160})?/?',path)
@@ -3572,11 +3581,13 @@ def _adc_article(html,url,now,listing_title):
     for p in paragraphs:
         # Negated announcements and restored service never produce alerts.
         f=folded(p)
-        if _REGIONAL_NEGATIVE.search(f) or _REGIONAL_FINISHED.search(f):
+        if (_REGIONAL_NEGATIVE.search(f) or _REGIONAL_FINISHED.search(f) or
+            _ADC_NO_IMPACT.search(f)):
             continue
         for line in re.split(r'(?<=[.!?])\s+',p):
             linef=folded(line)
             if (_MUNICIPAL_IMPACT.search(linef) and
+                not _ADC_NO_IMPACT.search(linef) and
                 ('agua potable' in linef or 'suministro de agua' in linef or
                  'servicio de agua' in linef) and
                 not _REGIONAL_NEGATIVE.search(linef)):
@@ -3595,7 +3606,7 @@ def _adc_article(html,url,now,listing_title):
 
 def _collect_adc(checked_at,now,fetch):
     r=_result(_ADC_KEY,checked_at)
-    r.update(parser_revision='ADC-ROUTE-DIAGNOSTIC-v5.65',
+    r.update(parser_revision='ADC-NUMERIC-PUBLIC-NEWS-v5.66',
              coverage_kind='dated_official_company_news_not_live',
              notices=[],article_links_seen=0,articles_checked=0,
              source_attempts=[],index_attempts=[],
