@@ -1,4 +1,4 @@
-"""Conservative public water-service bulletin collectors for Argentina (v5.64).
+"""Conservative public water-service bulletin collectors for Argentina (v5.65).
 
 No report is a live outage confirmation. No credentials, service identifiers or
 unofficial APIs are used. Completely independent of provincial_electricity.
@@ -740,17 +740,29 @@ def _arsa_water_topic(text):
     """
     return bool(re.search(
         r'agua potable|servicio de agua|suministro de agua|acueducto|red de agua|'
-        r'planta potabilizadora|sistema de bombeo|cisterna|sistema de abastecimiento',
+        r'planta potabilizadora|sistema de bombeo|cisterna|sistema de abastecimiento|'
+        r'purgado de (?:la )?red|purga de (?:la )?red|red de distribucion',
         folded(text)))
 
 
 def _arsa_explicit_service_impact(text):
-    """Require an actual, localized service impact, not routine maintenance."""
-    return bool(re.search(
+    """Require an affirmative impact in the article, not a negated assertion.
+
+    Examining sentences individually allows an explicit positive notice even
+    if another sentence explains that unaffected neighborhoods are normal.
+    """
+    pattern=re.compile(
         r'\b(?:baja presion|falta de (?:suministro|agua)|afectad[oa]|afectar|'
         r'interrumpir|interrupcion|turbiedad|turbidez|corte de agua|'
-        r'corte del suministro|afecta (?:a los barrios|a las zonas|el suministro|el servicio))\b',
-        folded(text)))
+        r'corte del suministro|afecta (?:a los barrios|a las zonas|el suministro|el servicio))\b')
+    for sentence in re.split(r'(?<=[.!?;])\s+',folded(text)):
+        if _REGIONAL_NEGATIVE.search(sentence) or re.search(
+            r'\b(?:sin baja presion|no (?:hay|habra|se registrara) baja presion|'
+            r'no (?:se )?afectara (?:el )?(?:servicio|suministro))\b',sentence):
+            continue
+        if pattern.search(sentence):
+            return True
+    return False
 
 
 def _arsa_failure_hint(html,url,now):
@@ -765,7 +777,7 @@ def _arsa_failure_hint(html,url,now):
         if d<now.date()-timedelta(days=2):return 'publication_too_old'
         paragraphs=' '.join(p for p in dom.paragraphs if len(p)>=42)
         if not paragraphs:return 'no_article_paragraphs'
-        if not _arsa_water_topic(paragraphs):return 'water_topic_not_identified'
+        if not _arsa_water_topic(title+' '+paragraphs):return 'water_topic_not_identified'
         if not _arsa_explicit_service_impact(paragraphs):return 'water_service_impact_not_explicit'
         return 'notice_rejected_by_validation'
     except Exception as exc:
@@ -991,7 +1003,10 @@ def _arsa_article(html,url,now,index_published=None):
     paragraphs=[p for p in dom.paragraphs if len(p)>=42]
     content=' '.join(paragraphs)
     f=folded(content)
-    if not _arsa_water_topic(content):
+    # The provider may identify 'purgado de red' only in its locality heading.
+    # A matching title establishes the water TOPIC, never the service impact:
+    # an explicit positive impact is still mandatory in article paragraphs.
+    if not _arsa_water_topic(title+' '+content):
         return [],published
     if re.search(r'oficina|atencion al publico|factura|cobranz',folded(title)):
         return [],published
@@ -3431,6 +3446,7 @@ def _collect_public_news(key,checked_at,now,fetch):
 # potable-water impacts in the concessionaire's own articles can be notices.
 _ADC_KEY='aguas_corrientes_prestador'
 _ADC_HOST='www.aguasdecorrientes.com'
+_ADC_HOSTS=frozenset((_ADC_HOST,'aguasdecorrientes.com'))
 _ADC_IMPACT_HEADLINE=re.compile(
     r'\b(?:corte|cortes|interrupcion|interrupciones|suspension|'
     r'baja presion|falta de agua|sin agua|sin suministro|'
@@ -3444,31 +3460,68 @@ _ADC_CITIES=(
 )
 
 
-def _adc_article_url(url):
-    p=urlsplit(url)
-    return bool(p.scheme=='https' and p.hostname==_ADC_HOST and
+def _adc_safe_public_url(url):
+    """Only same-site public HTTPS. No query strings, fragments or credentials."""
+    try:
+        p=urlsplit(url)
+        return (p.scheme=='https' and p.hostname in _ADC_HOSTS and
                 not p.username and not p.password and p.port is None and
-                not p.query and not p.fragment and
-                re.fullmatch(r'/[0-9]{1,8}/[a-z0-9-]{12,160}/?',p.path))
+                not p.query and not p.fragment)
+    except ValueError:
+        return False
+
+
+def _adc_article_url(url):
+    if not _adc_safe_public_url(url):
+        return False
+    path=urlsplit(url).path
+    # Route shapes are candidate PUBLIC ARTICLES only, not proof of an impact.
+    # v5.64 assumed the first shape exclusively; actual index had 104 anchors
+    # but none matched. Strictly scoped news paths allow safe variants.
+    return bool(
+        re.fullmatch(r'/[0-9]{1,8}/[a-z0-9-]{12,160}/?',path) or
+        re.fullmatch(r'/(?:noticias|noticia|novedades|novedad)/[a-z0-9-]{12,160}/?',path) or
+        re.fullmatch(r'/(?:noticias|noticia|novedades|novedad)/[0-9]{1,8}(?:/[a-z0-9-]{12,160})?/?',path)
+    )
 
 
 def _adc_index(html,base):
     dom,visible=page(html)
-    unique={};valid=0
+    unique={};valid=0;same_site=0;rejected=0;path_samples=[];title_hits=0
     for href,label in dom.anchors:
         url=urljoin(base,href)
+        label=clean(label,260)
+        # Treat links with queries, fragments and credential-looking URLs as
+        # opaque and never log their parameters or fetch them.
+        if not _adc_safe_public_url(url):
+            continue
+        same_site+=1
+        if _ADC_IMPACT_HEADLINE.search(folded(label)):
+            title_hits+=1
         if not _adc_article_url(url):
+            rejected+=1
+            path=urlsplit(url).path
+            # Only public-looking non-navigation headings; no full query URLs.
+            if (len(label)>=24 and len(path)>2 and len(path)<=160 and
+                path not in ('/noticias','/noticias/','/') and
+                not re.search(r'/(?:login|cuenta|usuario|factura|registro|perfil|carrito|search|buscar)(?:/|$)',path,re.I) and
+                len(path_samples)<8):
+                path_samples.append({'path':path,'title':clean(label,100)})
             continue
         if url in unique:
             continue
-        label=clean(label,260)
         unique[url]=label
         valid+=1
-    # Never fetch articles only because they mention 'agua' or 'cañería':
-    # infrastructure investment articles are not proof of supply impacts.
+    # A headline alone is not an outage. The article must independently
+    # establish the locality, publication date and an affirmative impact.
     likely=[(u,t) for u,t in unique.items()
             if _ADC_IMPACT_HEADLINE.search(folded(t))]
     return likely[:3],{'html_anchors_seen':len(dom.anchors),
+                       'html_visible_characters':len(visible),
+                       'same_site_anchors_seen':same_site,
+                       'same_site_unmatched_paths_seen':rejected,
+                       'same_site_unmatched_path_samples':path_samples,
+                       'same_site_impact_headlines_seen':title_hits,
                        'valid_article_links_seen':valid,
                        'impact_title_candidates_seen':len(likely),
                        'articles_deferred_by_budget':max(0,len(likely)-3)}
@@ -3542,7 +3595,7 @@ def _adc_article(html,url,now,listing_title):
 
 def _collect_adc(checked_at,now,fetch):
     r=_result(_ADC_KEY,checked_at)
-    r.update(parser_revision='ADC-OFFICIAL-NEWS-v5.64',
+    r.update(parser_revision='ADC-ROUTE-DIAGNOSTIC-v5.65',
              coverage_kind='dated_official_company_news_not_live',
              notices=[],article_links_seen=0,articles_checked=0,
              source_attempts=[],index_attempts=[],
@@ -3588,6 +3641,10 @@ def _collect_adc(checked_at,now,fetch):
     elif dates and all(d<now.date()-timedelta(days=3) for d in dates):
         r['status']='stale'
         r['message']='Publicaciones antiguas de la prestadora; estado actual desconocido.'
+    elif not r['article_links_seen'] and r['html_anchors_seen']:
+        r['message']=('El índice de la prestadora responde, pero no ofrece enlaces de artículos '
+                      'en los formatos reconocidos; se requiere validar su estructura. '
+                      'No se pudo verificar el estado del servicio.')
     elif r['article_links_seen'] and not r['impact_title_candidates_seen']:
         r['message']='Noticias oficiales revisadas sin titulares sobre cortes de agua; estado del servicio desconocido.'
     else:
