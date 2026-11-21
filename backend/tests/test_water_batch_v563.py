@@ -24,7 +24,7 @@ def tagged(title=TITLE,day='20/11/2026',url=PNA_ART):
 
 class PublicOfficialNews563(unittest.TestCase):
     def test_23_sources_and_pilot_no_notifications(self):
-        self.assertEqual(len(w.SOURCES),23)
+        self.assertEqual(len(w.SOURCES),24)
         self.assertEqual(w.SOURCES['parana_radio_municipal_agua'][2],PNA_INDEX)
         for key in ('parana_radio_municipal_agua','aosc_corrientes_regulador'):
             r=w.collect_one(key,NOW,lambda _:'<html></html>')

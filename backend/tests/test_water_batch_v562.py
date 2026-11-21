@@ -28,7 +28,7 @@ def article(key,body,day='19 de noviembre de 2026',title=None):
 
 class PublicNews562(unittest.TestCase):
     def test_sources_added_and_all_push_off(self):
-        self.assertEqual(len(w.SOURCES),23)
+        self.assertEqual(len(w.SOURCES),24)
         self.assertEqual(w.SOURCES['aosc_corrientes_regulador'][2],AOSC_INDEX)
         self.assertEqual(w.SOURCES['parana_radio_municipal_agua'][2],PNA_INDEX)
         for key in w.SOURCES:
