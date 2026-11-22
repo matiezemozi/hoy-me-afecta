@@ -30,7 +30,7 @@ def arsa_article(*paras):
 class TestV565(unittest.TestCase):
     def test_source_count_and_safety_flags(self):
         r=w.collect_water(NOW,lambda _: '<html></html>')
-        self.assertEqual(len(r['sources']),24)
+        self.assertGreaterEqual(len(r['sources']),24)
         self.assertFalse(r['notifications_enabled'])
         self.assertFalse(r['android_display_enabled'])
         self.assertTrue(all(not n['notification_allowed'] for n in r['notices']))

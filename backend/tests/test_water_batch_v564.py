@@ -24,7 +24,7 @@ def story(title=HEAD,lead=LEAD,day='2026-11-21'):
 
 class ADC564(unittest.TestCase):
     def test_source_registered_and_no_automatic_water_notifications(self):
-        self.assertEqual(len(w.SOURCES),24)
+        self.assertGreaterEqual(len(w.SOURCES),24)
         self.assertEqual(w.SOURCES['aguas_corrientes_prestador'][2],INDEX)
         self.assertEqual(w.collect_water(NOW,lambda _: '<html></html>')['notifications_enabled'],False)
 

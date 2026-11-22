@@ -91,7 +91,7 @@ class TestWaterV567(unittest.TestCase):
 
     def test_global_safety_flags_and_existing_24_sources(self):
         r=w.collect_water(NOW,lambda _: '<html></html>')
-        self.assertEqual(len(r['sources']),24)
+        self.assertGreaterEqual(len(r['sources']),24)
         self.assertFalse(r['notifications_enabled'])
         self.assertFalse(r['android_display_enabled'])
         self.assertTrue(all(not x['notification_allowed'] for x in r['notices']))

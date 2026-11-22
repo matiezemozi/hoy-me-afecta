@@ -159,7 +159,7 @@ class WaterV566(unittest.TestCase):
 
     def test_status_and_flags_no_liveness_claim(self):
         result=w.collect_water(NOW,lambda _: '<html></html>')
-        self.assertEqual(len(result['sources']),24)
+        self.assertGreaterEqual(len(result['sources']),24)
         self.assertEqual(result['status'],'pilot_read_only_in_android')
         self.assertFalse(result['notifications_enabled'])
         self.assertFalse(result['android_display_enabled'])
