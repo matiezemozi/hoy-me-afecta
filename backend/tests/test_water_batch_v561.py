@@ -96,7 +96,7 @@ class ArsaReportedHoursV561(unittest.TestCase):
         self.assertGreaterEqual(len(w.SOURCES),21)
         result=w.collect_one('aguas_rionegrinas_arsa',NOW,
                              fetcher=lambda url: '<html></html>')
-        self.assertEqual(result['parser_revision'],'ARSA-HOURS-CONTEXT-v5.61')
+        self.assertEqual(result['parser_revision'],'ARSA-STARTED-WORK-ESTIMATES-v5.70')
         self.assertEqual(result['max_article_requests_per_run'],2)
         self.assertFalse(result['notifications_enabled'])
         self.assertFalse(result['notices'])
