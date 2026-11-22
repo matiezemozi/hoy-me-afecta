@@ -1,4 +1,4 @@
-"""Conservative public water-service bulletin collectors for Argentina (v5.69).
+"""Conservative public water-service bulletin collectors for Argentina (v5.70).
 
 No report is a live outage confirmation. No credentials, service identifiers or
 unofficial APIs are used. Completely independent of provincial_electricity.
@@ -984,6 +984,77 @@ def _arsa_reported_hours_without_confirmed_day(paragraphs):
     result['reported_end_local_time_estimate' if estimated else 'reported_end_local_time']=end
     return result
 
+def _arsa_work_already_started(paragraphs, published, scheduled):
+    """Read explicit dated *started* work, not a future outage announcement.
+
+    The 22 Nov El Bolson release says staff "trabaja desde las 9 de este
+    domingo 22" and *estimates* pressure normalization "a partir de las
+    14 hs". Preserve both as reported facts, not a scheduled end or a
+    confirmation of normal supply. Never borrow an office-hour or different
+    dated work as a service-restoration forecast.
+    """
+    weekdays='|'.join(WEEKDAY)
+    start_pattern=re.compile(
+        r'\b(?:trabaja|trabajan|se trabaja|viene trabajando)\s+desde\s+las\s+'
+        r'(\d{1,2})(?::(\d{2}))?\s+(?:de\s+)?este\s+'
+        r'('+weekdays+r')\s+(\d{1,2})\b')
+    prediction=re.compile(
+        r'\b(?:se preve|se estima)\s+que\s+a\s+partir\s+de\s+las\s+'
+        r'(\d{1,2})(?::(\d{2}))?\s*(?:hs|horas)?\s+'
+        r'(.{0,85}?)\bnormalizad[oa]\b')
+    for i,p in enumerate(paragraphs):
+        if _weekday_date(p,published)!=scheduled:
+            continue
+        f=folded(p)
+        m=start_pattern.search(f)
+        if not m or not re.search(r'\breparacion\b|\breparaciones\b',f):
+            continue
+        if not re.search(r'\bcaneria\b|\bred de agua\b|\bred de distribucion\b',f):
+            continue
+        if re.search(r'\bno\s+(?:se\s+)?(?:trabaja|trabajan)\s+desde\b',f):
+            continue
+        hour,minute=int(m[1]),int(m[2] or 0)
+        if hour>23 or minute>59:
+            continue
+        # Require this particular weekday and day, not merely a date
+        # somewhere else in the article or a title about future works.
+        if WEEKDAY[m[3]]!=scheduled.weekday() or int(m[4])!=scheduled.day:
+            continue
+        started=datetime(scheduled.year,scheduled.month,scheduled.day,hour,minute,tzinfo=ART)
+        info={'reported_work_date':scheduled.isoformat(),
+              'reported_work_started_at':started.isoformat(timespec='minutes'),
+              'scheduled_start':None,'scheduled_end':None,
+              'time_precision':'reported_work_started_not_live'}
+        candidates=[]
+        for next_p in paragraphs[i:i+3]:
+            normalized=folded(next_p)
+            if (re.search(r'\boficina\b|atencion al publico|horario de atencion',normalized)
+                or (_weekday_date(next_p,published) not in (None,scheduled))):
+                break
+            for match in prediction.finditer(normalized):
+                # An explicitly negated forecast is not an estimate.
+                preceding=normalized[max(0,match.start()-4):match.start()]
+                if re.search(r'\bno\s*$',preceding):
+                    continue
+                context=normalized[match.start():match.end()+95]
+                if re.search(r'\bno\s+(?:este|estara|se encuentre)\s+normalizad[oa]',context):
+                    continue
+                if not re.search(r'\bpresion\b|\bsuministro\b|\bservicio\b',context):
+                    continue
+                h2,m2=int(match[1]),int(match[2] or 0)
+                if h2>23 or m2>59:
+                    continue
+                estimated=datetime(scheduled.year,scheduled.month,scheduled.day,h2,m2,tzinfo=ART)
+                if started < estimated <= started+timedelta(hours=18):
+                    candidates.append(estimated)
+        # Multiple distinct predictions do not establish a single estimate.
+        if len(set(candidates))==1:
+            info['reported_pressure_normalization_estimate']=candidates[0].isoformat(timespec='minutes')
+            info['time_precision']='reported_started_work_normalization_estimated_not_live'
+        return info
+    return None
+
+
 def _arsa_article(html,url,now,index_published=None):
     dom,visible=page(html)
     title=_arsa_article_title(dom,html,url)
@@ -1025,6 +1096,15 @@ def _arsa_article(html,url,now,index_published=None):
             break
     title_fold=folded(title)
     future_verb=bool(re.search(r'se realizaran|se llevaran adelante|se preve|realizara|tareas programadas|trabajos programados|esta previsto',f+' '+title_fold))
+    # An explicit "trabaja desde las 9 de este domingo 22" describes work
+    # already underway, even if another sentence says "se preve" about its
+    # estimated normalization. Never misclassify it as a future scheduled cut.
+    if scheduled is not None:
+        started=_arsa_work_already_started(paragraphs,published,scheduled)
+        if started:
+            return [mk_notice('Aguas Rionegrinas','Río Negro',locality,url,
+                'water_service_bulletin','publication_only_not_live',content,
+                published_on=published.isoformat(),**started)],published
     # Past-tense completed/same-day works are publication-only, not plans.
     if scheduled and future_verb and not re.search(r'inicio trabajos|iniciaron los trabajos|tareas comenzaron',title_fold):
         times=_arsa_times_from_dated_paragraphs(paragraphs,published,scheduled)
@@ -1050,7 +1130,7 @@ def _collect_arsa(checked_at,now,fetch):
     budget. Older, explicitly dated index entries need not be fetched again.
     """
     result=_result('aguas_rionegrinas_arsa',checked_at)
-    result['parser_revision']='ARSA-HOURS-CONTEXT-v5.61'
+    result['parser_revision']='ARSA-STARTED-WORK-ESTIMATES-v5.70'
     result['rate_limited']=False
     result['article_links_skipped_after_rate_limit']=0
     result['article_links_skipped_old']=0
