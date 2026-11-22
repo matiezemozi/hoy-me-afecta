@@ -1,4 +1,4 @@
-"""Conservative public water-service bulletin collectors for Argentina (v5.66).
+"""Conservative public water-service bulletin collectors for Argentina (v5.68).
 
 No report is a live outage confirmation. No credentials, service identifiers or
 unofficial APIs are used. Completely independent of provincial_electricity.
@@ -45,6 +45,7 @@ SOURCES = {
     'aosc_corrientes_regulador': ('AOSC / Ente Regulador', 'Corrientes', 'https://aosc.gob.ar/noticias'),
     'parana_radio_municipal_agua': ('Radio Costa Parana / Municipalidad', 'Entre Rios', 'https://costa.parana.gob.ar/noticias/'),
     'aguas_corrientes_prestador': ('Aguas de Corrientes S.A.', 'Corrientes', 'https://www.aguasdecorrientes.com/noticias'),
+    'osse_san_juan_prensa': ('OSSE Obras Sanitarias San Juan', 'San Juan', 'https://www.ossesanjuan.com.ar/'),
 }
 WEEKDAY = {'lunes':0, 'martes':1, 'miercoles':2, 'jueves':3, 'viernes':4,
            'sabado':5, 'domingo':6}
@@ -3715,12 +3716,203 @@ def _collect_adc(checked_at,now,fetch):
     return r
 
 
+
+
+# v5.68: Official OSSE San Juan news is a PUBLIC pilot, not an interruption
+# monitor. The new site has a news carousel; the legacy /v4/prensa index
+# previously displayed old items. Do not substitute that stale archive for a
+# fresh index and never infer any disruption from restrictions on water use.
+_OSSE_SJ_KEY='osse_san_juan_prensa'
+_OSSE_SJ_HOSTS=frozenset(('www.ossesanjuan.com.ar','ossesanjuan.com.ar'))
+_OSSE_SJ_LOCALITIES=(
+    'Rawson','Pocito','Rivadavia','Chimbas','Caucete','Albardon',
+    'Santa Lucia','San Martin','Sarmiento','Jachal','Iglesia','Calingasta',
+    'Valle Fertil','25 de Mayo','9 de Julio','Ullum','Zonda','Angaco',
+    'Barreal','Rodeo',
+)
+
+
+def _osse_sj_news_url(url):
+    try:
+        u=urlsplit(url)
+        if (u.scheme!='https' or u.hostname not in _OSSE_SJ_HOSTS or
+            u.username or u.password or u.port is not None or u.fragment):
+            return False
+        path=u.path.lower()
+        if re.search(r'/(?:usuario|cuenta|perfil|login|registro|factura|pago|reclamo)(?:/|$)',path):
+            return False
+        if re.fullmatch(r'/v4/prensa/noticia/?',path):
+            return bool(re.fullmatch(r'noticia=[A-Za-z0-9_-]{12,200}',u.query))
+        return (not u.query and bool(re.fullmatch(
+            r'/(?:noticias|novedades|noticia|prensa)/(?:[a-z0-9_-]{6,}/?){1,3}',path)))
+    except ValueError:
+        return False
+
+
+class _OSSESJIndexPage(VisiblePage):
+    """Capture the H2/H3 preceding a generic 'Ver más' news-card link."""
+    def __init__(self):
+        super().__init__()
+        self.news_anchors=[]
+        self._last_heading=''
+        self._since_heading=9999
+        self._anchor_heading=''
+    def handle_starttag(self,tag,attrs):
+        if tag=='a' and not self.ignored:
+            self._anchor_heading=(self._last_heading if self._since_heading<550 else '')
+        super().handle_starttag(tag,attrs)
+    def handle_data(self,t):
+        super().handle_data(t)
+        if not self.ignored:
+            self._since_heading+=len(t)
+    def handle_endtag(self,tag):
+        prev=len(self.anchors)
+        super().handle_endtag(tag)
+        if tag in ('h2','h3') and self.headings:
+            self._last_heading=self.headings[-1]
+            self._since_heading=0
+        if tag=='a' and len(self.anchors)>prev:
+            href,label=self.anchors[-1]
+            self.news_anchors.append((href,label,self._anchor_heading))
+            self._anchor_heading=''
+
+
+def _osse_sj_index(html,base):
+    if not isinstance(html,str) or not html.strip() or len(html.encode('utf-8'))>MAX_PAGE_BYTES:
+        raise ValueError('Índice OSSE vacío o muy grande')
+    parser=_OSSESJIndexPage()
+    parser.feed(html)
+    seen=set();candidate=[];valid=0;hits=0;unmatched=[]
+    for href,label,nearby_h in parser.news_anchors:
+        url=urljoin(base,href)
+        if url in seen:continue
+        seen.add(url)
+        if not _osse_sj_news_url(url):
+            if (urlsplit(url).hostname in _OSSE_SJ_HOSTS and
+                urlsplit(url).scheme=='https' and len(unmatched)<6 and
+                re.search('noticia|noticias|prensa|novedad',urlsplit(url).path,re.I)):
+                unmatched.append(urlsplit(url).path[:120])
+            continue
+        valid+=1
+        title=label
+        if folded(label).strip(' .:') in ('ver mas','leer mas','mas informacion',''):
+            title=nearby_h
+        title=clean(title,240)
+        if not title or len(title)<18:continue
+        if _ADC_IMPACT_HEADLINE.search(folded(title)):
+            hits+=1;candidate.append((url,title))
+    return candidate[:3],{
+        'html_anchors_seen':len(parser.anchors),
+        'valid_article_links_seen':valid,
+        'impact_title_candidates_seen':hits,
+        'unmatched_news_route_samples':unmatched,
+    }
+
+
+def _osse_sj_locality(title):
+    f=folded(title)
+    found=[loc for loc in _OSSE_SJ_LOCALITIES
+           if re.search(r'(?<!\w)'+re.escape(folded(loc))+r'(?!\w)',f)]
+    if re.search(r'(?<!\w)capital(?!\w)',f):found.append('Capital')
+    # 'San Juan' alone is a province, and is NOT enough to identify city.
+    return found[0] if len(found)==1 else None
+
+
+def _osse_sj_article(html,url,now,listed_title):
+    dom,visible=page(html)
+    name=folded(listed_title).rstrip('. ').strip()
+    # A carousel H2 may be clipped by an ellipsis. Still require the article
+    # heading to have the same substantive first words.
+    probe=name[:min(len(name),27)]
+    title=next((h for h in dom.headings if len(h)>15 and probe in folded(h)),None)
+    if not title:
+        return None,None,'article_title_not_verified'
+    locality=_osse_sj_locality(title)
+    if not locality:return None,None,'locality_not_explicit_in_title'
+    if _REGIONAL_FINISHED.search(folded(title)):
+        return None,None,'completed_or_restored_title'
+    pub=_adc_publication_day(html,visible,title)
+    if not pub:return None,None,'publication_date_not_verified'
+    if pub>now.date() or pub<now.date()-timedelta(days=3):
+        return None,pub,'outside_publication_window'
+    paragraphs=[p for p in dom.paragraphs if len(p)>28][:18]
+    if not paragraphs:return None,pub,'no_article_body'
+    affirmative=False
+    for p in paragraphs:
+        f=folded(p)
+        if (_REGIONAL_NEGATIVE.search(f) or _REGIONAL_FINISHED.search(f) or
+            _ADC_NO_IMPACT.search(f)):
+            continue
+        for sentence in re.split(r'(?<=[.!?])\s+',p):
+            sf=folded(sentence)
+            if (_MUNICIPAL_IMPACT.search(sf) and
+                not _REGIONAL_NEGATIVE.search(sf) and
+                not _ADC_NO_IMPACT.search(sf) and
+                _MUNICIPAL_WATER.search(sf)):
+                affirmative=True;break
+        if affirmative:break
+    if not affirmative:return None,pub,'no_explicit_water_impact'
+    company,province,_=SOURCES[_OSSE_SJ_KEY]
+    notice=mk_notice(company,province,locality,url,
+        'water_service_bulletin','publication_only_not_live',' '.join(paragraphs),
+        published_on=pub.isoformat(),scheduled_start=None,scheduled_end=None)
+    return notice,pub,'parsed'
+
+
+def _collect_osse_sj(checked_at,now,fetch):
+    r=_result(_OSSE_SJ_KEY,checked_at)
+    r.update(parser_revision='OSSE-SANJUAN-PUBLIC-NEWS-v5.68',
+             coverage_kind='official_public_company_news_not_live',
+             notices=[],article_links_seen=0,articles_checked=0,
+             source_attempts=[],index_attempts=[],articles_deferred_by_budget=0)
+    url=r['source_url']
+    try:
+        chosen,stats=_osse_sj_index(fetch(url),url)
+        r.update(stats)
+        r['article_links_seen']=stats['valid_article_links_seen']
+        r['index_attempts'].append({'url':url,'result':'index_read',
+                                    'valid_article_links_seen':stats['valid_article_links_seen']})
+    except Exception as exc:
+        a={'url':url,'result':'fetch_or_parse_error','error_type':type(exc).__name__}
+        if isinstance(exc,HTTPError):a['http_status']=exc.code
+        r['index_attempts'].append(a)
+        r['message']='No se pudo verificar el índice oficial OSSE: '+type(exc).__name__
+        return r
+    dates=[]
+    for u,label in chosen:
+        try:
+            n,d,why=_osse_sj_article(fetch(u),u,now,label)
+            r['articles_checked']+=1
+            r['source_attempts'].append({'url':u,'result':why})
+            if d:dates.append(d)
+            if n:r['notices'].append(n)
+        except Exception as exc:
+            a={'url':u,'result':'fetch_or_parse_error','error_type':type(exc).__name__}
+            if isinstance(exc,HTTPError):a['http_status']=exc.code
+            r['source_attempts'].append(a)
+            if isinstance(exc,HTTPError) and exc.code==429:
+                r['rate_limited']=True
+                break
+    if r['notices']:
+        r['status']='ok'
+        r['message']='Comunicados oficiales fechados; no son cortes confirmados en tiempo real.'
+    elif dates and all(d<now.date()-timedelta(days=3) for d in dates):
+        r['status']='stale'
+        r['message']='Las noticias recuperadas son antiguas; estado del servicio desconocido.'
+    elif not r['article_links_seen']:
+        r['message']='La portada OSSE no mostró enlaces de noticias reconocibles; falta verificar su estructura.'
+    else:
+        r['message']='Portada oficial consultada, sin afectaciones recientes verificables; no implica servicio normal.'
+    return r
+
+
 def collect_one(key,checked_at,fetcher=None):
     if key not in SOURCES:
         raise KeyError(key)
     now=checked_instant(checked_at)
     fetch=fetcher or fetch_html
     if key==_ADC_KEY:return _collect_adc(checked_at,now,fetch)
+    if key==_OSSE_SJ_KEY:return _collect_osse_sj(checked_at,now,fetch)
     if key in _PUBLIC_NEWS_HOSTS:return _collect_public_news(key,checked_at,now,fetch)
     if key=='dposs_tierra_del_fuego_reparaciones':return _collect_dposs(checked_at,now,fetch)
     if key=='absa_buenos_aires':return _collect_absa(checked_at,now,fetch)
