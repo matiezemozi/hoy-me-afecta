@@ -1,4 +1,4 @@
-"""Conservative public water-service bulletin collectors for Argentina (v5.68).
+"""Conservative public water-service bulletin collectors for Argentina (v5.69).
 
 No report is a live outage confirmation. No credentials, service identifiers or
 unofficial APIs are used. Completely independent of provincial_electricity.
@@ -46,6 +46,7 @@ SOURCES = {
     'parana_radio_municipal_agua': ('Radio Costa Parana / Municipalidad', 'Entre Rios', 'https://costa.parana.gob.ar/noticias/'),
     'aguas_corrientes_prestador': ('Aguas de Corrientes S.A.', 'Corrientes', 'https://www.aguasdecorrientes.com/noticias'),
     'osse_san_juan_prensa': ('OSSE Obras Sanitarias San Juan', 'San Juan', 'https://www.ossesanjuan.com.ar/'),
+    'spse_santa_cruz_prensa': ('SPSE / Prensa Santa Cruz', 'Santa Cruz', 'https://noticias.santacruz.gob.ar/organismos/entes-publicos/servicios-publicos'),
 }
 WEEKDAY = {'lunes':0, 'martes':1, 'miercoles':2, 'jueves':3, 'viernes':4,
            'sabado':5, 'domingo':6}
@@ -3867,7 +3868,11 @@ def _collect_osse_sj(checked_at,now,fetch):
              source_attempts=[],index_attempts=[],articles_deferred_by_budget=0)
     url=r['source_url']
     try:
-        chosen,stats=_osse_sj_index(fetch(url),url)
+        index_html=fetch(url)
+        chosen,stats=_osse_sj_index(index_html,url)
+        _dom,index_visible=page(index_html)
+        stats['html_visible_characters']=len(index_visible)
+        stats['index_mode']=('client_rendered_shell_suspected' if not stats['html_anchors_seen'] and re.search(r'<script\b',index_html,re.I) else 'public_html_index')
         r.update(stats)
         r['article_links_seen']=stats['valid_article_links_seen']
         r['index_attempts'].append({'url':url,'result':'index_read',
@@ -3900,11 +3905,210 @@ def _collect_osse_sj(checked_at,now,fetch):
         r['status']='stale'
         r['message']='Las noticias recuperadas son antiguas; estado del servicio desconocido.'
     elif not r['article_links_seen']:
-        r['message']='La portada OSSE no mostró enlaces de noticias reconocibles; falta verificar su estructura.'
+        r['message']=('La portada oficial no expuso enlaces de noticias utilizables en el HTML recibido. '
+                      'Si el contenido se carga mediante JavaScript, el estado del servicio sigue sin verificar.')
     else:
         r['message']='Portada oficial consultada, sin afectaciones recientes verificables; no implica servicio normal.'
     return r
 
+
+
+# v5.69: Province of Santa Cruz government press, official SPSE section.
+# The public news index explicitly shows publication dates and story links.
+# This is NOT the SPSE outage-monitor API; only verified dated announcements.
+_SPSE_KEY='spse_santa_cruz_prensa'
+_SPSE_PRESS_PREFIX='/organismos/entes-publicos/servicios-publicos/'
+_SPSE_HEADLINE=re.compile(
+    r'\b(?:corte(?:s)?|interrupcion(?:es)?|suspension(?:es)?|'
+    r'falta de agua|sin agua|baja presion|presion reducida|'
+    r'suministro (?:de agua )?(?:afectado|interrumpido))\b')
+_SPSE_WATER_TOPIC=re.compile(
+    r'\b(?:agua potable|red de agua|servicio de agua|suministro de agua|'
+    r'falta de agua|agua corriente|acueducto|planta potabilizadora)\b')
+_SPSE_NEGATIVE=re.compile(
+    r'\b(?:no hubo (?:corte|interrupcion|falta de agua)|'
+    r'no se registraron (?:cortes|interrupciones)|'
+    r'no se afectara|sin afectar|sin interrumpir|'
+    r'no se interrumpira|no se vera afectad[oa])\b')
+_SPSE_PLACES=(
+    'Rio Gallegos','Caleta Olivia','Pico Truncado','Puerto Deseado',
+    'Las Heras','Perito Moreno','El Calafate','Rio Turbio',
+    '28 de Noviembre','Puerto San Julian','San Julian','Gobernador Gregores',
+    'Comandante Luis Piedra Buena','Piedra Buena','Los Antiguos',
+    'Puerto Santa Cruz','Canadon Seco','Lago Posadas','El Chalten',
+    'Puerto Santa Cruz','Tres Lagos','Jaramillo','Fitz Roy','Tellier',
+)
+_SPSE_DATE=re.compile(
+    r'\b(\d{1,2})\s+(?:de\s+)?'
+    r'(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|setiembre|octubre|noviembre|diciembre)'
+    r'\s+(?:de\s+)?(20\d{2})\b')
+
+
+def _spse_date(text):
+    m=_SPSE_DATE.search(folded(text))
+    if not m:return None,m
+    try:return date(int(m.group(3)),MONTH[m.group(2)],int(m.group(1))),m
+    except ValueError:return None,m
+
+
+def _spse_story_url(url):
+    try:
+        u=urlsplit(url)
+        slug=u.path[len(_SPSE_PRESS_PREFIX):] if u.path.startswith(_SPSE_PRESS_PREFIX) else ''
+        if slug in ('contacto','reclamos','usuarios','login','noticias','facturas','servicios'):
+            return False
+        return (u.scheme=='https' and u.hostname=='noticias.santacruz.gob.ar' and
+                not u.username and not u.password and u.port is None and
+                not u.query and not u.fragment and
+                bool(re.fullmatch(re.escape(_SPSE_PRESS_PREFIX)+r'[a-z0-9-]{8,180}',u.path)))
+    except ValueError:
+        return False
+
+
+def _spse_index(html,base,now):
+    dom,visible=page(html)
+    seen=set(); candidates=[]; valid=0; dated=0; skipped_old=0; topical=0
+    for href,label in dom.anchors:
+        url=urljoin(base,href)
+        if not _spse_story_url(url) or url in seen:continue
+        seen.add(url);valid+=1
+        pub,match=_spse_date(label)
+        if not pub or not match:continue
+        dated+=1
+        title=clean(label[match.end():],240).strip(' -|:')
+        if len(title)<17:continue
+        if pub>now.date() or pub<now.date()-timedelta(days=3):
+            skipped_old+=1;continue
+        if _REGIONAL_FINISHED.search(folded(title)):
+            continue
+        if not _SPSE_HEADLINE.search(folded(title)):
+            continue
+        topical+=1
+        candidates.append((url,title,pub))
+    return candidates[:3],{
+        'html_anchors_seen':len(dom.anchors),
+        'valid_article_links_seen':valid,
+        'dated_headlines_seen':dated,
+        'headlines_skipped_outside_window':skipped_old,
+        'impact_title_candidates_seen':topical,
+        'articles_deferred_by_budget':max(0,len(candidates)-3),
+    }
+
+
+def _spse_location(title,paragraphs):
+    # Locality must occur explicitly in the title, or in a short opening
+    # fragment as 'en [city]'/'de [city]'. The provincial seat isn't assumed.
+    ft=folded(title)
+    names=[]
+    for city in _SPSE_PLACES:
+        if re.search(r'(?<!\w)'+re.escape(folded(city))+r'(?!\w)',ft):
+            names.append(city)
+    if not names and paragraphs:
+        intro=folded(' '.join(paragraphs[:2])[:390])
+        for city in _SPSE_PLACES:
+            if re.search(r'\b(?:en|de|localidad de|ciudad de)\s+'+re.escape(folded(city))+r'(?!\w)',intro):
+                names.append(city)
+    # Avoid a shorter overlapping city if a full official place is named.
+    if 'Comandante Luis Piedra Buena' in names and 'Piedra Buena' in names:
+        names.remove('Piedra Buena')
+    if 'Puerto San Julian' in names and 'San Julian' in names:
+        names.remove('San Julian')
+    return names[0] if len(set(names))==1 else None
+
+
+def _spse_article(html,url,now,listed_title,listed_date):
+    dom,visible=page(html)
+    title=next((h for h in dom.headings if
+                (folded(listed_title) in folded(h) or folded(h) in folded(listed_title))
+                and len(h)>16),None)
+    if not title:return None,'article_title_not_verified'
+    if _REGIONAL_FINISHED.search(folded(title)):
+        return None,'completed_or_restored_title'
+    # The provincial press places the explicit article publication day near
+    # the H1, after its deck paragraph. Do not use dates elsewhere in body.
+    flat=folded(visible);at=flat.find(folded(title))
+    if at<0:return None,'article_title_not_in_visible_text'
+    # The article date must occupy its own HTML text element, rather than
+    # appearing inside a sentence that announces the DATE OF THE WORK.
+    heading_end=re.search(r'</h[123]\s*>',html,re.I)
+    if not heading_end:
+        return None,'article_publication_date_not_confirmed'
+    near_html=html[heading_end.end():heading_end.end()+5000]
+    standalone_dates=re.findall(
+        r'>\s*(\d{1,2}\s+(?:de\s+)?(?:enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|setiembre|octubre|noviembre|diciembre)\s+(?:de\s+)?20\d{2})\s*<',
+        near_html,re.I)
+    article_days=[_spse_date(fragment)[0] for fragment in standalone_dates]
+    if listed_date not in article_days:
+        return None,'article_publication_date_not_confirmed'
+    article_day=listed_date
+    if article_day>now.date() or article_day<now.date()-timedelta(days=3):
+        return None,'outside_publication_window'
+    paragraphs=[p for p in dom.paragraphs if len(p)>35][:16]
+    if not paragraphs:return None,'article_body_not_verified'
+    locality=_spse_location(title,paragraphs)
+    if not locality:return None,'locality_not_explicit_or_ambiguous'
+    impact=False
+    for para in paragraphs:
+        for sentence in re.split(r'(?<=[.!?])\s+',para):
+            text=folded(sentence)
+            if (_REGIONAL_NEGATIVE.search(text) or _REGIONAL_FINISHED.search(text)
+                or _ADC_NO_IMPACT.search(text) or _SPSE_NEGATIVE.search(text)):
+                continue
+            if _SPSE_WATER_TOPIC.search(text) and _REGIONAL_IMPACT.search(text):
+                impact=True;break
+        if impact:break
+    if not impact:return None,'explicit_potable_water_impact_missing'
+    company,province,_=SOURCES[_SPSE_KEY]
+    notice=mk_notice(company,province,locality,url,'water_service_bulletin',
+                     'publication_only_not_live',' '.join(paragraphs),
+                     published_on=article_day.isoformat(),
+                     scheduled_start=None,scheduled_end=None)
+    return notice,'parsed'
+
+
+def _collect_spse(checked_at,now,fetch):
+    r=_result(_SPSE_KEY,checked_at)
+    r.update(parser_revision='SPSE-PROVINCIAL-PRESS-v5.69',
+             coverage_kind='official_dated_provincial_spse_bulletins_not_live',
+             notices=[],article_links_seen=0,articles_checked=0,
+             source_attempts=[],index_attempts=[],articles_deferred_by_budget=0)
+    url=r['source_url']
+    try:
+        selected,stats=_spse_index(fetch(url),url,now)
+        r.update(stats);r['article_links_seen']=stats['valid_article_links_seen']
+        r['index_attempts'].append({'url':url,'result':'official_index_read',
+                                    'valid_article_links_seen':stats['valid_article_links_seen']})
+    except Exception as exc:
+        e={'url':url,'result':'fetch_or_parse_error','error_type':type(exc).__name__}
+        if isinstance(exc,HTTPError):e['http_status']=exc.code
+        r['index_attempts'].append(e)
+        r['message']='No se pudo verificar el índice provincial de SPSE: '+type(exc).__name__
+        return r
+    for article_url,title,day in selected:
+        try:
+            n,reason=_spse_article(fetch(article_url),article_url,now,title,day)
+            r['articles_checked']+=1
+            r['source_attempts'].append({'url':article_url,'result':reason,
+                                         'index_published_on':day.isoformat()})
+            if n:r['notices'].append(n)
+        except Exception as exc:
+            e={'url':article_url,'result':'fetch_or_parse_error','error_type':type(exc).__name__}
+            if isinstance(exc,HTTPError):e['http_status']=exc.code
+            r['source_attempts'].append(e)
+            if isinstance(exc,HTTPError) and exc.code==429:
+                r['rate_limited']=True;break
+    if r['notices']:
+        r['status']='ok'
+        r['message']='Comunicados públicos fechados de SPSE, no verificación de cortes en tiempo real.'
+    elif r['valid_article_links_seen']==0:
+        r['message']='Índice provincial sin enlaces de artículos verificables; cobertura desconocida.'
+    elif r['impact_title_candidates_seen']==0:
+        r['message']='Índice oficial leído sin titulares recientes de afectación de agua; no implica servicio normal.'
+    else:
+        r['message']='Sin aviso reciente con fecha, localidad y afectación de agua confirmadas en la publicación.'
+    if any(x['result']=='fetch_or_parse_error' for x in r['source_attempts']):
+        r['message']+=' Lectura parcial por error de acceso.'
+    return r
 
 def collect_one(key,checked_at,fetcher=None):
     if key not in SOURCES:
@@ -3913,6 +4117,7 @@ def collect_one(key,checked_at,fetcher=None):
     fetch=fetcher or fetch_html
     if key==_ADC_KEY:return _collect_adc(checked_at,now,fetch)
     if key==_OSSE_SJ_KEY:return _collect_osse_sj(checked_at,now,fetch)
+    if key==_SPSE_KEY:return _collect_spse(checked_at,now,fetch)
     if key in _PUBLIC_NEWS_HOSTS:return _collect_public_news(key,checked_at,now,fetch)
     if key=='dposs_tierra_del_fuego_reparaciones':return _collect_dposs(checked_at,now,fetch)
     if key=='absa_buenos_aires':return _collect_absa(checked_at,now,fetch)
