@@ -1,4 +1,4 @@
-"""Conservative public water-service bulletin collectors for Argentina (v5.75).
+"""Conservative public water-service bulletin collectors for Argentina (v5.77).
 
 No report is a live outage confirmation. No credentials, service identifiers or
 unofficial APIs are used. Completely independent of provincial_electricity.
@@ -4668,12 +4668,39 @@ def _cba_article_url(url):
         return False
 
 
+def _cba_resolve_article_href(href,base):
+    """Canonicalize only first-party news/press routes from official indices.
+
+    The public site emits links like 'CanalSaladePrensa/DetalleComunicado/ID/slug'
+    *without* an initial slash, despite a nested HomeSalaPrensa/ page URL.
+    urljoin(base, href) would incorrectly put the HomeSalaPrensa directory in
+    front of the real article route. Reject traversal, foreign hosts, userinfo,
+    non-HTTPS, queries, fragments and arbitrary paths even after resolution.
+    """
+    raw=str(href or '').strip()
+    if not raw or '..' in raw or '\\' in raw:return None
+    try:
+        source=urlsplit(base)
+        if (source.scheme!='https' or source.hostname not in _CBA_HOSTS or
+                source.username or source.password or source.port is not None):
+            return None
+        if re.match(r'^(?:CanalSaladePrensa/DetalleComunicado|CanalNoticias/DetalleNoticia)/',raw,re.I):
+            resolved=urljoin('https://'+source.netloc+'/',raw)
+        else:
+            resolved=urljoin(base,raw)
+        return resolved if _cba_article_url(resolved) else None
+    except ValueError:
+        return None
+
+
 def _cba_index(html,base,now):
     dom,visible=page(html)
-    discovered=[];seen=set();candidates=[];old=0;filtered=0
+    discovered=[];seen=set();candidates=[];old=0;filtered=0;relative_fixed=0
     for href,label in dom.anchors:
-        url=urljoin(base,href)
-        if not _cba_article_url(url) or url in seen:continue
+        url=_cba_resolve_article_href(href,base)
+        if not url or url in seen:continue
+        if re.match(r'^(?:CanalSaladePrensa/DetalleComunicado|CanalNoticias/DetalleNoticia)/',str(href).strip(),re.I):
+            relative_fixed+=1
         seen.add(url);discovered.append(url)
         slug=folded(urlsplit(url).path.split('/')[-1].replace('-',' '))
         title=folded(label) if len(label)>=15 else slug
@@ -4695,6 +4722,7 @@ def _cba_index(html,base,now):
     news_links=sum('/CanalNoticias/DetalleNoticia/' in url for url in discovered)
     return candidates[:3],{'html_anchors_seen':len(dom.anchors),
         'press_article_links_seen':press_links,'news_article_links_seen':news_links,
+        'relative_article_links_fixed':relative_fixed,
         'html_visible_characters':len(visible),'valid_article_links_seen':len(discovered),
         'article_candidates_before_budget':len(candidates),'articles_deferred_by_budget':max(0,len(candidates)-3),
         'articles_skipped_dated_slug':old,'articles_skipped_completed_title':filtered}
@@ -4766,7 +4794,7 @@ def _cba_article(html,url,now):
 
 def _collect_cba(checked_at,now,fetch):
     r=_result(_CBA_KEY,checked_at)
-    r.update(parser_revision='CBA-NEWS-PRESS-ROUTES-v5.76',
+    r.update(parser_revision='CBA-RELATIVE-PRESS-LINKS-v5.77',
         coverage_kind='official_dated_public_water_bulletins_not_live',
         notices=[],article_links_seen=0,articles_checked=0,
         source_attempts=[],index_attempts=[],articles_deferred_by_budget=0,
@@ -4796,7 +4824,8 @@ def _collect_cba(checked_at,now,fetch):
     # report the total public links examined, including both official pages.
     for key in ('html_anchors_seen','html_visible_characters',
                 'valid_article_links_seen','press_article_links_seen',
-                'news_article_links_seen','article_candidates_before_budget',
+                'news_article_links_seen','relative_article_links_fixed',
+                'article_candidates_before_budget',
                 'articles_deferred_by_budget','articles_skipped_dated_slug',
                 'articles_skipped_completed_title'):
         r[key]=sum(stats.get(key,0) for stats in index_stats)
