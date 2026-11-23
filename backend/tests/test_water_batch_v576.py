@@ -107,7 +107,7 @@ class CordobaPressV576(unittest.TestCase):
         self.assertEqual(result['source_attempts'][0]['result'],'no_explicit_water_service_interruption')
         self.assertEqual(result['index_attempts'][0]['result'],'official_index_read')
         self.assertEqual(result['press_article_links_seen'],1)
-        self.assertEqual(result['parser_revision'],'CBA-NEWS-PRESS-ROUTES-v5.76')
+        self.assertEqual(result['parser_revision'],'CBA-RELATIVE-PRESS-LINKS-v5.77')
         self.assertEqual(result['notices'],[])
         self.assertFalse(result['notifications_enabled'])
 
