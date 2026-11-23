@@ -1,4 +1,4 @@
-"""Conservative public water-service bulletin collectors for Argentina (v5.70).
+"""Conservative public water-service bulletin collectors for Argentina (v5.71).
 
 No report is a live outage confirmation. No credentials, service identifiers or
 unofficial APIs are used. Completely independent of provincial_electricity.
@@ -47,6 +47,7 @@ SOURCES = {
     'aguas_corrientes_prestador': ('Aguas de Corrientes S.A.', 'Corrientes', 'https://www.aguasdecorrientes.com/noticias'),
     'osse_san_juan_prensa': ('OSSE Obras Sanitarias San Juan', 'San Juan', 'https://www.ossesanjuan.com.ar/'),
     'spse_santa_cruz_prensa': ('SPSE / Prensa Santa Cruz', 'Santa Cruz', 'https://noticias.santacruz.gob.ar/organismos/entes-publicos/servicios-publicos'),
+    'la_rioja_ministerio_agua': ('Ministerio de Agua y Energia / La Rioja', 'La Rioja', 'https://aguayenergia.larioja.gob.ar/'),
 }
 WEEKDAY = {'lunes':0, 'martes':1, 'miercoles':2, 'jueves':3, 'viernes':4,
            'sabado':5, 'domingo':6}
@@ -4190,6 +4191,187 @@ def _collect_spse(checked_at,now,fetch):
         r['message']+=' Lectura parcial por error de acceso.'
     return r
 
+
+
+# v5.71: La Rioja Ministry of Water and Energy public news home.
+# Only public articles, never customer-account checks, status APIs, social networks,
+# or assumptions about ongoing disruption. An index headline alone is insufficient.
+_RIOJA_KEY='la_rioja_ministerio_agua'
+_RIOJA_HOST='aguayenergia.larioja.gob.ar'
+_RIOJA_LOCATIONS=(
+    'Chilecito','Aimogasta','Chamical','Chepes','Olta','Famatina',
+    'Villa Union','Villa Castelli','Vinchina',
+    'Villa Mazan','Vichigasta','Nonogasta','Patquia','Tama','Ulapes',
+    'Milagro','Malanzan','Anillaco','Aminga',
+    'La Rioja','Los Molinos','San Pedro','Balde de la Viuda',
+    'Punta de los Llanos','Miranda','Guanchin','Chañar','Ambil',
+    'Santo Domingo','Bañado de los Pantanos',
+    'Guandacol','Los Tres Pozos',
+)
+_RIOJA_HEADLINE_TOPIC=re.compile(
+    r'\b(?:agua|acueducto|suministro|abastecimiento|potabiliz|'
+    r'corte|interrupcion|presion|caneria|red hidrica|perforacion|servicio hidrico)')
+_RIOJA_WATER_TOPIC=re.compile(
+    r'\b(?:agua potable|servicio de agua|suministro de agua|red de agua|'
+    r'acueducto|red de distribucion de agua|sistema de agua)')
+_RIOJA_IMPACT=re.compile(
+    r'\b(?:cortes? (?:programad[oa]s? )?(?:de agua|del (?:servicio|suministro))|'
+    r'interrupcion(?:es)? (?:del |de )?(?:servicio|suministro|agua potable)|'
+    r'falta de agua|faltante de agua|baja presion|sin suministro|'
+    r'sin agua|interrumpira (?:el )?(?:servicio|suministro)|'
+    r'(?:servicio|suministro) (?:se vera|esta|se encuentra) afectado|'
+    r'se vera afectad[oa] (?:el )?(?:servicio|suministro))\b')
+_RIOJA_PREVENTIVE=re.compile(
+    r'\b(?:evitar|prevenir|reducir el riesgo de|reducir riesgo de|'
+    r'para que no haya|sin generar|sin ocasionar|sin provocar)\b.{0,50}'
+    r'(?:cortes?|interrupciones?|falta de agua|baja presion)')
+_RIOJA_PUB=re.compile(r'\bfecha de publicacion\s*:?[\s-]*'
+                     r'(\d{1,2})[/-](\d{1,2})[/-](20\d{2})\b')
+
+
+def _rioja_story_url(url):
+    parts=urlsplit(url)
+    return (parts.scheme=='https' and parts.hostname==_RIOJA_HOST
+            and parts.username is None and parts.password is None
+            and parts.port is None and not parts.query and not parts.fragment
+            and re.fullmatch(r'/noticia/[a-z0-9-]{12,160}/?',parts.path) is not None
+            and '..' not in parts.path)
+
+
+def _rioja_index(html,base):
+    dom,visible=page(html)
+    seen=set();candidates=[];valid=0;topic=0
+    for href,title in dom.anchors:
+        absolute=urljoin(base,href)
+        if not _rioja_story_url(absolute) or absolute in seen:continue
+        seen.add(absolute);valid+=1
+        label=clean(title,240)
+        if len(label)<16 or not _RIOJA_HEADLINE_TOPIC.search(folded(label)):
+            continue
+        if _REGIONAL_FINISHED.search(folded(label)):continue
+        topic+=1;candidates.append((absolute,label))
+    return candidates[:3],{
+        'html_anchors_seen':len(dom.anchors),
+        'html_visible_characters':len(visible),
+        'valid_article_links_seen':valid,
+        'impact_title_candidates_seen':topic,
+        'articles_deferred_by_budget':max(0,len(candidates)-3),
+    }
+
+
+def _rioja_locality(title,paragraphs):
+    # The phrase 'Gobierno de La Rioja' names a province, NOT the city.
+    title_f=folded(title)
+    possibilities=set()
+    for loc in _RIOJA_LOCATIONS:
+        place=folded(loc)
+        if loc=='La Rioja':
+            if re.search(r'\b(?:ciudad|capital) de la rioja\b',title_f):
+                possibilities.add('La Rioja')
+            continue
+        if re.search(r'(?<!\w)'+re.escape(place)+r'(?!\w)',title_f):
+            possibilities.add(loc)
+    if not possibilities:
+        first=folded(' '.join(paragraphs[:2])[:440])
+        for loc in _RIOJA_LOCATIONS:
+            place=folded(loc)
+            if loc=='La Rioja':
+                if re.search(r'\b(?:ciudad|capital) de la rioja\b',first):
+                    possibilities.add('La Rioja')
+            elif re.search(r'\b(?:en|de|localidad de|ciudad de)\s+'+re.escape(place)+r'(?!\w)',first):
+                possibilities.add(loc)
+    return next(iter(possibilities)) if len(possibilities)==1 else None
+
+
+def _rioja_article(html,url,now,listed_title):
+    dom,visible=page(html)
+    title=next((h for h in dom.headings if len(h)>16 and
+                (folded(listed_title) in folded(h) or folded(h) in folded(listed_title))),None)
+    if not title:return None,None,'article_title_not_verified'
+    if _REGIONAL_FINISHED.search(folded(title)):
+        return None,None,'completed_or_restored_title'
+    start=folded(visible).find(folded(title))
+    if start<0:return None,None,'article_heading_not_in_visible_text'
+    # Restrict publication-day recognition to the article header, explicitly
+    # labelled 'Fecha de Publicacion', not an event date in the body.
+    head=folded(visible[start+len(title):start+len(title)+800])
+    m=_RIOJA_PUB.search(head)
+    if not m:return None,None,'publication_date_not_verified'
+    try:
+        published=date(int(m.group(3)),int(m.group(2)),int(m.group(1)))
+    except ValueError:
+        return None,None,'publication_date_invalid'
+    if published>now.date() or published<now.date()-timedelta(days=3):
+        return None,published,'outside_publication_window'
+    paragraphs=[p for p in dom.paragraphs if len(p)>35][:16]
+    locality=_rioja_locality(title,paragraphs)
+    if not locality:return None,published,'locality_not_explicit_or_ambiguous'
+    if not paragraphs:return None,published,'no_article_body'
+    affirmative=False
+    for para in paragraphs:
+        for sentence in re.split(r'(?<=[.!?])\s+',para):
+            sf=folded(sentence)
+            if (_REGIONAL_NEGATIVE.search(sf) or _ADC_NO_IMPACT.search(sf)
+                or _RIOJA_PREVENTIVE.search(sf) or _REGIONAL_FINISHED.search(sf)):
+                continue
+            if _RIOJA_WATER_TOPIC.search(sf) and _RIOJA_IMPACT.search(sf):
+                affirmative=True;break
+        if affirmative:break
+    if not affirmative:return None,published,'no_explicit_water_service_impact'
+    company,province,_=SOURCES[_RIOJA_KEY]
+    n=mk_notice(company,province,locality,url,
+        'water_service_bulletin','publication_only_not_live',' '.join(paragraphs),
+        published_on=published.isoformat(),scheduled_start=None,scheduled_end=None)
+    return n,published,'parsed'
+
+
+def _collect_rioja(checked_at,now,fetch):
+    r=_result(_RIOJA_KEY,checked_at)
+    r.update(parser_revision='LA-RIOJA-OFFICIAL-PUBLIC-NEWS-v5.71',
+             coverage_kind='official_dated_ministry_public_news_not_live',
+             notices=[],article_links_seen=0,articles_checked=0,
+             index_attempts=[],source_attempts=[],articles_deferred_by_budget=0)
+    url=r['source_url']
+    try:
+        selected,stats=_rioja_index(fetch(url),url)
+        r.update(stats);r['article_links_seen']=stats['valid_article_links_seen']
+        r['index_attempts'].append({'url':url,'result':'official_index_read',
+                                    'valid_article_links_seen':stats['valid_article_links_seen']})
+    except Exception as exc:
+        a={'url':url,'result':'fetch_or_parse_error','error_type':type(exc).__name__}
+        if isinstance(exc,HTTPError):a['http_status']=exc.code
+        r['index_attempts'].append(a)
+        r['message']='No se pudo leer la portada oficial de La Rioja: '+type(exc).__name__
+        return r
+    dates=[]
+    for article_url,heading in selected:
+        try:
+            n,d,reason=_rioja_article(fetch(article_url),article_url,now,heading)
+            r['articles_checked']+=1
+            a={'url':article_url,'result':reason}
+            if d:a['article_published_on']=d.isoformat();dates.append(d)
+            r['source_attempts'].append(a)
+            if n:r['notices'].append(n)
+        except Exception as exc:
+            a={'url':article_url,'result':'fetch_or_parse_error','error_type':type(exc).__name__}
+            if isinstance(exc,HTTPError):a['http_status']=exc.code
+            r['source_attempts'].append(a)
+            if isinstance(exc,HTTPError) and exc.code==429:
+                r['rate_limited']=True;break
+    if r['notices']:
+        r['status']='ok'
+        r['message']='Publicaciones oficiales fechadas, no verificacion de cortes activos.'
+    elif dates and all(d<now.date()-timedelta(days=3) for d in dates):
+        r['status']='stale'
+        r['message']='Solo publicaciones antiguas en los articulos consultados; estado desconocido.'
+    elif not r['valid_article_links_seen']:
+        r['message']='La portada no mostro articulos reconocibles; cobertura sin verificar.'
+    else:
+        r['message']='Portada consultada, sin afectaciones recientes confirmadas por articulos; no implica servicio normal.'
+    if any(a['result']=='fetch_or_parse_error' for a in r['source_attempts']):
+        r['message']+=' Acceso parcial a noticias.'
+    return r
+
 def collect_one(key,checked_at,fetcher=None):
     if key not in SOURCES:
         raise KeyError(key)
@@ -4198,6 +4380,7 @@ def collect_one(key,checked_at,fetcher=None):
     if key==_ADC_KEY:return _collect_adc(checked_at,now,fetch)
     if key==_OSSE_SJ_KEY:return _collect_osse_sj(checked_at,now,fetch)
     if key==_SPSE_KEY:return _collect_spse(checked_at,now,fetch)
+    if key==_RIOJA_KEY:return _collect_rioja(checked_at,now,fetch)
     if key in _PUBLIC_NEWS_HOSTS:return _collect_public_news(key,checked_at,now,fetch)
     if key=='dposs_tierra_del_fuego_reparaciones':return _collect_dposs(checked_at,now,fetch)
     if key=='absa_buenos_aires':return _collect_absa(checked_at,now,fetch)
