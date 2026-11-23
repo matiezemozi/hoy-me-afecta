@@ -1,4 +1,4 @@
-"""Conservative public water-service bulletin collectors for Argentina (v5.74).
+"""Conservative public water-service bulletin collectors for Argentina (v5.75).
 
 No report is a live outage confirmation. No credentials, service identifiers or
 unofficial APIs are used. Completely independent of provincial_electricity.
@@ -24,7 +24,7 @@ SOURCES = {
     'absa_buenos_aires': ('ABSA', 'Buenos Aires', 'https://www.aguasbonaerenses.com.ar/noticias/'),
     'aguas_del_norte_salta': ('Aguas del Norte', 'Salta', 'https://www.aguasdelnortesalta.com.ar/cortes.php'),
     'aysam_mendoza': ('AYSAM', 'Mendoza', 'https://aysam.com.ar/cortes/'),
-    'aguas_cordobesas': ('Aguas Cordobesas', 'Córdoba', 'https://www.aws.aguascordobesas.com.ar/CanalNoticias/NoticiasCategoria/2/servicio'),
+    'aguas_cordobesas': ('Aguas Cordobesas', 'Córdoba', 'https://www.aguascordobesas.com.ar/CanalSaladePrensa/HomeSalaPrensa/'),
     'aguas_santafesinas': ('Aguas Santafesinas', 'Santa Fe', 'https://www.aguassantafesinas.com.ar/portal/noticias'),
     'aguas_rionegrinas_arsa': ('Aguas Rionegrinas', 'Río Negro', 'https://aguasrionegrinas.com/category/interrupciones/'),
     'aguas_catamarca': ('Aguas de Catamarca SAPEM', 'Catamarca', 'https://www.adcsapem.com.ar/?page_id=240'),
@@ -4623,11 +4623,192 @@ def _water3_collect(key,checked_at,now,fetch):
     return result
 
 
+
+# v5.75: Public institutional articles are a fallback to a broken legacy
+# hostname, NOT live/address-specific interruptions. Article text, locality,
+# explicit water impact, and date are required; no user data is queried.
+_CBA_KEY='aguas_cordobesas'
+_CBA_INDEX_FALLBACK='https://www.aguascordobesas.com.ar/CanalNoticias/HomeNoticias'
+_CBA_HOSTS=frozenset(('www.aguascordobesas.com.ar','www.aws.aguascordobesas.com.ar'))
+_CBA_TITLE_TOPIC=re.compile(r'\b(?:agua potable|suministro|baja presion|falta de agua|'
+    r'interrupcion|corte(?:s)?|reparacion|mantenimiento|cañeria|caneria|'
+    r'estacion elevadora|restablecimiento|trabajos|servicio)\b')
+_CBA_TITLE_BAD=re.compile(r'\b(?:finalizaron|finalizo|terminaron|culminaron|'
+    r'normalizo|normalizacion completa|servicio restablecido|obra inaugurada|'
+    r'convenio|tarifa|factura|sustentabilidad|visita|hidratacion)\b')
+_CBA_DIRECT_IMPACT=re.compile(r'\b(?:baja presion|falta de agua|sin agua|'
+    r'sin suministro|corte(?:s)? de agua|'
+    r'(?:interrupcion|suspension) (?:del? )?(?:servicio|suministro)(?: de agua)?|'
+    r'(?:servicio|suministro)(?: de agua(?: potable)?)? (?:se encuentra |esta |se vera |fue )?afectado|'
+    r'presion del agua (?:se vera |esta )?afectada|'
+    r'(?:falta|faltante) (?:de )?(?:suministro|agua))\b')
+_CBA_NEGATED=re.compile(r'\b(?:no deberian experimentar inconvenientes|'
+    r'no se registraran cortes|no se registrara falta de agua|no hay interrupcion|'
+    r'no se interrumpira|sin cortes|sin interrupcion|sin afectar|no afectara|'
+    r'no se vera afectado|no se vera interrumpido|no hay corte|'
+    r'se normalizo|ya fue restablecido|se encuentra normalizado|'
+    r'para evitar cortes)\b')
+
+
+def _cba_article_url(url):
+    """Accept first-party dated article routes only, never generic links."""
+    try:
+        u=urlsplit(url)
+        if (u.scheme!='https' or u.hostname not in _CBA_HOSTS or
+                u.username or u.password or u.port is not None or
+                u.query or u.fragment or '..' in u.path):return False
+        return re.fullmatch(r'/CanalNoticias/DetalleNoticia/\d{1,6}/[a-z0-9-]{5,210}/?',u.path,re.I) is not None
+    except ValueError:
+        return False
+
+
+def _cba_index(html,base,now):
+    dom,visible=page(html)
+    discovered=[];seen=set();candidates=[];old=0;filtered=0
+    for href,label in dom.anchors:
+        url=urljoin(base,href)
+        if not _cba_article_url(url) or url in seen:continue
+        seen.add(url);discovered.append(url)
+        slug=folded(urlsplit(url).path.split('/')[-1].replace('-',' '))
+        title=folded(label) if len(label)>=15 else slug
+        if _CBA_TITLE_BAD.search(title) or _CBA_TITLE_BAD.search(slug):
+            filtered+=1;continue
+        if not _CBA_TITLE_TOPIC.search(title+' '+slug):continue
+        # A date embedded in the URL is a *recency screening hint only*,
+        # NEVER proof of publication date or of service interruption.
+        md=re.search(r'(\d{1,2})-(\d{1,2})-(20\d{2})',urlsplit(url).path)
+        if md:
+            try:
+                maybe=date(int(md.group(3)),int(md.group(2)),int(md.group(1)))
+            except ValueError:
+                maybe=None
+            if maybe and (maybe<now.date()-timedelta(days=3) or maybe>now.date()):
+                old+=1;continue
+        candidates.append(url)
+    return candidates[:3],{'html_anchors_seen':len(dom.anchors),
+        'html_visible_characters':len(visible),'valid_article_links_seen':len(discovered),
+        'article_candidates_before_budget':len(candidates),'articles_deferred_by_budget':max(0,len(candidates)-3),
+        'articles_skipped_dated_slug':old,'articles_skipped_completed_title':filtered}
+
+
+def _cba_publication_date(html,dom,visible,title):
+    """Publication marker must be in article header, not event text/body."""
+    meta=_published_date_from_meta(html)
+    if meta:return meta
+    txt=folded(visible);head=folded(title)
+    pos=txt.find(head)
+    if pos<0:return None
+    before=txt[max(0,pos-85):pos]
+    after=txt[pos+len(head):pos+len(head)+100]
+    # Card/article design: 'Servicio 20/11/2026' directly before heading,
+    # or labelled date just after heading. Never mine arbitrary paragraphs.
+    expr=r'(?<!\d)(\d{1,2})[/-](\d{1,2})[/-](20\d{2})(?!\d)'
+    m=re.search(expr+r'\s*(?:servicio\s*)?$',before)
+    if not m:
+        m=re.match(r'^\s*(?:servicio\s*)?(?:publicado\s+el\s*|fecha\s*:?\s*)?'+expr+r'\b',after)
+    if not m:return None
+    try:return date(int(m.group(3)),int(m.group(2)),int(m.group(1)))
+    except ValueError:return None
+
+
+def _cba_article(html,url,now):
+    dom,visible=page(html)
+    slug=folded(urlsplit(url).path.split('/')[-1].replace('-',' '))
+    heads=[h for h in dom.headings if len(h)>=18 and
+           len(set(re.findall(r'[a-z]{4,}',folded(h))) & set(re.findall(r'[a-z]{4,}',slug)))>=2]
+    if not heads:return None,None,'article_heading_not_confirmed'
+    title=heads[0]
+    if _CBA_TITLE_BAD.search(folded(title)) or _REGIONAL_FINISHED.search(folded(title)):
+        return None,None,'completed_or_institutional_title'
+    published=_cba_publication_date(html,dom,visible,title)
+    if not published:return None,None,'publication_date_not_verified'
+    if published<now.date()-timedelta(days=3) or published>now.date():
+        return None,published,'outside_publication_window'
+    paras=[p for p in dom.paragraphs if len(p)>32][:20]
+    if not paras:return None,published,'body_missing'
+    # Service-provider scope is Córdoba CITY, not province-wide.
+    # Headline must mention a bounded service area (barrio, named street)
+    # or explicit 'Ciudad de Córdoba'. Never infer a province-wide event.
+    evidence=folded(' '.join([title]+paras[:3])[:900])
+    area=re.search(r'\b(?:barrio|b°|av\.|avenida|calle|bv\.|boulevard|'
+                   r'ciudad de cordoba)\s+[a-z0-9]+',evidence)
+    if not area:return None,published,'service_area_not_precise'
+    impacted=False
+    for para in paras:
+        sent=re.split(r'(?<=[.!?])\s+',para)
+        for i,sentence in enumerate(sent):
+            f=folded(sentence)
+            if (_CBA_NEGATED.search(f) or _ADC_NO_IMPACT.search(f) or
+                    _REGIONAL_NEGATIVE.search(f) or _REGIONAL_FINISHED.search(f)):
+                continue
+            if not _CBA_DIRECT_IMPACT.search(f):continue
+            context=f+' '+(folded(sent[i-1]) if i else '')
+            if re.search(r'\b(?:agua|suministro|servicio|red|presion)\b',context):
+                impacted=True;break
+        if impacted:break
+    if not impacted:return None,published,'no_explicit_water_service_interruption'
+    name,province,_=SOURCES[_CBA_KEY]
+    item=mk_notice(name,province,'Córdoba',url,'water_service_bulletin',
+        'publication_only_not_live',' '.join(paras),
+        published_on=published.isoformat(),scheduled_start=None,scheduled_end=None,
+        coverage_kind='official_dated_public_water_bulletin_not_live')
+    return item,published,'parsed'
+
+
+def _collect_cba(checked_at,now,fetch):
+    r=_result(_CBA_KEY,checked_at)
+    r.update(parser_revision='CBA-CANONICAL-NEWS-v5.75',
+        coverage_kind='official_dated_public_water_bulletins_not_live',
+        notices=[],article_links_seen=0,articles_checked=0,
+        source_attempts=[],index_attempts=[],articles_deferred_by_budget=0,
+        account_lookup_required_for_address=True)
+    candidates=[];index_read=False
+    for url in (r['source_url'],_CBA_INDEX_FALLBACK):
+        try:
+            selected,stats=_cba_index(fetch(url),url,now)
+            index_read=True;candidates=selected;r.update(stats)
+            r['article_links_seen']=stats['valid_article_links_seen']
+            r['index_attempts'].append({'url':url,'result':'official_index_read',
+                'valid_article_links_seen':stats['valid_article_links_seen']})
+            if stats['valid_article_links_seen']:break
+        except Exception as e:
+            d={'url':url,'result':'fetch_or_parse_error','error_type':type(e).__name__}
+            if isinstance(e,HTTPError):d['http_status']=e.code
+            r['index_attempts'].append(d)
+            if isinstance(e,HTTPError) and e.code in (403,429):
+                r['message']='Portal oficial rechazó la consulta (HTTP %s); suministro desconocido.'%e.code
+                return r
+    if not index_read:
+        r['message']='No se pudo leer la prensa oficial de Aguas Cordobesas; suministro desconocido.'
+        return r
+    pubs=[]
+    for url in candidates:
+        try:
+            notice,day,reason=_cba_article(fetch(url),url,now)
+            r['articles_checked']+=1
+            r['source_attempts'].append({'url':url,'result':reason})
+            if day:pubs.append(day)
+            if notice:r['notices'].append(notice)
+        except Exception as e:
+            d={'url':url,'result':'fetch_or_parse_error','error_type':type(e).__name__}
+            if isinstance(e,HTTPError):d['http_status']=e.code
+            r['source_attempts'].append(d)
+            if isinstance(e,HTTPError) and e.code==429:break
+    if pubs:r['latest_published_date']=max(pubs).isoformat()
+    if r['notices']:
+        r['status']='ok';r['message']='Comunicados oficiales fechados; no acreditan cortes activos.'
+    elif r['article_links_seen']==0:
+        r['message']='Índice consultado sin enlaces de noticias reconocibles; suministro desconocido.'
+    else:
+        r['message']='Índice oficial consultado sin afectación reciente y verificada del agua; no implica suministro normal.'
+    return r
+
 def collect_one(key,checked_at,fetcher=None):
     if key not in SOURCES:
         raise KeyError(key)
     now=checked_instant(checked_at)
     fetch=fetcher or fetch_html
+    if key==_CBA_KEY:return _collect_cba(checked_at,now,fetch)
     if key==_ADC_KEY:return _collect_adc(checked_at,now,fetch)
     if key==_OSSE_SJ_KEY:return _collect_osse_sj(checked_at,now,fetch)
     if key==_SPSE_KEY:return _collect_spse(checked_at,now,fetch)
