@@ -1,4 +1,4 @@
-"""Conservative public water-service bulletin collectors for Argentina (v5.71).
+"""Conservative public water-service bulletin collectors for Argentina (v5.72).
 
 No report is a live outage confirmation. No credentials, service identifiers or
 unofficial APIs are used. Completely independent of provincial_electricity.
@@ -48,6 +48,9 @@ SOURCES = {
     'osse_san_juan_prensa': ('OSSE Obras Sanitarias San Juan', 'San Juan', 'https://www.ossesanjuan.com.ar/'),
     'spse_santa_cruz_prensa': ('SPSE / Prensa Santa Cruz', 'Santa Cruz', 'https://noticias.santacruz.gob.ar/organismos/entes-publicos/servicios-publicos'),
     'la_rioja_ministerio_agua': ('Ministerio de Agua y Energia / La Rioja', 'La Rioja', 'https://aguayenergia.larioja.gob.ar/'),
+    'sameep_chaco_prensa_gobierno': ('SAMEEP / Gobierno del Chaco', 'Chaco', 'https://www.chaco.gob.ar/noticias'),
+    'gualeguaychu_obras_sanitarias': ('Obras Sanitarias / Municipalidad de Gualeguaychú', 'Entre Ríos', 'https://gualeguaychu.gov.ar/'),
+    'corpico_general_pico_agua': ('CORPICO / General Pico', 'La Pampa', 'https://www.corpico.com.ar/novedades'),
 }
 WEEKDAY = {'lunes':0, 'martes':1, 'miercoles':2, 'jueves':3, 'viernes':4,
            'sabado':5, 'domingo':6}
@@ -4372,6 +4375,238 @@ def _collect_rioja(checked_at,now,fetch):
         r['message']+=' Acceso parcial a noticias.'
     return r
 
+# v5.72: three official public channels. They are NEWS, not outage-state APIs.
+# Most importantly, the CORPICO homepage advertises ELECTRIC interruptions;
+# no mixed-service generic heading can create a water notice.
+_WATER3_KEYS=frozenset(('sameep_chaco_prensa_gobierno',
+                        'gualeguaychu_obras_sanitarias',
+                        'corpico_general_pico_agua'))
+_WATER3_CHACO_LOCATIONS=(
+    'Resistencia','Barranqueras','Fontana','Puerto Vilelas','Colonia Benitez',
+    'Puerto Tirol','Presidencia Roque Saenz Pena','Saenz Pena','Villa Angela',
+    'Charata','Las Brenas','Quitilipi','Machagai','General San Martin',
+    'La Leonesa','Las Palmas','Puerto Bermejo','Presidencia Roca','Pampa del Indio',
+    'General Pinedo','Coronel Du Graty','Santa Sylvina','La Tigra','La Clotilde',
+    'San Bernardo','Basail','Colonias Unidas','Castelli','Tres Isletas',
+    'Juan Jose Castelli','Corzuela','Avia Terai','Napénay','Nap enay',
+    'Villa Berthet','Hermoso Campo','Campo Largo','Makalle','Pampa Almiron',
+    'Isla del Cerrito','Margarita Belen','Los Frentones','La Escondida',
+)
+_WATER3_TOPIC=re.compile(
+    r'\b(?:agua potable|servicio de agua|suministro de agua|red de agua|'
+    r'distribucion de agua|acueducto|planta potabilizadora|bombeo de agua|'
+    r'captacion de agua|presion del agua|sistema de abastecimiento de agua)\b')
+_WATER3_HEAD=re.compile(
+    r'\b(?:falta de agua|baja presion|sin agua|sin suministro|corte|'
+    r'interrupcion|suspension|rotura|reparacion|averia|normalizar|'
+    r'restablecer|restablecimiento|bombeo|afectacion|cañeria|caneria)\b')
+_WATER3_IMPACT=re.compile(
+    r'\b(?:faltante de agua|falta de agua|baja presion|presion baja|'
+    r'sin agua|sin suministro|corte(?:s)? (?:de agua|del servicio|del suministro)|'
+    r'interrupcion(?:es)? (?:del |de )?(?:suministro|servicio|agua potable)|'
+    r'suspension (?:del |de )?(?:servicio|suministro)|'
+    r'(?:servicio|suministro) (?:se vera|esta|se encuentra|fue) afectado|'
+    r'afecta (?:el |al )?(?:servicio|suministro)|'
+    r'se interrumpira (?:el )?(?:servicio|suministro)|'
+    r'podria(?:n)? (?:registrarse|producirse) (?:baja presion|faltante de agua|falta de agua)|'
+    r'(?:reduccion|disminucion) de (?:la )?presion)\b')
+_WATER3_NEGATIVE=re.compile(
+    r'\b(?:sin afectar|sin interrumpir|no se interrumpira|no se vera afectado|'
+    r'no afectara|no se afectara|no registraran|no se registraron|'
+    r'no hay cortes|no habra cortes|no habrá cortes|'
+    r'no se produjeron cortes|para evitar cortes|'
+    r'se normalizo el servicio|servicio restablecido)\b')
+
+
+def _water3_story_url(key,url):
+    try:
+        u=urlsplit(url)
+        if (u.scheme!='https' or u.username or u.password or u.port is not None
+            or u.query or u.fragment or '..' in u.path):return False
+        if key=='sameep_chaco_prensa_gobierno':
+            return (u.hostname in ('chaco.gob.ar','www.chaco.gob.ar') and
+                    re.fullmatch(r'/noticia-[a-z0-9-]{12,210}',u.path) is not None)
+        if key=='gualeguaychu_obras_sanitarias':
+            return (u.hostname in ('gualeguaychu.gov.ar','www.gualeguaychu.gov.ar',
+                                   'ws.gualeguaychu.gov.ar') and
+                    (re.fullmatch(r'/redaccion/[a-z0-9-]{14,200}/?',u.path) is not None or
+                     re.fullmatch(r'/noticia/[0-9]{3,7}-[a-z0-9-]{12,180}/?',u.path) is not None))
+        if key=='corpico_general_pico_agua':
+            return (u.hostname in ('corpico.com.ar','www.corpico.com.ar') and
+                    re.fullmatch(r'/novedades/[0-9]{2,8}/?',u.path) is not None)
+    except ValueError:
+        pass
+    return False
+
+
+def _water3_url_day(key,url):
+    if key!='sameep_chaco_prensa_gobierno':return None
+    m=re.search(r'-(20\d{2})-(\d{2})-(\d{2})-\d{2}-\d{2}/?$',urlsplit(url).path)
+    if not m:return None
+    try:return date(int(m.group(1)),int(m.group(2)),int(m.group(3)))
+    except ValueError:return None
+
+
+def _water3_explicit_day(fragment):
+    d=_regional_index_date(fragment)
+    if d:return d
+    # The official pages also use month names without 'de', and with a trailing dot.
+    text=folded(fragment)
+    m=re.search(r'\b(\d{1,2})\s+(ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)\.?\s+(20\d{2})\b',text)
+    if m:
+        try:return date(int(m.group(3)),_REGIONAL_SANTIAGO_MONTHS[m.group(2)],int(m.group(1)))
+        except ValueError:return None
+    return None
+
+
+def _water3_index(key,html,url,now):
+    dom,visible=page(html)
+    seen=set(); items=[];valid=0;impact=0;skipped_old=0
+    for href,label in dom.anchors:
+        absolute=urljoin(url,href)
+        if absolute in seen or not _water3_story_url(key,absolute):continue
+        seen.add(absolute);valid+=1
+        name=clean(label,240)
+        f=folded(name)
+        if len(name)<14 or not _WATER3_HEAD.search(f):continue
+        # A story headline MUST actually name water service. A generic outage,
+        # 'cortes programados' or electric-works reference is not enough.
+        if not _WATER3_TOPIC.search(f):continue
+        if _WATER3_NEGATIVE.search(f) or _REGIONAL_FINISHED.search(f):continue
+        if key=='sameep_chaco_prensa_gobierno' and not re.search(r'\bsameep\b',f):continue
+        impact+=1
+        url_day=_water3_url_day(key,absolute)
+        if url_day and (url_day<now.date()-timedelta(days=3) or url_day>now.date()):
+            skipped_old+=1;continue
+        items.append((absolute,name,url_day))
+    stats={'html_anchors_seen':len(dom.anchors),'html_visible_characters':len(visible),
+           'valid_article_links_seen':valid,'impact_title_candidates_seen':impact,
+           'headlines_skipped_outside_window':skipped_old,
+           'articles_deferred_by_budget':max(0,len(items)-3)}
+    return items[:3],stats
+
+
+def _water3_article_date(key,html,visible,title,listed_day):
+    f=folded(visible)
+    pos=f.find(folded(title))
+    if pos<0:return None
+    # Only a date placed as a HEADER immediately before or after the verified
+    # title may be a publication date. A work date inside an article paragraph
+    # is not a publication date and MUST NOT be promoted to one.
+    tail=folded(visible[pos+len(title):pos+len(title)+140])
+    day_pattern=(r'(?:\d{1,2}[/-]\d{1,2}[/-]20\d{2}|'
+                 r'\d{1,2}\s+(?:de\s+)?[a-z]+\.?\s+(?:de\s+)?20\d{2})')
+    label=r'(?:fecha de publicacion|publicado el|publicado|fecha)'
+    d=None
+    if re.match(r'^\s*(?:'+label+r'\s*:?\s*)?'+day_pattern+r'\b',tail):
+        d=_water3_explicit_day(tail[:95])
+    if not d:
+        before=folded(visible[max(0,pos-100):pos])
+        match=re.search(r'('+day_pattern+r')\s*$',before)
+        if match:d=_water3_explicit_day(match.group(1))
+    if not d:return None
+    if listed_day and d!=listed_day:return None
+    return d
+
+
+def _water3_locality(key,title,paragraphs):
+    if key=='gualeguaychu_obras_sanitarias':return 'Gualeguaychú'
+    if key=='corpico_general_pico_agua':
+        z=folded(' '.join([title]+paragraphs[:3]))
+        return 'General Pico' if re.search(r'\bgeneral pico\b',z) else None
+    f=folded(' '.join([title]+paragraphs[:2])[:650])
+    locations=set()
+    for loc in _WATER3_CHACO_LOCATIONS:
+        if re.search(r'(?<!\w)'+re.escape(folded(loc))+r'(?!\w)',f):locations.add(loc)
+    return next(iter(locations)) if len(locations)==1 else None
+
+
+def _water3_article(key,html,url,now,label,listed_day):
+    dom,visible=page(html)
+    f_label=folded(label)
+    title=next((h for h in dom.headings if len(h)>12 and
+                 (folded(h) in f_label or f_label in folded(h)) and
+                 len(folded(h))>14),None)
+    if not title:return None,None,'article_title_not_confirmed'
+    d=_water3_article_date(key,html,visible,title,listed_day)
+    if not d:return None,None,'publication_date_not_verified'
+    if d>now.date() or d<now.date()-timedelta(days=3):
+        return None,d,'outside_publication_window'
+    if _REGIONAL_FINISHED.search(folded(title)) or _WATER3_NEGATIVE.search(folded(title)):
+        return None,d,'completed_or_negated_headline'
+    body=[p for p in dom.paragraphs if len(p)>30][:20]
+    if not body:return None,d,'article_body_not_verified'
+    locality=_water3_locality(key,title,body)
+    if not locality:return None,d,'locality_missing_or_ambiguous'
+    impact=False
+    for paragraph in body:
+        for sentence in re.split(r'(?<=[.!?])\s+',paragraph):
+            f=folded(sentence)
+            if (_WATER3_NEGATIVE.search(f) or _REGIONAL_NEGATIVE.search(f)
+                or _ADC_NO_IMPACT.search(f) or _REGIONAL_FINISHED.search(f)):
+                continue
+            if _WATER3_TOPIC.search(f) and _WATER3_IMPACT.search(f):
+                impact=True;break
+        if impact:break
+    if not impact:return None,d,'water_service_impact_not_explicit'
+    name,province,_=SOURCES[key]
+    n=mk_notice(name,province,locality,url,'water_service_bulletin',
+                'publication_only_not_live',' '.join(body),
+                published_on=d.isoformat(),scheduled_start=None,scheduled_end=None)
+    return n,d,'parsed'
+
+
+def _water3_collect(key,checked_at,now,fetch):
+    result=_result(key,checked_at)
+    result.update(parser_revision='THREE-REGIONAL-PUBLIC-NEWS-v5.72',
+        coverage_kind='official_dated_public_news_only_not_live',
+        notices=[],source_attempts=[],index_attempts=[],article_links_seen=0,
+        articles_checked=0,articles_deferred_by_budget=0)
+    indices=[result['source_url']]
+    if key=='gualeguaychu_obras_sanitarias':
+        indices.append('https://gualeguaychu.gov.ar/noticias')
+    newest=None;selected=[]
+    for index_url in indices:
+        try:
+            items,stats=_water3_index(key,fetch(index_url),index_url,now)
+            result.update(stats)
+            result['article_links_seen']=stats['valid_article_links_seen']
+            result['index_attempts'].append({
+                'url':index_url,'result':'official_index_read',
+                'valid_article_links_seen':stats['valid_article_links_seen']})
+            selected=items
+            if items or stats['valid_article_links_seen'] or key!='gualeguaychu_obras_sanitarias':break
+        except Exception as e:
+            err={'url':index_url,'result':'fetch_or_parse_error','error_type':type(e).__name__}
+            if isinstance(e,HTTPError):err['http_status']=e.code
+            result['index_attempts'].append(err)
+    if not any(a['result']=='official_index_read' for a in result['index_attempts']):
+        result['message']='No se pudo leer índice oficial; suministro desconocido.'
+        return result
+    for article_url,label,index_day in selected:
+        try:
+            notice,pub,reason=_water3_article(key,fetch(article_url),article_url,now,label,index_day)
+            result['articles_checked']+=1
+            result['source_attempts'].append({'url':article_url,'result':reason})
+            if pub and (newest is None or pub>newest):newest=pub
+            if notice:result['notices'].append(notice)
+        except Exception as e:
+            result['source_attempts'].append({'url':article_url,'result':'fetch_or_parse_error',
+                                              'error_type':type(e).__name__})
+    if newest:result['latest_published_date']=newest.isoformat()
+    if result['notices']:
+        result['status']='ok'
+        result['message']='Comunicados públicos fechados; no confirman cortes activos.'
+    elif key=='corpico_general_pico_agua':
+        result['status']='unverified'
+        result['message']=('Noticias oficiales sin afectación reciente verificable de agua. '
+                           'Los cortes eléctricos publicados por CORPICO se excluyen; servicio de agua desconocido.')
+    else:
+        result['status']='unverified'
+        result['message']='Sin comunicados recientes de agua suficientemente verificados; servicio desconocido.'
+    return result
+
+
 def collect_one(key,checked_at,fetcher=None):
     if key not in SOURCES:
         raise KeyError(key)
@@ -4381,6 +4616,7 @@ def collect_one(key,checked_at,fetcher=None):
     if key==_OSSE_SJ_KEY:return _collect_osse_sj(checked_at,now,fetch)
     if key==_SPSE_KEY:return _collect_spse(checked_at,now,fetch)
     if key==_RIOJA_KEY:return _collect_rioja(checked_at,now,fetch)
+    if key in _WATER3_KEYS:return _water3_collect(key,checked_at,now,fetch)
     if key in _PUBLIC_NEWS_HOSTS:return _collect_public_news(key,checked_at,now,fetch)
     if key=='dposs_tierra_del_fuego_reparaciones':return _collect_dposs(checked_at,now,fetch)
     if key=='absa_buenos_aires':return _collect_absa(checked_at,now,fetch)
