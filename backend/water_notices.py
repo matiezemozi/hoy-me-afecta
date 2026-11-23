@@ -1,4 +1,4 @@
-"""Conservative public water-service bulletin collectors for Argentina (v5.73).
+"""Conservative public water-service bulletin collectors for Argentina (v5.74).
 
 No report is a live outage confirmation. No credentials, service identifiers or
 unofficial APIs are used. Completely independent of provincial_electricity.
@@ -1092,6 +1092,18 @@ def _arsa_article(html,url,now,index_published=None):
     # A generic announcement about works is not evidence of affected supply.
     if not _arsa_explicit_service_impact(content):
         return [],published
+    # Preserve explicitly reported start/normalization times after the day
+    # of publication. Earlier versions only tried parsing a started repair
+    # when its dated work day was >= today's date, so the same article lost
+    # factual metadata at midnight. Do NOT treat it as an active outage.
+    # Publication-day anchoring also prevents reclassifying a future plan
+    # published on an earlier date as work already started.
+    if published<=now.date():
+        already_started=_arsa_work_already_started(paragraphs,published,published)
+        if already_started:
+            return [mk_notice('Aguas Rionegrinas','Río Negro',locality,url,
+                'water_service_bulletin','publication_only_not_live',content,
+                published_on=published.isoformat(),**already_started)],published
     scheduled=None
     for p in paragraphs:
         d=_weekday_date(p,published)
@@ -1103,12 +1115,8 @@ def _arsa_article(html,url,now,index_published=None):
     # An explicit "trabaja desde las 9 de este domingo 22" describes work
     # already underway, even if another sentence says "se preve" about its
     # estimated normalization. Never misclassify it as a future scheduled cut.
-    if scheduled is not None:
-        started=_arsa_work_already_started(paragraphs,published,scheduled)
-        if started:
-            return [mk_notice('Aguas Rionegrinas','Río Negro',locality,url,
-                'water_service_bulletin','publication_only_not_live',content,
-                published_on=published.isoformat(),**started)],published
+    # A planned weekday on a later date cannot establish that work started.
+    # Started-work metadata is parsed above, strictly on publication day.
     # Past-tense completed/same-day works are publication-only, not plans.
     if scheduled and future_verb and not re.search(r'inicio trabajos|iniciaron los trabajos|tareas comenzaron',title_fold):
         times=_arsa_times_from_dated_paragraphs(paragraphs,published,scheduled)
