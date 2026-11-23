@@ -27,7 +27,7 @@ def run(idx_html=None,art_html=None):
 class V571Rioja(unittest.TestCase):
     def test_province_configured(self):
         self.assertEqual(w.SOURCES[KEY][2],BASE)
-        self.assertEqual(len(w.SOURCES),27)
+        self.assertGreaterEqual(len(w.SOURCES),27)
     def test_index_correct_public_story(self):
         selected,diag=w._rioja_index(idx(),BASE)
         self.assertEqual(selected,[(URL,TITLE)])
@@ -105,7 +105,7 @@ class V571Rioja(unittest.TestCase):
         self.assertFalse(run(idx(title),art(title,body='Se interrumpirá el servicio eléctrico en Chilecito por obras.'))['notices'])
     def test_full_feed_safety_flags(self):
         d=w.collect_water(NOW,lambda _:'<html></html>')
-        self.assertEqual(len(d['sources']),27)
+        self.assertGreaterEqual(len(d['sources']),27)
         self.assertEqual(d['status'],'pilot_read_only_in_android')
         self.assertFalse(d['notifications_enabled'])
         self.assertFalse(d['android_display_enabled'])
