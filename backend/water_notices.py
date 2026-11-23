@@ -1,4 +1,4 @@
-"""Conservative public water-service bulletin collectors for Argentina (v5.72).
+"""Conservative public water-service bulletin collectors for Argentina (v5.73).
 
 No report is a live outage confirmation. No credentials, service identifiers or
 unofficial APIs are used. Completely independent of provincial_electricity.
@@ -48,7 +48,7 @@ SOURCES = {
     'osse_san_juan_prensa': ('OSSE Obras Sanitarias San Juan', 'San Juan', 'https://www.ossesanjuan.com.ar/'),
     'spse_santa_cruz_prensa': ('SPSE / Prensa Santa Cruz', 'Santa Cruz', 'https://noticias.santacruz.gob.ar/organismos/entes-publicos/servicios-publicos'),
     'la_rioja_ministerio_agua': ('Ministerio de Agua y Energia / La Rioja', 'La Rioja', 'https://aguayenergia.larioja.gob.ar/'),
-    'sameep_chaco_prensa_gobierno': ('SAMEEP / Gobierno del Chaco', 'Chaco', 'https://www.chaco.gob.ar/noticias'),
+    'sameep_chaco_prensa_gobierno': ('SAMEEP / Gobierno del Chaco', 'Chaco', 'https://chaco.gob.ar/'),
     'gualeguaychu_obras_sanitarias': ('Obras Sanitarias / Municipalidad de Gualeguaychú', 'Entre Ríos', 'https://gualeguaychu.gov.ar/'),
     'corpico_general_pico_agua': ('CORPICO / General Pico', 'La Pampa', 'https://www.corpico.com.ar/novedades'),
 }
@@ -4375,7 +4375,9 @@ def _collect_rioja(checked_at,now,fetch):
         r['message']+=' Acceso parcial a noticias.'
     return r
 
-# v5.72: three official public channels. They are NEWS, not outage-state APIs.
+# v5.73: the official Chaco homepage is an observed news index, while /noticias
+# reported URLError in GitHub. Read a safe canonical index with one fallback.
+# These remain NEWS, not outage-state APIs.
 # Most importantly, the CORPICO homepage advertises ELECTRIC interruptions;
 # no mixed-service generic heading can create a water notice.
 _WATER3_KEYS=frozenset(('sameep_chaco_prensa_gobierno',
@@ -4558,11 +4560,16 @@ def _water3_article(key,html,url,now,label,listed_day):
 
 def _water3_collect(key,checked_at,now,fetch):
     result=_result(key,checked_at)
-    result.update(parser_revision='THREE-REGIONAL-PUBLIC-NEWS-v5.72',
+    result.update(parser_revision='THREE-REGIONAL-PUBLIC-NEWS-CHACO-INDEX-v5.73',
         coverage_kind='official_dated_public_news_only_not_live',
         notices=[],source_attempts=[],index_attempts=[],article_links_seen=0,
         articles_checked=0,articles_deferred_by_budget=0)
     indices=[result['source_url']]
+    if key=='sameep_chaco_prensa_gobierno':
+        # The previously configured /noticias route was not readable in Actions.
+        # The government homepage is a public dated news index. Alternate host
+        # is attempted only if the canonical site fails or has no story links.
+        indices.append('https://www.chaco.gob.ar/')
     if key=='gualeguaychu_obras_sanitarias':
         indices.append('https://gualeguaychu.gov.ar/noticias')
     newest=None;selected=[]
@@ -4575,7 +4582,8 @@ def _water3_collect(key,checked_at,now,fetch):
                 'url':index_url,'result':'official_index_read',
                 'valid_article_links_seen':stats['valid_article_links_seen']})
             selected=items
-            if items or stats['valid_article_links_seen'] or key!='gualeguaychu_obras_sanitarias':break
+            if items or stats['valid_article_links_seen'] or key not in ('gualeguaychu_obras_sanitarias','sameep_chaco_prensa_gobierno'):
+                break
         except Exception as e:
             err={'url':index_url,'result':'fetch_or_parse_error','error_type':type(e).__name__}
             if isinstance(e,HTTPError):err['http_status']=e.code
