@@ -4657,7 +4657,13 @@ def _cba_article_url(url):
         if (u.scheme!='https' or u.hostname not in _CBA_HOSTS or
                 u.username or u.password or u.port is not None or
                 u.query or u.fragment or '..' in u.path):return False
-        return re.fullmatch(r'/CanalNoticias/DetalleNoticia/\d{1,6}/[a-z0-9-]{5,210}/?',u.path,re.I) is not None
+        # Official site uses two independent publication sections:
+        # /CanalNoticias/DetalleNoticia/<id>/<slug> and
+        # /CanalSaladePrensa/DetalleComunicado/<id>/<slug>.
+        # Never follow arbitrary routes, queries, or offsite URLs.
+        return re.fullmatch(
+            r'/(?:CanalNoticias/DetalleNoticia|CanalSaladePrensa/DetalleComunicado)/'
+            r'\d{1,6}/[a-z0-9-]{5,210}/?',u.path,re.I) is not None
     except ValueError:
         return False
 
@@ -4685,7 +4691,10 @@ def _cba_index(html,base,now):
             if maybe and (maybe<now.date()-timedelta(days=3) or maybe>now.date()):
                 old+=1;continue
         candidates.append(url)
+    press_links=sum('/CanalSaladePrensa/DetalleComunicado/' in url for url in discovered)
+    news_links=sum('/CanalNoticias/DetalleNoticia/' in url for url in discovered)
     return candidates[:3],{'html_anchors_seen':len(dom.anchors),
+        'press_article_links_seen':press_links,'news_article_links_seen':news_links,
         'html_visible_characters':len(visible),'valid_article_links_seen':len(discovered),
         'article_candidates_before_budget':len(candidates),'articles_deferred_by_budget':max(0,len(candidates)-3),
         'articles_skipped_dated_slug':old,'articles_skipped_completed_title':filtered}
@@ -4757,20 +4766,22 @@ def _cba_article(html,url,now):
 
 def _collect_cba(checked_at,now,fetch):
     r=_result(_CBA_KEY,checked_at)
-    r.update(parser_revision='CBA-CANONICAL-NEWS-v5.75',
+    r.update(parser_revision='CBA-NEWS-PRESS-ROUTES-v5.76',
         coverage_kind='official_dated_public_water_bulletins_not_live',
         notices=[],article_links_seen=0,articles_checked=0,
         source_attempts=[],index_attempts=[],articles_deferred_by_budget=0,
         account_lookup_required_for_address=True)
-    candidates=[];index_read=False
+    candidates=[];index_read=False;index_stats=[]
     for url in (r['source_url'],_CBA_INDEX_FALLBACK):
         try:
             selected,stats=_cba_index(fetch(url),url,now)
-            index_read=True;candidates=selected;r.update(stats)
+            index_read=True;candidates=selected;index_stats.append(stats);r.update(stats)
             r['article_links_seen']=stats['valid_article_links_seen']
             r['index_attempts'].append({'url':url,'result':'official_index_read',
                 'valid_article_links_seen':stats['valid_article_links_seen']})
-            if stats['valid_article_links_seen']:break
+            # A valid archive link is not evidence of a current service notice.
+            # On a page with no candidates, consult the other official index.
+            if selected:break
         except Exception as e:
             d={'url':url,'result':'fetch_or_parse_error','error_type':type(e).__name__}
             if isinstance(e,HTTPError):d['http_status']=e.code
@@ -4781,6 +4792,15 @@ def _collect_cba(checked_at,now,fetch):
     if not index_read:
         r['message']='No se pudo leer la prensa oficial de Aguas Cordobesas; suministro desconocido.'
         return r
+    # The fallback index must not erase a successfully read first index:
+    # report the total public links examined, including both official pages.
+    for key in ('html_anchors_seen','html_visible_characters',
+                'valid_article_links_seen','press_article_links_seen',
+                'news_article_links_seen','article_candidates_before_budget',
+                'articles_deferred_by_budget','articles_skipped_dated_slug',
+                'articles_skipped_completed_title'):
+        r[key]=sum(stats.get(key,0) for stats in index_stats)
+    r['article_links_seen']=r['valid_article_links_seen']
     pubs=[]
     for url in candidates:
         try:
