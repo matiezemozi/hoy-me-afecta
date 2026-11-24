@@ -1,4 +1,4 @@
-"""Conservative public water-service bulletin collectors for Argentina (v5.82).
+"""Conservative public water-service bulletin collectors for Argentina (v5.83).
 
 No report is a live outage confirmation. No credentials, service identifiers or
 unofficial APIs are used. Completely independent of provincial_electricity.
@@ -13,13 +13,46 @@ from urllib.request import Request, urlopen
 from urllib.error import HTTPError, URLError
 from email.utils import parsedate_to_datetime
 from xml.etree import ElementTree as ET
-from time import sleep
+from time import sleep, monotonic
+from concurrent.futures import ThreadPoolExecutor
 import calendar
 import re
 
 ART = timezone(timedelta(hours=-3))
 HORIZON_DAYS = 14
 MAX_PAGE_BYTES = 1_500_000
+# v5.83: Bounds for each independent official source, not a limit on alerts.
+# Parallelism is across different source collectors, never article requests
+# inside a single source (preserves per-site rate-limit avoidance).
+MAX_PARALLEL_SOURCES = 4
+MAX_NETWORK_FETCHES_PER_SOURCE = 16
+MAX_SOURCE_NETWORK_SECONDS = 90
+
+
+class SourceFetchBudgetExceeded(RuntimeError):
+    """A public source exhausted its conservative per-run query budget."""
+
+
+def _budgeted_fetcher(fetch, *, max_fetches=MAX_NETWORK_FETCHES_PER_SOURCE,
+                      max_seconds=MAX_SOURCE_NETWORK_SECONDS, clock=monotonic):
+    """No more network calls once a collector exceeds count or elapsed budget.
+
+    This is a cooperative budget checked BEFORE each request; the standard
+    urlopen socket timeout still bounds each individual request. A DNS or
+    remote server outside Python's control can still run longer than desired.
+    """
+    started = clock()
+    requests = 0
+
+    def limited(url):
+        nonlocal requests
+        if requests >= max_fetches or clock() - started >= max_seconds:
+            raise SourceFetchBudgetExceeded('Limite de consultas/tiempo de la fuente')
+        requests += 1
+        return fetch(url)
+
+    return limited
+
 SOURCES = {
     'absa_buenos_aires': ('ABSA', 'Buenos Aires', 'https://www.aguasbonaerenses.com.ar/noticias/'),
     'aguas_del_norte_salta': ('Aguas del Norte', 'Salta', 'https://www.aguasdelnortesalta.com.ar/cortes.php'),
@@ -81,6 +114,8 @@ def fetch_html(url):
     req = Request(url, headers={'User-Agent':'HoyMeAfecta/5.37 (public notice reader)',
                                 'Accept':'text/html,application/xhtml+xml,application/rss+xml,application/xml;q=0.9'})
     with urlopen(req, timeout=13) as response:
+        if urlsplit(response.geturl()).scheme != 'https':
+            raise ValueError('Redireccion fuera de HTTPS')
         raw = response.read(MAX_PAGE_BYTES + 1)
         if len(raw) > MAX_PAGE_BYTES:
             raise ValueError('Página demasiado grande')
@@ -1243,7 +1278,8 @@ def _collect_arsa(checked_at,now,fetch):
         for position,link in enumerate(selected):
             # Requests are deliberately spread out for production collection.
             # Offline fixture-based unit tests do not sleep.
-            if position and fetch is fetch_html:
+            if position and (fetch is fetch_html or
+                             getattr(fetch, '_production_network_fetch', False)):
                 sleep(2.25)
             checked+=1
             try:
@@ -2306,13 +2342,25 @@ def _collect_jujuy(checked_at, now, fetch):
             if result['articles_checked'] >= 6:
                 break
             try:
-                notice, published, verdict = _jujuy_article(fetch(link), link, now, title)
+                article_html = fetch(link)
+                notice, published, verdict = _jujuy_article(article_html, link, now, title)
                 result['articles_checked'] += 1
                 if published:
                     newest = max(newest, published) if newest else published
                 if notice:
                     result['notices'].append(notice)
-                result['source_attempts'].append({'url':link, 'result':verdict})
+                attempt = {'url':link, 'result':verdict}
+                if verdict == 'no_verifiable_water_article_body':
+                    # Shape-only diagnostic, no second request or article text.
+                    # Helps distinguish missing paragraphs from a page-section
+                    # detection failure without relaxing editorial validation.
+                    dom_check, visible_check = page(article_html)
+                    attempt['article_html_bytes'] = len(article_html.encode('utf-8'))
+                    attempt['article_visible_characters'] = len(visible_check)
+                    attempt['article_paragraphs_seen'] = len(dom_check.paragraphs)
+                    attempt['matching_headings_seen'] = sum(
+                        folded(h) == folded(title) for h in dom_check.headings)
+                result['source_attempts'].append(attempt)
             except Exception as exc:
                 result['source_attempts'].append({'url':link, 'result':'fetch_or_parse_error',
                                                   'error_type':type(exc).__name__})
@@ -5207,6 +5255,7 @@ def source_health_summary(results):
     all_url_errors=[]
     account_only=[]
     unresolved=[]
+    budget_exhausted=[]
     for key,r in results.items():
         status=r.get('status','unverified')
         counts[status]=counts.get(status,0)+1
@@ -5229,6 +5278,9 @@ def source_health_summary(results):
         private_lookup=(r.get('access_mode')=='account_required' or
             r.get('coverage_kind')=='address_account_lookup_only')
         if private_lookup:account_only.append(key)
+        if ('SourceFetchBudgetExceeded' in str(r.get('message','')) or
+            any(a.get('error_type') == 'SourceFetchBudgetExceeded' for a in attempts)):
+            budget_exhausted.append(key)
         readable=(not private_lookup and (status in ('ok','stale') or
             r.get('page_read') is True or
             (isinstance(r.get('article_links_seen'),int) and r['article_links_seen']>0) or
@@ -5248,19 +5300,41 @@ def source_health_summary(results):
         'all_index_requests_rejected_http_403':rejected_http_403,
         'all_index_requests_failed_url_error':all_url_errors,
         'account_only_sources_without_public_status':account_only,
+        'source_query_budget_exhausted':budget_exhausted,
         'unverified_without_readable_index':unresolved,
         'interpretation':'Public official bulletins only. Reachability, status OK, or absence of notices does not confirm live water service or comprehensive geographic coverage.'
     }
 
 def collect_water(checked_at,fetcher=None):
     checked_instant(checked_at)
-    out={}
-    for key in SOURCES:
+
+    def safe_one(key, source_fetcher):
         try:
-            out[key]=collect_one(key,checked_at,fetcher=fetcher)
+            return collect_one(key, checked_at, fetcher=source_fetcher)
         except Exception as exc:
-            out[key]=_result(key,checked_at)
-            out[key]['message']='Fallo aislado: '+type(exc).__name__
+            result = _result(key, checked_at)
+            result['message'] = 'Fallo aislado: ' + type(exc).__name__
+            return result
+
+    if fetcher is not None:
+        # Deterministic offline tests and injected fetchers retain the previous
+        # sequential behavior. Never start threads for a caller's mock.
+        out = {key: safe_one(key, fetcher) for key in SOURCES}
+    else:
+        # Independent sources can run concurrently; within each source the
+        # requests remain serialized, preserving rate-limit protection.
+        def production_one(key):
+            limited = _budgeted_fetcher(fetch_html)
+            # ARSA keeps its inter-request pause despite the budget wrapper.
+            limited._production_network_fetch = True
+            return safe_one(key, limited)
+
+        with ThreadPoolExecutor(max_workers=MAX_PARALLEL_SOURCES,
+                                thread_name_prefix='water-source') as executor:
+            pending = {key: executor.submit(production_one, key) for key in SOURCES}
+            # Preserve stable, predictable source and notice ordering even if
+            # some providers respond slower than others.
+            out = {key: pending[key].result() for key in SOURCES}
     notices=[]
     for key in SOURCES:
         notices.extend(out[key]['notices'])
