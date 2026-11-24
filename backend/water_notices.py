@@ -1,4 +1,4 @@
-"""Conservative public water-service bulletin collectors for Argentina (v5.78).
+"""Conservative public water-service bulletin collectors for Argentina (v5.79).
 
 No report is a live outage confirmation. No credentials, service identifiers or
 unofficial APIs are used. Completely independent of provincial_electricity.
@@ -3049,6 +3049,141 @@ def _municipal_article(html,url,now,key,index_day,rss_title=None):
     return notice,'parsed'
 
 
+# v5.79: official Santa Rosa HTML fallback when its RSS endpoint answers 403.
+# /noticias/ can be a JavaScript shell; the homepage offers public story
+# links. HTML discovery is only a candidate list, NEVER an outage or date.
+_SANTA_ROSA_NEWS_INDEX = 'https://www.santarosa.gob.ar/noticias/'
+_SANTA_ROSA_HOME = 'https://www.santarosa.gob.ar/'
+_SANTA_ROSA_STORY = re.compile(r'^/noticias/[a-z0-9][a-z0-9-]{11,200}/?$',re.I)
+_SANTA_ROSA_SERVICE_TOPIC = re.compile(
+    r'agua|acueduct|potabiliz|suministro|presion|abastec|caneria|red-hidrica', re.I)
+
+
+def _santa_rosa_public_links(html,base):
+    dom,_=page(html)
+    found=[]; seen=set()
+    for href,label in dom.anchors:
+        if not href or len(href)>800:
+            continue
+        link=urljoin(base,href.strip())
+        u=urlsplit(link)
+        try:
+            safe=(u.scheme=='https' and
+                  u.hostname in _MUNICIPAL_RSS_HOSTS['santa_rosa_municipal_lp'] and
+                  u.username is None and u.password is None and u.port is None and
+                  not u.query and not u.fragment and
+                  bool(_SANTA_ROSA_STORY.fullmatch(u.path)) and link not in seen)
+        except ValueError:  # Invalid URL ports never abort the entire index.
+            safe=False
+        if not safe:
+            continue
+        seen.add(link)
+        # An anchor may wrap the entire card, or may say only 'Leer mas'.
+        # The official slug is suitable for candidate selection, never date.
+        slug=u.path.rstrip('/').split('/')[-1].replace('-',' ')
+        label=clean(label,240)
+        title=label if len(label)>18 and not re.fullmatch(r'leer (?:mas|noticia completa)',folded(label)) else slug
+        found.append((link,title))
+    return found,len(dom.anchors)
+
+
+def _santa_rosa_publication_day(html):
+    dom,visible=page(html)
+    title=next((h for h in dom.headings if len(h)>22 and 'santa rosa' in folded(h)),None)
+    if not title:
+        return None
+    # The title may occur inside <title> before the visible H1. Scan every
+    # occurrence, as in the Cordoba v5.78 fix, and accept only an explicit
+    # 'Noticias DD de mes de YYYY' immediately preceding the heading.
+    header=None
+    for match_title in re.finditer(re.escape(title),visible):
+        before=visible[max(0,match_title.start()-110):match_title.start()]
+        date_match=re.search(r'\bnoticias\s+(\d{1,2}\s+de\s+\w+\s+de\s+20\d{2})\s*$',folded(before))
+        if date_match:
+            header=_parse_official_day(date_match.group(1))
+            if header:break
+    meta=_published_date_from_meta(html)
+    if header and meta and abs((header-meta).days)>1:
+        return None
+    return header or meta
+
+
+def _santa_rosa_html_fallback(r,now,fetch):
+    r['fallback_index_attempts']=[]
+    links=None
+    for url in (_SANTA_ROSA_NEWS_INDEX,_SANTA_ROSA_HOME):
+        try:
+            html=fetch(url)
+            stories,anchors=_santa_rosa_public_links(html,url)
+            r['fallback_index_attempts'].append({
+                'url':url,'result':'official_html_read','html_anchors_seen':anchors,
+                'valid_article_links_seen':len(stories)})
+            if stories:
+                links=stories
+                r['index_mode']='official_html_news_fallback' if url==_SANTA_ROSA_NEWS_INDEX else 'official_homepage_sample_fallback'
+                break
+        except Exception as exc:
+            attempt={'url':url,'result':'fetch_or_parse_error','error_type':type(exc).__name__}
+            if isinstance(exc,HTTPError):attempt['http_status']=exc.code
+            r['fallback_index_attempts'].append(attempt)
+            if isinstance(exc,HTTPError) and exc.code==429:
+                break
+    if links is None:
+        r['message']='RSS oficial inaccesible y HTML municipal sin titulares aprovechables; suministro desconocido.'
+        r['index_warning']='El indice de noticias puede requerir JavaScript; no equivale a servicio normal.'
+        if any(a['result']=='official_html_read' for a in r['fallback_index_attempts']):
+            r['index_status']='html_no_article_links'
+            r['index_mode']='official_html_no_recognizable_stories'
+        return r
+    r['source_url']=url  # The real official index read, not the blocked RSS.
+    r['index_status']='official_html_article_links_found'
+    r['article_links_seen']=len(links)
+    r['html_links_seen']=len(links)
+    r['source_attempts']=[]
+    candidates=[(url,title) for url,title in links if _SANTA_ROSA_SERVICE_TOPIC.search(
+        folded(title).replace(' ','-'))]
+    r['relevant_titles_seen']=len(candidates)
+    r['article_candidates_before_budget']=len(candidates)
+    r['articles_deferred_by_budget']=max(0,len(candidates)-3)
+    r['index_warning']='La lectura HTML es parcial: se examinan solo titulares del indice visible, no todos los cortes.'
+    published_days=[]
+    for url,title in candidates[:3]:
+        try:
+            html=fetch(url)
+            r['articles_checked']+=1
+            published=_santa_rosa_publication_day(html)
+            if not published:
+                reason='publication_date_not_verified'
+                notice=None
+            elif published>now.date() or published<now.date()-timedelta(days=3):
+                reason='outside_publication_window'
+                notice=None
+                r['articles_skipped_old']+=1
+            else:
+                notice,reason=_municipal_article(html,url,now,'santa_rosa_municipal_lp',published)
+            if published:published_days.append(published)
+            r['source_attempts'].append({'url':url,'result':reason})
+            if notice:r['notices'].append(notice)
+        except Exception as exc:
+            attempt={'url':url,'result':'fetch_or_parse_error','error_type':type(exc).__name__}
+            if isinstance(exc,HTTPError):attempt['http_status']=exc.code
+            r['source_attempts'].append(attempt)
+            if isinstance(exc,HTTPError) and exc.code==429:
+                r['rate_limited']=True
+                break
+    if published_days:
+        r['latest_published_date']=max(published_days).isoformat()
+    if r['notices']:
+        r['status']='ok'
+        r['message']='Comunicados municipales fechados de fuente HTML oficial; no confirman cortes en tiempo real.'
+    elif published_days and max(published_days)<now.date()-timedelta(days=3):
+        r['status']='stale'
+        r['message']='La portada municipal incluye noticias antiguas; no confirma normalidad del suministro.'
+    else:
+        r['message']='Indice HTML municipal consultado sin corte reciente de agua verificado; servicio desconocido.'
+    return r
+
+
 def _collect_municipal_rss(key,checked_at,now,fetch):
     r=_result(key,checked_at)
     r.update(parser_revision='MUNICIPAL-RSS-DIAGNOSTIC-v5.58',
@@ -3088,6 +3223,9 @@ def _collect_municipal_rss(key,checked_at,now,fetch):
         if 'http_status' in error:
             r['message']+=' (HTTP '+str(error['http_status'])+')'
         r['index_status']='fetch_or_parse_error'
+        if (key=='santa_rosa_municipal_lp' and r['index_attempts']
+                and all(a.get('http_status')==403 for a in r['index_attempts'])):
+            return _santa_rosa_html_fallback(r,now,fetch)
         return r
     r['rss_items_seen']=count
     r['article_links_seen']=len(entries)
