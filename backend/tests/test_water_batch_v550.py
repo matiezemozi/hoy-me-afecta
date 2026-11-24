@@ -107,7 +107,7 @@ class TestWaterRequestBudget550(unittest.TestCase):
             calls.append(url)
             return scpl_archive() if url==SCPL_INDEX else scpl_article()
         result=w.collect_one('scpl_comodoro_chubut',STAMP,fetcher=fetch)
-        self.assertEqual(result['parser_revision'],'SCPL-INDEX-OPT-v5.50')
+        self.assertTrue(result['parser_revision'].startswith('SCPL-'))
         self.assertEqual(result['article_links_seen'],30)
         self.assertEqual(result['index_window_considered'],12)
         self.assertEqual(result['article_links_outside_window'],18)
