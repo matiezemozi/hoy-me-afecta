@@ -1,4 +1,4 @@
-"""Conservative public water-service bulletin collectors for Argentina (v5.83).
+"""Conservative public water-service bulletin collectors for Argentina (v5.84).
 
 No report is a live outage confirmation. No credentials, service identifiers or
 unofficial APIs are used. Completely independent of provincial_electricity.
@@ -2251,23 +2251,51 @@ def _jujuy_article(html, url, now, index_title=None):
         return None, None, 'article_title_not_verified'
     # A headline may occur in page navigation as well as the article itself.
     # Associate its publication date with the body, not a later news item.
-    matched=[]
-    for m in re.finditer(re.escape(title), visible, re.I):
-        following = visible[m.end():]
-        # Only use the header BEFORE the first article paragraph. Event dates
-        # narrated in a paragraph must never become publication dates.
-        first_body_para = next((p for p in dom.paragraphs
-                                if len(p) >= 35 and p[:30] in following), None)
-        header = following.split(first_body_para, 1)[0] if first_body_para else following[:180]
-        pub = _day_spanish(header[:450])
-        if pub:
-            matched.append((m.start(), following, pub))
-    if matched:
-        _pos, main, published = matched[0]
-    else:
-        main = visible.split(title, 1)[-1]
-        published = None
+    # The official page may repeat its headline in a navigation/card and in
+    # the real article. A single first-match search can stop at the site's
+    # navigation (e.g. "Ministerios"), hiding the actual water announcement.
+    # Divide equal-headline occurrences into bounded sections and prefer the
+    # section containing substantive ARTICLE PARAGRAPHS, not a menu headline.
+    # Neither another story's paragraphs nor dates in the narrated work are
+    # accepted as corroboration for this story.
+    occurrences = list(re.finditer(re.escape(title), visible, re.I))
     meta_published = _published_date_from_meta(html)
+    sections = []
+    for pos, match in enumerate(occurrences):
+        stop = occurrences[pos+1].start() if pos+1 < len(occurrences) else len(visible)
+        following = visible[match.end():stop]
+        footer = re.search(r'\blas m[a\u00e1]s le[i\u00ed]das\b|\bte puede interesar\b|\bministerios\b',
+                           following, re.I)
+        if footer:
+            following = following[:footer.start()]
+        first_body_para = next((para for para in dom.paragraphs
+                                if len(para) >= 35 and para[:30] in following), None)
+        header = (following.split(first_body_para, 1)[0] if first_body_para
+                  else following[:180])
+        local_date = _day_spanish(header[:450])
+        candidate_text = following[:7500]
+        candidate_body = re.sub(r'^.*?\b20\d\d\s*-\s*\d\d:\d\d\b',
+                                '', candidate_text, count=1)
+        # A title, an image caption or a sidebar alone cannot establish a
+        # dated impact. Paragraphs must be present INSIDE this title section.
+        substantive_paragraphs = [para for para in dom.paragraphs
+                                  if len(para) >= 50 and para[:35] in candidate_body]
+        norm_paragraphs = folded(' '.join(substantive_paragraphs))
+        has_water = bool(_JUJUY_WATER_CONTEXT.search(norm_paragraphs))
+        has_impact = bool(_WATER_IMPACT.search(norm_paragraphs) or
+                          _JUJUY_DIRECT_CUT.search(norm_paragraphs))
+        sections.append((pos, following, local_date, bool(substantive_paragraphs),
+                         has_water, has_impact))
+    # Stronger source evidence wins; only if equally strong do we prefer the
+    # later article heading over an earlier duplicated navigation headline.
+    if len(sections) > 1:
+        _idx, main, published, _has_p, _water, _impact = max(
+            sections, key=lambda sec:(sec[3] and sec[4] and sec[5],
+                                     sec[3] and sec[4],sec[3],sec[0]))
+    elif sections:
+        _idx, main, published, _has_p, _water, _impact = sections[0]
+    else:
+        main, published = visible.split(title, 1)[-1], None
     if published and meta_published and published != meta_published:
         return None, None, 'publication_date_conflict'
     published = published or meta_published
@@ -2360,6 +2388,15 @@ def _collect_jujuy(checked_at, now, fetch):
                     attempt['article_paragraphs_seen'] = len(dom_check.paragraphs)
                     attempt['matching_headings_seen'] = sum(
                         folded(h) == folded(title) for h in dom_check.headings)
+                    attempt['repeated_title_occurrences_in_visible'] = len(list(
+                        re.finditer(re.escape(title), visible_check, re.I)))
+                    attempt['water_context_paragraphs_seen'] = sum(
+                        bool(_JUJUY_WATER_CONTEXT.search(folded(paragraph)))
+                        for paragraph in dom_check.paragraphs)
+                    attempt['impact_like_paragraphs_seen'] = sum(
+                        bool(_WATER_IMPACT.search(folded(paragraph)) or
+                             _JUJUY_DIRECT_CUT.search(folded(paragraph)))
+                        for paragraph in dom_check.paragraphs)
                 result['source_attempts'].append(attempt)
             except Exception as exc:
                 result['source_attempts'].append({'url':link, 'result':'fetch_or_parse_error',
