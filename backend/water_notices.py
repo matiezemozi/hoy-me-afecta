@@ -1,4 +1,4 @@
-"""Conservative public water-service bulletin collectors for Argentina (v5.81).
+"""Conservative public water-service bulletin collectors for Argentina (v5.82).
 
 No report is a live outage confirmation. No credentials, service identifiers or
 unofficial APIs are used. Completely independent of provincial_electricity.
@@ -2183,49 +2183,119 @@ _JUJUY_PLACES = (
 )
 
 
-def _jujuy_article(html, url, now):
+# v5.82: The government press uses headlines such as "corte de emergencia"
+# and "corte total del suministro", which the older generic impact matcher
+# could reject despite an explicit water-service impact in the article body.
+# Never turn a generic infrastructure project or a road/electricity cut into a
+# water bulletin solely from the title.
+_JUJUY_DIRECT_CUT = re.compile(
+    r'(?:\bcorte\s+(?:total|de\s+emergencia|programad[oa])\b|'
+    r'\bcorte\s+(?:del?\s+)?(?:suministro|servicio|abastecimiento)\b|'
+    r'\binterrupcion\s+(?:total|programada|del?\s+(?:servicio|suministro))\b|'
+    r'\bse\s+interrumpira\s+(?:el\s+)?(?:servicio|suministro)\b)', re.I)
+_JUJUY_NONWATER_CUT = re.compile(
+    r'\bcorte\s+(?:de\s+)?(?:calle|transito|ruta|energia|electricidad)\b', re.I)
+_JUJUY_WATER_CONTEXT = re.compile(
+    r'\b(?:agua\s+potable|suministro\s+de\s+agua|servicio\s+de\s+agua|'
+    r'abastecimiento\s+de\s+agua|acueducto|red\s+de\s+agua)\b', re.I)
+
+
+def _jujuy_article(html, url, now, index_title=None):
     dom, visible = page(html)
-    title = next((h for h in dom.headings if len(h) >= 20), '')
+    headings = [h for h in dom.headings if len(h) >= 20]
+    # Follow the government listing's actual headline rather than the first
+    # 20-character navigation heading. Allow a matching site heading if the
+    # listing has punctuation differences, but do not use a random sidebar.
+    title = next((h for h in headings if index_title and folded(h) == folded(index_title)), '')
     if not title:
-        return None, None
-    # Strip related articles and the footer before testing service impacts.
-    main = visible.split(title, 1)[-1]
+        title = next((h for h in headings if
+                      re.search(r'agua potable|interrupcion|corte de agua', folded(h)) and
+                      not re.search(r'las mas leidas|noticias relacionadas|te puede interesar',folded(h))), '')
+    if not title:
+        return None, None, 'article_title_not_verified'
+    # A headline may occur in page navigation as well as the article itself.
+    # Associate its publication date with the body, not a later news item.
+    matched=[]
+    for m in re.finditer(re.escape(title), visible, re.I):
+        following = visible[m.end():]
+        # Only use the header BEFORE the first article paragraph. Event dates
+        # narrated in a paragraph must never become publication dates.
+        first_body_para = next((p for p in dom.paragraphs
+                                if len(p) >= 35 and p[:30] in following), None)
+        header = following.split(first_body_para, 1)[0] if first_body_para else following[:180]
+        pub = _day_spanish(header[:450])
+        if pub:
+            matched.append((m.start(), following, pub))
+    if matched:
+        _pos, main, published = matched[0]
+    else:
+        main = visible.split(title, 1)[-1]
+        published = None
+    meta_published = _published_date_from_meta(html)
+    if published and meta_published and published != meta_published:
+        return None, None, 'publication_date_conflict'
+    published = published or meta_published
     footer = re.search(r'\blas m[aá]s le[ií]das\b|\bte puede interesar\b|\bministerios\b',
                        main, re.I)
     if footer:
         main = main[:footer.start()]
-    published = _day_spanish(main[:900]) or _published_date_from_meta(html)
-    if not published or published > now.date() or published < now.date()-timedelta(days=4):
-        return None, published
+    if not published:
+        return None, None, 'publication_date_not_verified'
+    if published > now.date() or published < now.date()-timedelta(days=4):
+        return None, published, 'outside_publication_window'
     if _WATER_FINISHED.search(folded(title)):
-        return None, published
-    # Check the actual news body; avoid classifying infrastructure investment
-    # announcements or isolated water-meter theft as an area-wide outage.
-    article_text = main[:6000]
+        return None, published, 'completed_article_title'
+    article_text = main[:7500]
     body = re.sub(r'^.*?\b20\d\d\s*-\s*\d\d:\d\d\b', '', article_text, count=1)
+    folded_body = folded(body)
+    if len(body.strip()) < 35 or not _JUJUY_WATER_CONTEXT.search(folded_body):
+        return None, published, 'no_verifiable_water_article_body'
+    # Attribution to the official water provider is required even though the
+    # source website is governmental. Article metadata alone is insufficient.
+    attribution = folded(title + ' ' + article_text[:850])
+    if not re.search(r'agua potable(?:\s+de\s+jujuy|\s+y\s+saneamiento|'
+                     r'\s+s\.?e\.?|\s+informa|\s+confirmo)', attribution):
+        return None, published, 'water_provider_not_attributed'
     sentences = re.split(r'(?<=[.!?])\s+', body)
-    impacts = [x for x in sentences if _WATER_IMPACT.search(folded(x))
-               and not _WATER_NEGATED.search(folded(x))]
-    if not impacts or not re.search(r'agua potable de jujuy|agua potable y saneamiento', folded(title + ' ' + article_text[:500])):
-        return None, published
-    # A location must occur in title or an impact statement, not in the
-    # standard capital-city address at the end of every Government page.
+    impacts = []
+    for sentence in sentences:
+        norm = folded(sentence)
+        if _WATER_NEGATED.search(norm):
+            continue
+        # A water-company article about its ELECTRICITY supply is not by
+        # itself an interruption of drinking water for the neighborhoods.
+        if (re.search(r'\b(?:suministro|servicio)\s+(?:electrico|de\s+energia|de\s+electricidad)\b', norm)
+                and not re.search(r'\b(?:suministro|servicio|abastecimiento)\s+de\s+agua\b', norm)):
+            continue
+        direct = bool(_WATER_IMPACT.search(norm))
+        emergency = bool(_JUJUY_DIRECT_CUT.search(norm)) and bool(_JUJUY_WATER_CONTEXT.search(norm))
+        # "Corte de calle por reparación de cañería" is a traffic notice.
+        if _JUJUY_NONWATER_CUT.search(norm) and not direct:
+            continue
+        if direct or emergency:
+            impacts.append(sentence)
+    if not impacts:
+        return None, published, 'no_explicit_water_service_impact'
+    # A location must be in the official article's headline or impact
+    # statements. Never take a city from site footer/contact information.
     localized_text = folded(title + ' ' + ' '.join(impacts))
     places = [place for place in _JUJUY_PLACES if re.search(
         r'(?<![a-z])' + re.escape(folded(place)) + r'(?![a-z])', localized_text)]
     if not places:
-        return None, published
+        return None, published, 'impacted_locality_not_verified'
     locality = ' / '.join(places[:3])
+    # A dated public report is NOT proof of a current cut. Without independently
+    # verified source-side schedules, do not infer start/end times from news.
     return mk_notice('Agua Potable de Jujuy', 'Jujuy', locality, url,
                      'water_service_bulletin', 'publication_only_not_live',
                      body, published_on=published.isoformat(),
                      area_precision='sectores_segun_comunicado_no_toda_la_localidad',
-                     scheduled_start=None, scheduled_end=None), published
+                     scheduled_start=None, scheduled_end=None), published, 'parsed'
 
 
 def _collect_jujuy(checked_at, now, fetch):
     result = _result('agua_potable_jujuy_prensa', checked_at)
-    result.update(parser_revision='JUJUY-PRENSA-v5.46', coverage_kind='dated_official_government_water_bulletins_only',
+    result.update(parser_revision='JUJUY-IMPACT-HEADLINE-DIAGNOSTIC-v5.82', coverage_kind='dated_official_government_water_bulletins_only',
                   article_links_seen=0, articles_checked=0, source_attempts=[])
     newest = None
     try:
@@ -2236,13 +2306,13 @@ def _collect_jujuy(checked_at, now, fetch):
             if result['articles_checked'] >= 6:
                 break
             try:
-                notice, published = _jujuy_article(fetch(link), link, now)
+                notice, published, verdict = _jujuy_article(fetch(link), link, now, title)
                 result['articles_checked'] += 1
                 if published:
                     newest = max(newest, published) if newest else published
                 if notice:
                     result['notices'].append(notice)
-                result['source_attempts'].append({'url':link, 'result':'parsed' if notice else 'no_precise_recent_impact'})
+                result['source_attempts'].append({'url':link, 'result':verdict})
             except Exception as exc:
                 result['source_attempts'].append({'url':link, 'result':'fetch_or_parse_error',
                                                   'error_type':type(exc).__name__})
