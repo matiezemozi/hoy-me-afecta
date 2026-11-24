@@ -117,7 +117,7 @@ class CordobaRelativeLinksV577(unittest.TestCase):
         self.assertEqual(result['relative_article_links_fixed'],1)
         self.assertEqual(result['notices'],[])
         self.assertFalse(result['notifications_enabled'])
-        self.assertEqual(result['parser_revision'],'CBA-RELATIVE-PRESS-LINKS-v5.77')
+        self.assertEqual(result['parser_revision'],'CBA-ARTICLE-HEADER-PUBLISHED-DATE-v5.78')
 
     def test_explicit_impact_with_verified_article_date_is_informational(self):
         def fetch(url):
