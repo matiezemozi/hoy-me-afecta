@@ -1,4 +1,4 @@
-"""Conservative public water-service bulletin collectors for Argentina (v5.79).
+"""Conservative public water-service bulletin collectors for Argentina (v5.80).
 
 No report is a live outage confirmation. No credentials, service identifiers or
 unofficial APIs are used. Completely independent of provincial_electricity.
@@ -3129,8 +3129,18 @@ def _santa_rosa_html_fallback(r,now,fetch):
             if isinstance(exc,HTTPError) and exc.code==429:
                 break
     if links is None:
-        r['message']='RSS oficial inaccesible y HTML municipal sin titulares aprovechables; suministro desconocido.'
-        r['index_warning']='El indice de noticias puede requerir JavaScript; no equivale a servicio normal.'
+        all_attempts=r.get('index_attempts',[])+r['fallback_index_attempts']
+        all_denied=bool(all_attempts) and all(a.get('http_status')==403 for a in all_attempts)
+        if all_denied:
+            # A proven HTTP 403 is an access refusal, not an empty index or a
+            # JavaScript application. Avoid giving a misleading diagnosis.
+            r['access_mode']='official_site_rejected_automated_request'
+            r['http_status']=403
+            r['message']='Los cuatro endpoints oficiales rechazaron la consulta (HTTP 403); suministro desconocido.'
+            r['index_warning']='RSS y HTML rechazados por el servidor (HTTP 403). No implica servicio normal.'
+        else:
+            r['message']='RSS oficial inaccesible y HTML municipal sin titulares aprovechables; suministro desconocido.'
+            r['index_warning']='El indice de noticias puede requerir JavaScript; no equivale a servicio normal.'
         if any(a['result']=='official_html_read' for a in r['fallback_index_attempts']):
             r['index_status']='html_no_article_links'
             r['index_mode']='official_html_no_recognizable_stories'
@@ -5052,6 +5062,65 @@ def collect_one(key,checked_at,fetcher=None):
     return _collect_diagnostic(key,checked_at,now,fetch)
 
 
+
+# v5.80: Technical reachability is NOT public-service coverage. These
+# diagnostics make it possible to tell apart a site rejecting every request,
+# a readable site with no qualifying bulletin, and an accepted public notice.
+# The schema is additive and does not change notifications or individual notices.
+_INDEX_READ_RESULTS=frozenset((
+    'official_index_read','rss_parsed','article_links_found',
+    'official_news_index_read','structured_records_read','index_read',
+    'no_recent_water_headlines','page_read','official_html_read',
+))
+
+
+def source_health_summary(results):
+    """Summarize observed retrieval evidence, never infer live water supply."""
+    if not isinstance(results,dict):
+        raise TypeError('sources debe ser un diccionario')
+    counts={'ok':0,'stale':0,'unverified':0}
+    with_notices=[]
+    readable_no_notices=[]
+    rejected_http_403=[]
+    all_url_errors=[]
+    unresolved=[]
+    for key,r in results.items():
+        status=r.get('status','unverified')
+        counts[status]=counts.get(status,0)+1
+        news=r.get('notices') or []
+        if news:with_notices.append(key)
+        attempts=[]
+        for name in ('index_attempts','fallback_index_attempts','source_attempts'):
+            for entry in r.get(name,[]) or []:
+                if isinstance(entry,dict):attempts.append(entry)
+        index_attempts=[entry for name in ('index_attempts','fallback_index_attempts')
+            for entry in (r.get(name,[]) or []) if isinstance(entry,dict)]
+        failed_403=(bool(index_attempts) and all(
+            a.get('result')=='fetch_or_parse_error' and a.get('http_status')==403
+            for a in index_attempts))
+        if failed_403:rejected_http_403.append(key)
+        failed_url=(bool(index_attempts) and all(
+            a.get('result')=='fetch_or_parse_error' and a.get('error_type')=='URLError'
+            for a in index_attempts))
+        if failed_url:all_url_errors.append(key)
+        readable=(status in ('ok','stale') or
+            any(a.get('result') in _INDEX_READ_RESULTS for a in index_attempts) or
+            any(a.get('result')=='page_read' for a in attempts))
+        if readable and not news:readable_no_notices.append(key)
+        if status=='unverified' and not readable and not news:unresolved.append(key)
+    accepted=sum(len(r.get('notices') or []) for r in results.values())
+    return {
+        'configured_sources':len(results),
+        'status_counts':counts,
+        'sources_with_accepted_bulletins':with_notices,
+        'accepted_public_bulletins':accepted,
+        'readable_sources_without_accepted_bulletins':readable_no_notices,
+        'all_index_requests_rejected_http_403':rejected_http_403,
+        'all_index_requests_failed_url_error':all_url_errors,
+        'unverified_without_readable_index':unresolved,
+        'interpretation':'Public official bulletins only. Reachability, status OK, or absence of notices does not confirm live water service or comprehensive geographic coverage.'
+    }
+
 def collect_water(checked_at,fetcher=None):
     checked_instant(checked_at)
     out={}
@@ -5072,4 +5141,5 @@ def collect_water(checked_at,fetcher=None):
             'notifications_enabled':False,'android_display_enabled':False,
             'android_read_only_pilot_available':True,
             'message':'Comunicados públicos disponibles en Android v5.39+ como lectura piloto. Notificaciones automáticas de agua desactivadas.',
-            'sources':out,'notices':notices}
+            'sources':out,'notices':notices,
+            'source_health':source_health_summary(out)}
