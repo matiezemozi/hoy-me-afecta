@@ -1,4 +1,4 @@
-"""Conservative public water-service bulletin collectors for Argentina (v5.77).
+"""Conservative public water-service bulletin collectors for Argentina (v5.78).
 
 No report is a live outage confirmation. No credentials, service identifiers or
 unofficial APIs are used. Completely independent of provincial_electricity.
@@ -4733,19 +4733,47 @@ def _cba_publication_date(html,dom,visible,title):
     meta=_published_date_from_meta(html)
     if meta:return meta
     txt=folded(visible);head=folded(title)
-    pos=txt.find(head)
-    if pos<0:return None
-    before=txt[max(0,pos-85):pos]
-    after=txt[pos+len(head):pos+len(head)+100]
-    # Card/article design: 'Servicio 20/11/2026' directly before heading,
-    # or labelled date just after heading. Never mine arbitrary paragraphs.
+    # The public page repeats its article title in the HTML <title> (which
+    # VisiblePage sees) and in the actual article heading. Looking only at
+    # txt.find(head) can select the document-title copy BEFORE the official
+    # date and discard an otherwise explicitly dated article. Inspect every
+    # occurrence, nearest to the article heading first. Dates in the title,
+    # URL slug, unrelated cards, or article body are NEVER evidence by themselves.
+    positions=[m.start() for m in re.finditer(re.escape(head),txt)] if head else []
     expr=r'(?<!\d)(\d{1,2})[/-](\d{1,2})[/-](20\d{2})(?!\d)'
-    m=re.search(expr+r'\s*(?:servicio\s*)?$',before)
-    if not m:
-        m=re.match(r'^\s*(?:servicio\s*)?(?:publicado\s+el\s*|fecha\s*:?\s*)?'+expr+r'\b',after)
-    if not m:return None
-    try:return date(int(m.group(3)),int(m.group(2)),int(m.group(1)))
-    except ValueError:return None
+    for pos in reversed(positions):
+        before=txt[max(0,pos-160):pos]
+        # Official template: "Comunicado de prensa 20/11/2026" or
+        # "Servicio 20/11/2026" directly precedes the article H1.
+        # Allow a standalone DD/MM/YYYY preceding H1 (older official layout),
+        # but do not scan any date far into the preceding article body.
+        m=re.search(expr+r'\s*$',before)
+        if not m:
+            continue
+        prefix=before[:m.start()]
+        # A date directly before H1 is credible only with a header label,
+        # or as a separate date element very close to the H1, never a date
+        # from a paragraph about works/events.
+        labeled=bool(re.search(r'(?:comunicado de prensa|servicio|publicado el|fecha(?: de publicacion)?\s*:)\s*$',prefix))
+        nearby=bool(re.search(r'\b(?:comunicado de prensa|servicio)\b',prefix[-85:]))
+        last_context=prefix[max(0,len(prefix)-60):]
+        event=bool(re.search(r'\b(?:trabajos?|reparacion|corte|inicio|estimad|previst|normalizacion|desde|hasta)\b',last_context))
+        if labeled or (nearby and not event):
+            try:return date(int(m.group(3)),int(m.group(2)),int(m.group(1)))
+            except ValueError:continue
+    # An older official template uses a bare date in its own <div> (or
+    # <time>) immediately before the article H1. This is distinct from a
+    # paragraph describing WHEN an event happened: never mine <p> dates.
+    header_html=re.compile(
+        r'<(?:div|time)\b[^>]*>\s*'
+        r'(\d{1,2})[/-](\d{1,2})[/-](20\d{2})\s*'
+        r'</(?:div|time)>\s*<h1\b[^>]*>\s*([^<]{10,250})\s*</h1>',re.I)
+    for m in header_html.finditer(html):
+        if folded(clean(m.group(4)))!=head:
+            continue
+        try:return date(int(m.group(3)),int(m.group(2)),int(m.group(1)))
+        except ValueError:continue
+    return None
 
 
 def _cba_article(html,url,now):
@@ -4794,7 +4822,7 @@ def _cba_article(html,url,now):
 
 def _collect_cba(checked_at,now,fetch):
     r=_result(_CBA_KEY,checked_at)
-    r.update(parser_revision='CBA-RELATIVE-PRESS-LINKS-v5.77',
+    r.update(parser_revision='CBA-ARTICLE-HEADER-PUBLISHED-DATE-v5.78',
         coverage_kind='official_dated_public_water_bulletins_not_live',
         notices=[],article_links_seen=0,articles_checked=0,
         source_attempts=[],index_attempts=[],articles_deferred_by_budget=0,
