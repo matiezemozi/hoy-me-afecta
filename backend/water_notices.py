@@ -1,4 +1,4 @@
-"""Conservative public water-service bulletin collectors for Argentina (v5.80).
+"""Conservative public water-service bulletin collectors for Argentina (v5.81).
 
 No report is a live outage confirmation. No credentials, service identifiers or
 unofficial APIs are used. Completely independent of provincial_electricity.
@@ -2326,6 +2326,56 @@ def _scpl_index(html, root):
     return result
 
 
+
+def _scpl_explicit_schedule(paragraphs, published, now):
+    """Keep an explicitly stated future SCPL water interruption and both clocks.
+
+    A date and two times must occur in the SAME service-interruption paragraph.
+    A weekday/month/day must agree with the calendar; avoid office hours,
+    unrelated electricity schedules, or estimated restoration claims.
+    """
+    day_phrase = re.compile(
+        r'\b(?:lunes|martes|miercoles|jueves|viernes|sabado|domingo)'
+        r'\s+\d{1,2}\s+de\s+(?:enero|febrero|marzo|abril|mayo|junio|'
+        r'julio|agosto|septiembre|setiembre|octubre|noviembre|diciembre)\b')
+    time_pair = re.compile(
+        r'\bdesde\s+las\s+(\d{1,2}):(\d{2})\s*(?:hs\.?|horas?)?'
+        r'\s*(?:,?\s*y\s+)?hasta\s+las\s+(\d{1,2}):(\d{2})'
+        r'\s*(?:hs\.?|horas?)?', re.I)
+    options=[]
+    for paragraph in paragraphs:
+        text = folded(paragraph)
+        days = list(day_phrase.finditer(text))
+        clocks = list(time_pair.finditer(text))
+        if len(days) != 1 or len(clocks) != 1:
+            continue
+        day = _weekday_date(days[0].group(), published)
+        if not day or not now.date() <= day <= now.date() + timedelta(days=HORIZON_DAYS):
+            continue
+        match = clocks[0]
+        # The notice's water interruption must be stated right after the
+        # published interval; do not reuse unrelated hours in a long article.
+        consequence = text[match.end():match.end()+100]
+        if not re.match(r'^[\s,.;:-]*se\s+interrump(?:e|ira)\s+el\s+(?:suministro|servicio)'
+                        r'\s+de\s+agua\b', consequence):
+            continue
+        h1,m1,h2,m2 = (int(v) for v in match.groups())
+        if max(h1,h2) > 23 or max(m1,m2) > 59:
+            continue
+        start = datetime(day.year,day.month,day.day,h1,m1,tzinfo=ART)
+        end = datetime(day.year,day.month,day.day,h2,m2,tzinfo=ART)
+        if not start < end <= start + timedelta(hours=20):
+            continue
+        # The stated end of an interruption is not proof of restoration.
+        options.append((day, start, end))
+    if len(options) != 1:
+        return None
+    day,start,end=options[0]
+    return {'scheduled_date':day.isoformat(),
+            'scheduled_start':start.isoformat(),
+            'scheduled_end':end.isoformat(),
+            'time_precision':'start_and_end_published'}
+
 def _scpl_article(html, url, now, index_published=None):
     dom, visible = page(html)
     headline = next((h for h in dom.headings
@@ -2366,7 +2416,7 @@ def _scpl_article(html, url, now, index_published=None):
     normalized = folded(body)
     if _SCPL_CANCEL.search(normalized):
         return None, published, 'cancelled_or_restored_announcement'
-    if not _SCPL_IMPACT.search(normalized):
+    if not _SCPL_IMPACT.search(normalized) or not re.search(r'\bagua\b|\bpotable\b', normalized):
         return None, published, 'no_explicit_water_impact'
     # A past explicitly dated incident must not be republished as a new event.
     action_day = None
@@ -2380,17 +2430,19 @@ def _scpl_article(html, url, now, index_published=None):
     if 'rada tilly' in folded(headline) and 'comodoro' in folded(headline):
         return None, published, 'multiple_localities_ambiguous'
     locality = 'Rada Tilly' if 'rada tilly' in folded(headline) else 'Comodoro Rivadavia'
+    schedule = _scpl_explicit_schedule(paragraph_list or [body], published, now)
     notice = mk_notice('SCPL Comodoro Rivadavia', 'Chubut', locality, url,
-                       'water_service_bulletin', 'publication_only_not_live', body,
+                       'planned_water_service_impact' if schedule else 'water_service_bulletin',
+                       'scheduled_not_confirmed' if schedule else 'publication_only_not_live', body,
                        published_on=published.isoformat(),
                        area_precision='barrios_o_zonas_segun_comunicado_no_toda_la_ciudad',
-                       scheduled_start=None, scheduled_end=None)
+                       **(schedule if schedule else {'scheduled_start':None,'scheduled_end':None}))
     return notice, published, 'parsed'
 
 
 def _collect_scpl(checked_at, now, fetch):
     r = _result('scpl_comodoro_chubut', checked_at)
-    r.update(parser_revision='SCPL-INDEX-OPT-v5.50',
+    r.update(parser_revision='SCPL-DATED-SCHEDULES-v5.81',
              coverage_kind='dated_public_scpl_bulletins_only_not_recurring_schedule',
              article_links_seen=0, articles_checked=0, articles_skipped_old=0,
              articles_skipped_cancelled=0, index_window_considered=0,
@@ -5083,6 +5135,7 @@ def source_health_summary(results):
     readable_no_notices=[]
     rejected_http_403=[]
     all_url_errors=[]
+    account_only=[]
     unresolved=[]
     for key,r in results.items():
         status=r.get('status','unverified')
@@ -5103,11 +5156,18 @@ def source_health_summary(results):
             a.get('result')=='fetch_or_parse_error' and a.get('error_type')=='URLError'
             for a in index_attempts))
         if failed_url:all_url_errors.append(key)
-        readable=(status in ('ok','stale') or
+        private_lookup=(r.get('access_mode')=='account_required' or
+            r.get('coverage_kind')=='address_account_lookup_only')
+        if private_lookup:account_only.append(key)
+        readable=(not private_lookup and (status in ('ok','stale') or
+            r.get('page_read') is True or
+            (isinstance(r.get('article_links_seen'),int) and r['article_links_seen']>0) or
+            (isinstance(r.get('articles_checked'),int) and r['articles_checked']>0) or
             any(a.get('result') in _INDEX_READ_RESULTS for a in index_attempts) or
-            any(a.get('result')=='page_read' for a in attempts))
+            any(a.get('result')=='page_read' for a in attempts)))
         if readable and not news:readable_no_notices.append(key)
-        if status=='unverified' and not readable and not news:unresolved.append(key)
+        if status=='unverified' and not readable and not private_lookup and not news:
+            unresolved.append(key)
     accepted=sum(len(r.get('notices') or []) for r in results.values())
     return {
         'configured_sources':len(results),
@@ -5117,6 +5177,7 @@ def source_health_summary(results):
         'readable_sources_without_accepted_bulletins':readable_no_notices,
         'all_index_requests_rejected_http_403':rejected_http_403,
         'all_index_requests_failed_url_error':all_url_errors,
+        'account_only_sources_without_public_status':account_only,
         'unverified_without_readable_index':unresolved,
         'interpretation':'Public official bulletins only. Reachability, status OK, or absence of notices does not confirm live water service or comprehensive geographic coverage.'
     }
