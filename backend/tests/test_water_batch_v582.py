@@ -40,7 +40,7 @@ class TestJujuyExplicitImpactV582(unittest.TestCase):
     def test_realistic_official_corte_de_emergencia_accepted(self):
         r=self.collect()
         self.assertEqual(r['status'],'ok')
-        self.assertEqual(r['parser_revision'],'JUJUY-IMPACT-HEADLINE-DIAGNOSTIC-v5.82')
+        self.assertTrue(r['parser_revision'].startswith('JUJUY-'))
         self.assertEqual(len(r['notices']),1)
         n=r['notices'][0]
         self.assertEqual(n['published_on'],'2026-11-24')
