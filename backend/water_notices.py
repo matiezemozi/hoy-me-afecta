@@ -1,4 +1,4 @@
-"""Conservative public water-service bulletin collectors for Argentina (v5.84).
+"""Conservative public water-service bulletin collectors for Argentina (v5.85).
 
 No report is a live outage confirmation. No credentials, service identifiers or
 unofficial APIs are used. Completely independent of provincial_electricity.
@@ -2269,7 +2269,7 @@ def _jujuy_article(html, url, now, index_title=None):
         if footer:
             following = following[:footer.start()]
         first_body_para = next((para for para in dom.paragraphs
-                                if len(para) >= 35 and para[:30] in following), None)
+                                if len(para) >= 35 and para in following), None)
         header = (following.split(first_body_para, 1)[0] if first_body_para
                   else following[:180])
         local_date = _day_spanish(header[:450])
@@ -2279,23 +2279,23 @@ def _jujuy_article(html, url, now, index_title=None):
         # A title, an image caption or a sidebar alone cannot establish a
         # dated impact. Paragraphs must be present INSIDE this title section.
         substantive_paragraphs = [para for para in dom.paragraphs
-                                  if len(para) >= 50 and para[:35] in candidate_body]
+                                  if len(para) >= 50 and para in candidate_body]
         norm_paragraphs = folded(' '.join(substantive_paragraphs))
         has_water = bool(_JUJUY_WATER_CONTEXT.search(norm_paragraphs))
         has_impact = bool(_WATER_IMPACT.search(norm_paragraphs) or
                           _JUJUY_DIRECT_CUT.search(norm_paragraphs))
         sections.append((pos, following, local_date, bool(substantive_paragraphs),
-                         has_water, has_impact))
+                         has_water, has_impact, substantive_paragraphs))
     # Stronger source evidence wins; only if equally strong do we prefer the
     # later article heading over an earlier duplicated navigation headline.
     if len(sections) > 1:
-        _idx, main, published, _has_p, _water, _impact = max(
+        _idx, main, published, _has_p, _water, _impact, body_paragraphs = max(
             sections, key=lambda sec:(sec[3] and sec[4] and sec[5],
                                      sec[3] and sec[4],sec[3],sec[0]))
     elif sections:
-        _idx, main, published, _has_p, _water, _impact = sections[0]
+        _idx, main, published, _has_p, _water, _impact, body_paragraphs = sections[0]
     else:
-        main, published = visible.split(title, 1)[-1], None
+        main, published, body_paragraphs = visible.split(title, 1)[-1], None, []
     if published and meta_published and published != meta_published:
         return None, None, 'publication_date_conflict'
     published = published or meta_published
@@ -2309,8 +2309,36 @@ def _jujuy_article(html, url, now, index_title=None):
         return None, published, 'outside_publication_window'
     if _WATER_FINISHED.search(folded(title)):
         return None, published, 'completed_article_title'
+    # Do not put the whole visible heading-to-footer region into a bulletin.
+    # The official newspaper template inserts navigation cards, "Seguí leyendo"
+    # and related headlines between real article paragraphs.  We require
+    # substantial paragraph text, already verified to occur within the chosen
+    # dated article section; headings/links/cards never become zone_detail.
     article_text = main[:7500]
-    body = re.sub(r'^.*?\b20\d\d\s*-\s*\d\d:\d\d\b', '', article_text, count=1)
+    related_titles = []
+    for href, label in dom.anchors:
+        link = urlsplit(urljoin(url, href))
+        if (link.scheme == 'https' and link.hostname == _JUJUY_HOST and
+                re.fullmatch(r'/[a-z0-9-]+/[a-z0-9-]+-n\d+/?', link.path, re.I)
+                and len(label) >= 18 and folded(label) != folded(title)):
+            related_titles.append(label)
+    # Reapply the already-trimmed footer boundary to paragraph candidates;
+    # otherwise an unrelated sidebar p could re-enter after the selection.
+    body_paragraphs = [p for p in body_paragraphs if p in main]
+    accepted_paragraphs = []
+    for paragraph in body_paragraphs[:20]:
+        # Remove inline linked suggestions, while retaining the true text on
+        # either side of a linked card when the publisher mixes them in a p.
+        para = paragraph
+        for label in related_titles:
+            para = re.sub(r'\bseg[uú]?[ií]\s+leyendo\s*' + re.escape(label),
+                          ' ', para, flags=re.I)
+        # A lone editorial call-to-action is not part of the announcement.
+        para = re.sub(r'\bsegu[ií]\s+leyendo\b', ' ', para, flags=re.I)
+        para = re.sub(r'\s+', ' ', para).strip()
+        if len(para) >= 35:
+            accepted_paragraphs.append(para)
+    body = ' '.join(accepted_paragraphs)[:7500]
     folded_body = folded(body)
     if len(body.strip()) < 35 or not _JUJUY_WATER_CONTEXT.search(folded_body):
         return None, published, 'no_verifiable_water_article_body'
@@ -2359,7 +2387,7 @@ def _jujuy_article(html, url, now, index_title=None):
 
 def _collect_jujuy(checked_at, now, fetch):
     result = _result('agua_potable_jujuy_prensa', checked_at)
-    result.update(parser_revision='JUJUY-IMPACT-HEADLINE-DIAGNOSTIC-v5.82', coverage_kind='dated_official_government_water_bulletins_only',
+    result.update(parser_revision='JUJUY-PARAGRAPHS-NO-RELATED-NEWS-v5.85', coverage_kind='dated_official_government_water_bulletins_only',
                   article_links_seen=0, articles_checked=0, source_attempts=[])
     newest = None
     try:
