@@ -1,4 +1,4 @@
-"""Conservative public water-service bulletin collectors for Argentina (v5.85).
+"""Conservative public water-service bulletin collectors for Argentina (v5.86).
 
 No report is a live outage confirmation. No credentials, service identifiers or
 unofficial APIs are used. Completely independent of provincial_electricity.
@@ -332,6 +332,39 @@ def _absa_stated_end_after_start(paragraph, stated_start, day):
             'time_precision':'start_and_end_published'}
 
 
+def _absa_work_duration_estimate(paragraph, stated_start, day):
+    """Keep the *estimated works duration*, not an assumed water restoration.
+
+    A duration belongs only to an explicit clock within the same phrase.
+    In particular, a stated 18-hour pumping shutdown does not prove that
+    distribution pressures will have normalized 18 hours later.
+    """
+    if stated_start is None:
+        return {}
+    f = folded(paragraph)
+    if re.search(r'horario de atencion|atencion al publico|\boficina\b', f):
+        return {}
+    pattern = (r'\b(?:desde|a partir de)\s+las\s+(\d{1,2})(?::(\d{2}))?'
+               r'\s+(?:de\s+la\s+(?:manana|tarde|noche)\s*,?\s*)?'
+               r'por\s+(?:un\s+)?plazo\s+estimado\s+de\s+(\d{1,2})\s+horas\b')
+    matches = list(re.finditer(pattern, f))
+    if len(matches) != 1:
+        return {}
+    m = matches[0]
+    hour, minute, duration = int(m[1]), int(m[2] or 0), int(m[3])
+    if (hour, minute) != stated_start or hour > 23 or minute > 59 or not 1 <= duration <= 48:
+        return {}
+    # Sanity-check the local context, not the entire publisher's news page.
+    prefix = f[max(0, m.start()-140):m.start()]
+    if not re.search(r'trabaj|tarea|perforacion|captacion|pozo|bombeo', prefix):
+        return {}
+    planned_stop = datetime(day.year, day.month, day.day, hour, minute, tzinfo=ART)
+    return {
+        'reported_work_duration_estimate_hours': duration,
+        'reported_work_end_estimate': (planned_stop + timedelta(hours=duration)).isoformat(timespec='minutes'),
+    }
+
+
 def _absa_shared_street_address(zone):
     """Require the exact three-part street reference for cross-release matching."""
     m=re.search(r'\bcalle\s+([a-z]+(?:\s+[a-z]+){0,3})\s+'
@@ -493,6 +526,9 @@ def _absa_article(html,url,now):
                                  hour, minute, tzinfo=ART).isoformat(timespec='minutes')
                 end_fields={'scheduled_end':None,'time_precision':'start_known_end_unknown'}
                 end_fields.update(_absa_stated_end_after_start(zone,stated_clock,future_day))
+                # A duration of works is separate from the water-service
+                # schedule and never fills scheduled_end(_estimate).
+                end_fields.update(_absa_work_duration_estimate(zone,stated_clock,future_day))
             # A published estimate in the past does not verify restoration.
             # It does make the original *future plan* historical rather than
             # a still-pending scheduled event. Keep it as read-only evidence.
@@ -526,6 +562,7 @@ def _collect_absa(checked_at,now,fetch):
     company,province,url=SOURCES['absa_buenos_aires']
     base=_result('absa_buenos_aires',checked_at)
     base['parser_revision']='ABSA-CROSSREF-TIMES-v5.60'
+    base['time_metadata_revision']='ABSA-WORK-DURATION-v5.86'
     seen=[];newest=None;article_count=0;errors=[]
     try:
         dom,_=page(fetch(url))
@@ -801,6 +838,18 @@ def _arsa_explicit_service_impact(text):
             r'\b(?:sin baja presion|no (?:hay|habra|se registrara) baja presion|'
             r'no (?:se )?afectara (?:el )?(?:servicio|suministro))\b',sentence):
             continue
+        # An external electric outage does NOT prove a water outage. In
+        # Valcheta a paragraph says "se vera afectado el servicio de energia
+        # electrica" while a later paragraph must independently establish
+        # possible low water pressure. Never promote the electrical statement
+        # alone to an affirmative water-service impact.
+        if re.search(r'\b(?:servicio|suministro)\s+(?:de\s+)?(?:energia\s+electrica|electrico|electricidad)\b',sentence):
+            explicit_water_effect = re.search(
+                r'\b(?:baja presion|falta de agua|falta de suministro|'
+                r'(?:afectara|afecta|afectado|afectada|interrumpira|interrumpido)'
+                r'.{0,60}(?:suministro de agua|servicio de agua|agua potable))\b',sentence)
+            if not explicit_water_effect:
+                continue
         if pattern.search(sentence):
             return True
     return False
@@ -1094,6 +1143,49 @@ def _arsa_work_already_started(paragraphs, published, scheduled):
     return None
 
 
+def _arsa_reported_electricity_outage_window(paragraphs, published):
+    """Record a dated external power outage affecting the water system.
+
+    The 12-16h energy outage in Valcheta is NOT a prediction that water
+    pressure will recover at 16h. Preserve the source's electric window
+    separately and never fill water scheduled_end from it.
+    """
+    found = []
+    for paragraph in paragraphs:
+        f = folded(paragraph)
+        d = _weekday_date(paragraph, published)
+        if not d or d > published + timedelta(days=HORIZON_DAYS):
+            continue
+        if not re.search(r'energia electrica|servicio electrico|suministro electrico', f):
+            continue
+        if not re.search(r'se vera afectad|se interrumpira|corte programado|se registrara un corte|sera suspendido', f):
+            continue
+        if re.search(r'no se vera afectad|no se interrumpira|no habra corte|sin corte|se descarta', f):
+            continue
+        windows = list(re.finditer(
+            r'\bentre\s+las\s+(\d{1,2})(?::(\d{2}))?'
+            r'\s+y\s+las\s+(\d{1,2})(?::(\d{2}))?\s+horas\b', f))
+        if len(windows) != 1:
+            continue
+        m = windows[0]
+        h1, mi1, h2, mi2 = int(m[1]), int(m[2] or 0), int(m[3]), int(m[4] or 0)
+        if h1 > 23 or h2 > 23 or mi1 > 59 or mi2 > 59:
+            continue
+        a = datetime(d.year,d.month,d.day,h1,mi1,tzinfo=ART)
+        b = datetime(d.year,d.month,d.day,h2,mi2,tzinfo=ART)
+        if not a < b <= a + timedelta(hours=18):
+            continue
+        found.append((a,b))
+    if len(set(found)) != 1:
+        return {}
+    start, end = found[0]
+    return {
+        'reported_electricity_outage_start':start.isoformat(timespec='minutes'),
+        'reported_electricity_outage_end':end.isoformat(timespec='minutes'),
+        'reported_electricity_end_does_not_confirm_water_recovery':True,
+    }
+
+
 def _arsa_article(html,url,now,index_published=None):
     dom,visible=page(html)
     title=_arsa_article_title(dom,html,url)
@@ -1127,6 +1219,7 @@ def _arsa_article(html,url,now,index_published=None):
     # A generic announcement about works is not evidence of affected supply.
     if not _arsa_explicit_service_impact(content):
         return [],published
+    external_power_window = _arsa_reported_electricity_outage_window(paragraphs,published)
     # Preserve explicitly reported start/normalization times after the day
     # of publication. Earlier versions only tried parsing a started repair
     # when its dated work day was >= today's date, so the same article lost
@@ -1138,7 +1231,8 @@ def _arsa_article(html,url,now,index_published=None):
         if already_started:
             return [mk_notice('Aguas Rionegrinas','Río Negro',locality,url,
                 'water_service_bulletin','publication_only_not_live',content,
-                published_on=published.isoformat(),**already_started)],published
+                published_on=published.isoformat(),**already_started,
+                **external_power_window)],published
     scheduled=None
     for p in paragraphs:
         d=_weekday_date(p,published)
@@ -1158,7 +1252,7 @@ def _arsa_article(html,url,now,index_published=None):
         return [mk_notice('Aguas Rionegrinas','Río Negro',locality,url,
                   'planned_water_service_impact','scheduled_not_confirmed',content,
                   published_on=published.isoformat(),scheduled_date=scheduled.isoformat(),
-                  **times)],published
+                  **times,**external_power_window)],published
     # Same-day planned work may have explicit clock hours but no numeric day.
     # Preserve them as dated bulletin metadata, NEVER as a live outage status.
     reported_window = _arsa_reported_same_day_work_window(paragraphs,published)
@@ -1167,7 +1261,8 @@ def _arsa_article(html,url,now,index_published=None):
                    or {'scheduled_start':None,'scheduled_end':None})
     return [mk_notice('Aguas Rionegrinas','Río Negro',locality,url,
                       'water_service_bulletin','publication_only_not_live',content,
-                      published_on=published.isoformat(),**time_fields)],published
+                      published_on=published.isoformat(),**time_fields,
+                      **external_power_window)],published
 
 
 def _collect_arsa(checked_at,now,fetch):
@@ -1178,6 +1273,7 @@ def _collect_arsa(checked_at,now,fetch):
     """
     result=_result('aguas_rionegrinas_arsa',checked_at)
     result['parser_revision']='ARSA-STARTED-WORK-ESTIMATES-v5.70'
+    result['time_metadata_revision']='ARSA-ELECTRIC-WINDOW-v5.86'
     result['rate_limited']=False
     result['article_links_skipped_after_rate_limit']=0
     result['article_links_skipped_old']=0
@@ -2614,12 +2710,21 @@ def _scpl_article(html, url, now, index_published=None):
         return None, published, 'multiple_localities_ambiguous'
     locality = 'Rada Tilly' if 'rada tilly' in folded(headline) else 'Comodoro Rivadavia'
     schedule = _scpl_explicit_schedule(paragraph_list or [body], published, now)
+    # The day can be today but the official interval may already have ended.
+    # Preserve the historical times; do not display the expired plan as an
+    # upcoming schedule or equate its end with restored pressure.
+    elapsed = bool(schedule and datetime.fromisoformat(schedule['scheduled_end']) < now)
     notice = mk_notice('SCPL Comodoro Rivadavia', 'Chubut', locality, url,
                        'planned_water_service_impact' if schedule else 'water_service_bulletin',
-                       'scheduled_not_confirmed' if schedule else 'publication_only_not_live', body,
+                       ('publication_only_not_live' if elapsed else 'scheduled_not_confirmed')
+                       if schedule else 'publication_only_not_live', body,
                        published_on=published.isoformat(),
                        area_precision='barrios_o_zonas_segun_comunicado_no_toda_la_ciudad',
                        **(schedule if schedule else {'scheduled_start':None,'scheduled_end':None}))
+    if elapsed:
+        notice['published_schedule_window_elapsed'] = True
+        notice['message'] = ('El intervalo publicado ya transcurrio. No confirma la '
+                             'finalizacion de trabajos ni la normalizacion del suministro.')
     return notice, published, 'parsed'
 
 
