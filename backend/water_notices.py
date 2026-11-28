@@ -1,4 +1,4 @@
-"""Conservative public water-service bulletin collectors for Argentina (v5.87).
+"""Conservative public water-service bulletin collectors for Argentina (v5.88).
 
 No report is a live outage confirmation. No credentials, service identifiers or
 unofficial APIs are used. Completely independent of provincial_electricity.
@@ -1291,6 +1291,53 @@ def _arsa_reported_electricity_outage_window(paragraphs, published):
     }
 
 
+
+def _arsa_same_day_recovery_forecasts(paragraphs, published):
+    """Preserve paired electrical/water predictions in one local context.
+
+    The 28 Nov General Roca article forecasts power restoration at 11:30 and
+    water-pressure recovery at 15:30. Neither is a verified recovery time.
+    The two clocks must be in the same paragraph, accompanied by a nearby
+    statement of actual water interruption. Do not borrow unrelated clocks.
+    """
+    ptexts = [folded(p) for p in paragraphs]
+    candidates = []
+    for i, text in enumerate(ptexts):
+        context = ' '.join(ptexts[max(0,i-1):i+1])
+        if (not re.search(r'\bse encuentra interrumpido el servicio de agua potable\b', context)
+                or not re.search(r'\b(?:corte de energia electrica|corte de luz)\b', context)
+                or re.search(r'\b(?:manana|ayer|pasado manana|horario de atencion|oficina de atencion)\b',context)):
+            continue
+        electricity = re.findall(
+            r'\b(?:suministro|servicio) electrico se restablecera a las '
+            r'(\d{1,2}):(\d{2})\s*horas\b', text)
+        water = re.findall(
+            r'\bse preve que a las (\d{1,2}):(\d{2})\s*horas '
+            r'quede normalizada la prestacion del servicio\b', text)
+        if not electricity and not water:
+            continue
+        # Ambiguous repetitions cannot establish a unique two-clock forecast.
+        if len(electricity)!=1 or len(water)!=1:
+            return {}
+        (h1,m1),(h2,m2)=electricity[0],water[0]
+        h1,m1,h2,m2=map(int,(h1,m1,h2,m2))
+        if max(h1,h2)>23 or max(m1,m2)>59:
+            return {}
+        power=datetime(published.year,published.month,published.day,h1,m1,tzinfo=ART)
+        water_at=datetime(published.year,published.month,published.day,h2,m2,tzinfo=ART)
+        if not power < water_at <= power + timedelta(hours=12):
+            return {}
+        candidates.append((power,water_at))
+    if len(candidates)!=1:
+        return {}
+    power,water_at=candidates[0]
+    return {
+        'reported_electricity_recovery_forecast':power.isoformat(timespec='minutes'),
+        'reported_pressure_normalization_estimate':water_at.isoformat(timespec='minutes'),
+        'reported_forecasts_do_not_confirm_water_recovery':True,
+    }
+
+
 def _arsa_article(html,url,now,index_published=None):
     dom,visible=page(html)
     title=_arsa_article_title(dom,html,url)
@@ -1325,6 +1372,7 @@ def _arsa_article(html,url,now,index_published=None):
     if not _arsa_explicit_service_impact(content):
         return [],published
     external_power_window = _arsa_reported_electricity_outage_window(paragraphs,published)
+    recovery_forecasts = _arsa_same_day_recovery_forecasts(paragraphs,published)
     # Preserve explicitly reported start/normalization times after the day
     # of publication. Earlier versions only tried parsing a started repair
     # when its dated work day was >= today's date, so the same article lost
@@ -1337,7 +1385,7 @@ def _arsa_article(html,url,now,index_published=None):
             return [mk_notice('Aguas Rionegrinas','Río Negro',locality,url,
                 'water_service_bulletin','publication_only_not_live',content,
                 published_on=published.isoformat(),**already_started,
-                **external_power_window)],published
+                **external_power_window,**recovery_forecasts)],published
     scheduled=None
     for p in paragraphs:
         d=_weekday_date(p,published)
@@ -1357,7 +1405,7 @@ def _arsa_article(html,url,now,index_published=None):
         return [mk_notice('Aguas Rionegrinas','Río Negro',locality,url,
                   'planned_water_service_impact','scheduled_not_confirmed',content,
                   published_on=published.isoformat(),scheduled_date=scheduled.isoformat(),
-                  **times,**external_power_window)],published
+                  **times,**external_power_window,**recovery_forecasts)],published
     # Same-day planned work may have explicit clock hours but no numeric day.
     # Preserve them as dated bulletin metadata, NEVER as a live outage status.
     reported_multi_window = _arsa_reported_two_day_water_windows(paragraphs,published)
@@ -1370,7 +1418,7 @@ def _arsa_article(html,url,now,index_published=None):
     return [mk_notice('Aguas Rionegrinas','Río Negro',locality,url,
                       'water_service_bulletin','publication_only_not_live',content,
                       published_on=published.isoformat(),**time_fields,
-                      **external_power_window)],published
+                      **external_power_window,**recovery_forecasts)],published
 
 
 def _collect_arsa(checked_at,now,fetch):
@@ -5477,6 +5525,115 @@ def _collect_cba(checked_at,now,fetch):
         r['message']='Índice oficial consultado sin afectación reciente y verificada del agua; no implica suministro normal.'
     return r
 
+
+_ALLOWED_WATER_KINDS = frozenset((
+    'water_service_bulletin', 'planned_water_service_impact',
+    'multi_day_water_works_bulletin',
+))
+_ALLOWED_WATER_STATUSES = frozenset((
+    'publication_only_not_live', 'scheduled_not_confirmed',
+))
+
+
+def _validate_water_notice(item, now):
+    """Fail closed on unsafe output, keeping ordinary valid notices unchanged.
+
+    This validates collector output, *not* whether a water outage is ongoing.
+    All notices remain public publications with automatic alerts forbidden.
+    """
+    if not isinstance(item, dict):
+        return None, 'not_an_object'
+    if (item.get('category')!='agua' or item.get('country')!='Argentina'
+            or item.get('notification_allowed') is not False):
+        return None, 'wrong_category_country_or_notification_permission'
+    kind, status = item.get('kind'), item.get('status')
+    if (not isinstance(kind,str) or not isinstance(status,str)
+            or kind not in _ALLOWED_WATER_KINDS or status not in _ALLOWED_WATER_STATUSES):
+        return None, 'unknown_water_notice_classification'
+    if not isinstance(item.get('id'),str) or not re.fullmatch(r'agua-[0-9a-f]{18}',item['id']):
+        return None, 'invalid_notice_id'
+    if not isinstance(item.get('locality_hint'),str) or not item['locality_hint'].strip():
+        return None, 'location_not_verified'
+    if not isinstance(item.get('zone_detail'),str) or len(item['zone_detail'].strip())<30:
+        return None, 'impact_detail_not_verified'
+    source=item.get('source_url')
+    try:
+        url_parts = urlsplit(source) if isinstance(source,str) else None
+        safe_source = bool(url_parts and url_parts.scheme=='https' and url_parts.hostname)
+    except ValueError:
+        safe_source = False
+    if not safe_source:
+        return None, 'unsafe_or_missing_official_url'
+    try:
+        published=date.fromisoformat(item['published_on'])
+    except (KeyError,TypeError,ValueError):
+        return None, 'invalid_publication_date'
+    if published > now.date()+timedelta(days=1):
+        return None, 'future_publication_date'
+    try:
+        event_date=(date.fromisoformat(item['scheduled_date'])
+                    if item.get('scheduled_date') else None)
+        start=(datetime.fromisoformat(item['scheduled_start'])
+               if item.get('scheduled_start') else None)
+        end=(datetime.fromisoformat(item['scheduled_end'])
+             if item.get('scheduled_end') else None)
+    except (TypeError,ValueError):
+        return None, 'invalid_event_datetime'
+    if (start and start.tzinfo is None) or (end and end.tzinfo is None):
+        return None, 'event_datetime_without_timezone'
+    if end and not start:
+        return None, 'end_without_start'
+    if start and end and not start<end:
+        return None, 'inverted_event_interval'
+    if event_date and start and event_date!=start.astimezone(ART).date():
+        return None, 'event_day_conflicts_with_start'
+    if event_date and event_date>now.date()+timedelta(days=HORIZON_DAYS):
+        return None, 'event_too_far_in_future'
+    if item['status']=='scheduled_not_confirmed':
+        # Do not leave an expired schedule labeled as a still-future plan.
+        day=event_date or (start.astimezone(ART).date() if start else None)
+        if day is None:
+            return None, 'planned_impact_without_event_date'
+        if day<now.date() or (end and end<=now):
+            item=dict(item)
+            item['status']='publication_only_not_live'
+            item['message']=('El intervalo programado ya transcurrio; no confirma '
+                             'normalizacion ni estado del servicio en tiempo real.')
+            item['reported_schedule_already_elapsed']=True
+    return item, None
+
+
+def _safe_source_result(key, result, checked_at):
+    """Keep malformed source output from breaking the other 29 collectors."""
+    if not isinstance(result,dict) or not isinstance(result.get('notices'),list):
+        fallback=_result(key,checked_at)
+        fallback['message']='Fallo aislado: el colector devolvio datos invalidos.'
+        fallback['notices_rejected_by_contract']=1
+        fallback['contract_rejection_reasons']=['invalid_source_result_shape']
+        return fallback
+    result=dict(result)
+    now=checked_instant(checked_at)
+    good=[];reasons=[];seen=set()
+    for item in result['notices']:
+        notice,reason=_validate_water_notice(item,now)
+        if reason:
+            reasons.append(reason)
+        elif notice['id'] in seen:
+            reasons.append('duplicate_notice_id')
+        else:
+            good.append(notice)
+            seen.add(notice['id'])
+    result['notices']=good
+    if reasons:
+        result['notices_rejected_by_contract']=len(reasons)
+        result['contract_rejection_reasons']=sorted(set(reasons))[:8]
+        result['message']=(str(result.get('message',''))+' Se descartaron '
+                           f'{len(reasons)} aviso(s) inconsistentes; estado desconocido.')
+        if not good:
+            result['status']='unverified'
+    return result
+
+
 def collect_one(key,checked_at,fetcher=None):
     if key not in SOURCES:
         raise KeyError(key)
@@ -5535,10 +5692,13 @@ def source_health_summary(results):
     account_only=[]
     unresolved=[]
     budget_exhausted=[]
+    contract_rejections={}
     for key,r in results.items():
         status=r.get('status','unverified')
         counts[status]=counts.get(status,0)+1
         news=r.get('notices') or []
+        if r.get('notices_rejected_by_contract'):
+            contract_rejections[key]=r['notices_rejected_by_contract']
         if news:with_notices.append(key)
         attempts=[]
         for name in ('index_attempts','fallback_index_attempts','source_attempts'):
@@ -5580,6 +5740,7 @@ def source_health_summary(results):
         'all_index_requests_failed_url_error':all_url_errors,
         'account_only_sources_without_public_status':account_only,
         'source_query_budget_exhausted':budget_exhausted,
+        'source_notice_contract_rejections':contract_rejections,
         'unverified_without_readable_index':unresolved,
         'interpretation':'Public official bulletins only. Reachability, status OK, or absence of notices does not confirm live water service or comprehensive geographic coverage.'
     }
@@ -5589,7 +5750,8 @@ def collect_water(checked_at,fetcher=None):
 
     def safe_one(key, source_fetcher):
         try:
-            return collect_one(key, checked_at, fetcher=source_fetcher)
+            return _safe_source_result(
+                key, collect_one(key, checked_at, fetcher=source_fetcher), checked_at)
         except Exception as exc:
             result = _result(key, checked_at)
             result['message'] = 'Fallo aislado: ' + type(exc).__name__
