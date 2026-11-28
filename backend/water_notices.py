@@ -1,4 +1,4 @@
-"""Conservative public water-service bulletin collectors for Argentina (v5.86).
+"""Conservative public water-service bulletin collectors for Argentina (v5.87).
 
 No report is a live outage confirmation. No credentials, service identifiers or
 unofficial APIs are used. Completely independent of provincial_electricity.
@@ -365,6 +365,42 @@ def _absa_work_duration_estimate(paragraph, stated_start, day):
     }
 
 
+def _absa_same_day_pressure_end_estimate(paragraphs,published):
+    """Record an approximate limit for announced low pressure, not recovery.
+
+    ABSA may say "Esta manana ... se registra baja presion ... hasta
+    aproximadamente las 13:30". The independent publication date anchors
+    "esta manana"; a clock value by itself must never imply a restored
+    water supply, a future outage, or a definite end.
+    """
+    candidates=[]
+    pattern=re.compile(
+        r'\besta manana\b.{0,240}\bse registra baja presion\b'
+        r'.{0,180}\bhasta aproximadamente las\s+'
+        r'(\d{1,2})(?::(\d{2}))?\b')
+    for paragraph in paragraphs:
+        f=folded(paragraph)
+        if re.search(r'\boficina\b|horario de atencion|atencion al publico',f):
+            continue
+        if re.search(r'\bno se registra baja presion\b',f):
+            continue
+        if not re.search(r'\bsuministro de energia electrica\b|'
+                         r'\bperforaciones\b|\bred de agua\b|\bagua potable\b',f):
+            continue
+        for m in pattern.finditer(f):
+            h,minute=int(m[1]),int(m[2] or 0)
+            if h>23 or minute>59:
+                continue
+            candidates.append(datetime(published.year,published.month,published.day,
+                                       h,minute,tzinfo=ART))
+    if len(candidates)!=1:
+        return {}
+    return {
+        'reported_low_pressure_end_estimate':candidates[0].isoformat(timespec='minutes'),
+        'reported_estimate_does_not_confirm_water_recovery':True,
+    }
+
+
 def _absa_shared_street_address(zone):
     """Require the exact three-part street reference for cross-release matching."""
     m=re.search(r'\bcalle\s+([a-z]+(?:\s+[a-z]+){0,3})\s+'
@@ -549,9 +585,10 @@ def _absa_article(html,url,now):
             notices.append(item)
     elif re.search(r'\b(se estan registrando|se registra|afecta el suministro|afectando|falta[s]? de agua|baja presion)\b',f):
         # Recent news is not evidence that the problem remains ongoing.
+        pressure_estimate=_absa_same_day_pressure_end_estimate(article_paragraphs,published)
         notices.append(mk_notice('ABSA','Buenos Aires',locality,url,'water_service_bulletin',
                                   'publication_only_not_live',content,published_on=published.isoformat(),
-                                  scheduled_start=None,scheduled_end=None))
+                                  scheduled_start=None,scheduled_end=None,**pressure_estimate))
     if absa_area_hint:
         for notice in notices:
             notice['area_hint'] = absa_area_hint
@@ -563,6 +600,7 @@ def _collect_absa(checked_at,now,fetch):
     base=_result('absa_buenos_aires',checked_at)
     base['parser_revision']='ABSA-CROSSREF-TIMES-v5.60'
     base['time_metadata_revision']='ABSA-WORK-DURATION-v5.86'
+    base['pressure_metadata_revision']='ABSA-SAME-DAY-PRESSURE-ESTIMATE-v5.87'
     seen=[];newest=None;article_count=0;errors=[]
     try:
         dom,_=page(fetch(url))
@@ -970,6 +1008,73 @@ def _arsa_times_from_dated_paragraphs(paragraphs, published, scheduled):
 
 
 
+def _arsa_reported_two_day_water_windows(paragraphs, published):
+    """Preserve two distinct reported water-impact windows, not a live status.
+
+    A publication dated Thursday can say "hoy de 13:00 a 18:00 y el
+    viernes de 00:00 a 07:00 horas se registrara baja presion". Both
+    clock intervals belong to water distribution work, but neither is
+    evidence that water is *currently* interrupted or restored.
+
+    This deliberately narrow grammar requires the SAME paragraph to link
+    the windows to water-network works and a positive impact statement.
+    "hoy" is anchored to the independently verified publication day and
+    the second named weekday must be the immediately following calendar day.
+    Ambiguous, negated, duplicate, or office-hour ranges are discarded.
+    """
+    pattern = re.compile(
+        r'\bhoy\s+de\s+(\d{1,2})(?::(\d{2}))?\s+a\s+'
+        r'(\d{1,2})(?::(\d{2}))?\s+y\s+el\s+'
+        r'(lunes|martes|miercoles|jueves|viernes|sabado|domingo)\s+de\s+'
+        r'(\d{1,2})(?::(\d{2}))?\s+a\s+'
+        r'(\d{1,2})(?::(\d{2}))?\s*(?:horas|hs\.?)?\s+'
+        r'(?:se\s+registrara|podra\s+registrarse)\s+'
+        r'(?:baja\s+presion|falta\s+de\s+(?:agua|suministro))\s+'
+        r'en\s+(?:el\s+)?(?:servicio|suministro|red)\b'
+    )
+    candidates = []
+    for paragraph in paragraphs:
+        f = folded(paragraph)
+        if re.search(r'\boficina\b|horario de atencion|atencion al publico', f):
+            continue
+        for m in pattern.finditer(f):
+            before = f[:m.start()]
+            if not re.search(r'\bmaniobras\b|\btrabajos\b|\btareas\b', before):
+                continue
+            if not re.search(r'\bred de distribucion\b|\bred de agua\b|'
+                             r'\bservicio de agua\b|\bagua potable\b', before):
+                continue
+            next_day = published + timedelta(days=1)
+            if WEEKDAY[m[5]] != next_day.weekday():
+                continue
+            values = [(m[1], m[2], m[3], m[4]),
+                      (m[6], m[7], m[8], m[9])]
+            windows = []
+            for day, (start_h, start_m, end_h, end_m) in zip((published, next_day),values):
+                sh, sm = int(start_h), int(start_m or 0)
+                eh, em = int(end_h), int(end_m or 0)
+                if sh>23 or eh>23 or sm>59 or em>59:
+                    break
+                a=datetime(day.year,day.month,day.day,sh,sm,tzinfo=ART)
+                b=datetime(day.year,day.month,day.day,eh,em,tzinfo=ART)
+                if not a < b <= a+timedelta(hours=18):
+                    break
+                windows.append({
+                    'start':a.isoformat(timespec='minutes'),
+                    'end':b.isoformat(timespec='minutes'),
+                    'impact':'reported_possible_water_low_pressure_not_live',
+                })
+            if len(windows)==2:
+                candidates.append(windows)
+    if len(candidates)!=1:
+        return None
+    return {
+        'scheduled_start':None, 'scheduled_end':None,
+        'reported_water_impact_windows':candidates[0],
+        'time_precision':'two_published_water_impact_windows_not_live',
+    }
+
+
 def _arsa_reported_same_day_work_window(paragraphs, published):
     """Preserve an explicitly dated work window without implying a live outage.
 
@@ -1255,8 +1360,11 @@ def _arsa_article(html,url,now,index_published=None):
                   **times,**external_power_window)],published
     # Same-day planned work may have explicit clock hours but no numeric day.
     # Preserve them as dated bulletin metadata, NEVER as a live outage status.
-    reported_window = _arsa_reported_same_day_work_window(paragraphs,published)
-    time_fields = (reported_window if reported_window is not None
+    reported_multi_window = _arsa_reported_two_day_water_windows(paragraphs,published)
+    reported_window = (_arsa_reported_same_day_work_window(paragraphs,published)
+                       if reported_multi_window is None else None)
+    time_fields = (reported_multi_window if reported_multi_window is not None
+                   else reported_window if reported_window is not None
                    else _arsa_reported_hours_without_confirmed_day(paragraphs)
                    or {'scheduled_start':None,'scheduled_end':None})
     return [mk_notice('Aguas Rionegrinas','Río Negro',locality,url,
@@ -1274,6 +1382,7 @@ def _collect_arsa(checked_at,now,fetch):
     result=_result('aguas_rionegrinas_arsa',checked_at)
     result['parser_revision']='ARSA-STARTED-WORK-ESTIMATES-v5.70'
     result['time_metadata_revision']='ARSA-ELECTRIC-WINDOW-v5.86'
+    result['multi_window_metadata_revision']='ARSA-TWO-DAY-IMPACT-WINDOWS-v5.87'
     result['rate_limited']=False
     result['article_links_skipped_after_rate_limit']=0
     result['article_links_skipped_old']=0
