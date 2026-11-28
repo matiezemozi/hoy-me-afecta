@@ -1,0 +1,55 @@
+name: Diagnosticar agua HOY ME AFECTA (8 fuentes)
+
+on:
+  workflow_dispatch:
+    inputs:
+      bloque:
+        description: Bloque de fuentes (1 = prioritarias)
+        type: choice
+        options:
+          - '1'
+          - '2'
+          - '3'
+          - '4'
+        default: '1'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hma-water-diagnostic-v589
+  cancel-in-progress: false
+
+jobs:
+  diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Obtener proyecto
+        uses: actions/checkout@v4
+      - name: Preparar Python y dependencias existentes
+        run: |
+          python3 -m venv .venv
+          .venv/bin/python -m pip install -r backend/requirements.txt
+      - name: Verificar codigo existente y diagnostico
+        run: |
+          .venv/bin/python -m py_compile backend/diagnosticar_agua_v589.py
+          .venv/bin/python -m unittest discover -s backend/tests -v
+      - name: Diagnosticar fuentes sin publicar avisos
+        env:
+          BLOQUE: ${{ inputs.bloque }}
+        run: .venv/bin/python backend/diagnosticar_agua_v589.py --batch "$BLOQUE"
+      - name: Mostrar informe JSON para copiar
+        if: always()
+        run: |
+          if [ -f water_diagnostic_v589.json ]; then
+            cat water_diagnostic_v589.json
+          fi
+      - name: Guardar informe de diagnostico
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: diagnostico-agua-v589-bloque-${{ inputs.bloque }}
+          path: water_diagnostic_v589.json
+          if-no-files-found: warn
+          retention-days: 14
