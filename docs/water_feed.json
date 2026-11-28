@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-28T13:23:37Z",
+  "generated_at": "2026-11-28T13:55:35Z",
   "status": "pilot_read_only_in_android",
   "category": "agua",
   "country": "Argentina",
@@ -16,11 +16,28 @@
       "province": "Buenos Aires",
       "country": "Argentina",
       "source_url": "https://www.aguasbonaerenses.com.ar/noticias/",
-      "checked_at": "2026-11-28T13:23:37Z",
+      "checked_at": "2026-11-28T13:55:35Z",
       "coverage_kind": "public_water_bulletins_only",
       "notifications_enabled": false,
       "parser_revision": "ABSA-CROSSREF-TIMES-v5.60",
       "notices": [
+        {
+          "id": "agua-eb45412749c58d8664",
+          "category": "agua",
+          "country": "Argentina",
+          "province": "Buenos Aires",
+          "company": "ABSA",
+          "kind": "water_service_bulletin",
+          "status": "publication_only_not_live",
+          "locality_hint": "Ensenada",
+          "zone_detail": "Se trabaja en la reparación de una cañería de agua en Echeverría esquina Betinoti, en Ensenada. Durante la ejecución de las tareas se afecta con baja presión y posible falta de agua el sector comprendido entre las calles Moreno a 127; y de Avenida Horacio Cestino hasta Garay. Por lo expuesto, se solicita a las personas usuarias utilizar el agua de red disponible únicamente para cubrir las necesidades esenciales hasta la normalización del servicio. Se recuerda que, ante dificultades en el servicio, la empresa cuenta con los siguientes canales de contacto: línea telefónica de Asistencia Técnica 0800-999-2272.",
+          "source_url": "https://www.aguasbonaerenses.com.ar/noticias/5137",
+          "notification_allowed": false,
+          "message": "Comunicado oficial; no acredita el estado del suministro en tiempo real.",
+          "published_on": "2026-11-28",
+          "scheduled_start": null,
+          "scheduled_end": null
+        },
         {
           "id": "agua-9ea4a88af1402c20ea",
           "category": "agua",
@@ -81,7 +98,7 @@
       "article_links_seen": 10,
       "articles_checked": 10,
       "records_checked": 10,
-      "latest_published_date": "2026-11-27"
+      "latest_published_date": "2026-11-28"
     },
     "aguas_del_norte_salta": {
       "status": "ok",
@@ -89,7 +106,7 @@
       "province": "Salta",
       "country": "Argentina",
       "source_url": "https://www.aguasdelnortesalta.com.ar/cortes.php",
-      "checked_at": "2026-11-28T13:23:37Z",
+      "checked_at": "2026-11-28T13:55:35Z",
       "coverage_kind": "public_water_bulletins_only",
       "notifications_enabled": false,
       "parser_revision": "WATER-v5.35",
@@ -104,7 +121,7 @@
       "province": "Mendoza",
       "country": "Argentina",
       "source_url": "https://www.aysam.com.ar/cortes/index.html",
-      "checked_at": "2026-11-28T13:23:37Z",
+      "checked_at": "2026-11-28T13:55:35Z",
       "coverage_kind": "public_water_bulletins_only",
       "notifications_enabled": false,
       "parser_revision": "WATER-v5.35",
@@ -130,7 +147,7 @@
       "province": "Córdoba",
       "country": "Argentina",
       "source_url": "https://www.aguascordobesas.com.ar/CanalSaladePrensa/HomeSalaPrensa/",
-      "checked_at": "2026-11-28T13:23:37Z",
+      "checked_at": "2026-11-28T13:55:35Z",
       "coverage_kind": "official_dated_public_water_bulletins_not_live",
       "notifications_enabled": false,
       "parser_revision": "CBA-ARTICLE-HEADER-PUBLISHED-DATE-v5.78",
@@ -175,7 +192,7 @@
       "province": "Santa Fe",
       "country": "Argentina",
       "source_url": "https://www.aguassantafesinas.com.ar/portal/noticias",
-      "checked_at": "2026-11-28T13:23:37Z",
+      "checked_at": "2026-11-28T13:55:35Z",
       "coverage_kind": "public_water_bulletins_only",
       "notifications_enabled": false,
       "parser_revision": "WATER-v5.35",
@@ -185,96 +202,53 @@
       "account_lookup_required_for_address": true
     },
     "aguas_rionegrinas_arsa": {
-      "status": "ok",
+      "status": "unverified",
       "company": "Aguas Rionegrinas",
       "province": "Río Negro",
       "country": "Argentina",
       "source_url": "https://aguasrionegrinas.com/category/interrupciones/",
-      "checked_at": "2026-11-28T13:23:37Z",
+      "checked_at": "2026-11-28T13:55:35Z",
       "coverage_kind": "public_water_bulletins_only",
       "notifications_enabled": false,
       "parser_revision": "ARSA-STARTED-WORK-ESTIMATES-v5.70",
-      "notices": [
-        {
-          "id": "agua-76eb9a5975620fd8a0",
-          "category": "agua",
-          "country": "Argentina",
-          "province": "Río Negro",
-          "company": "Aguas Rionegrinas",
-          "kind": "water_service_bulletin",
-          "status": "publication_only_not_live",
-          "locality_hint": "General Roca",
-          "zone_detail": "Aguas Rionegrinas informa que, debido a un corte de energía eléctrica realizado por la empresa EDERSA en el sector Roca Rugby, se encuentra afectada la Planta Potabilizadora Stefenelli. Por esta situación, se encuentra interrumpido el servicio de agua potable en la zona baja, desde el sur del Canal Principal y al noreste de la intersección de Gelonch y Maipú. Según informaron, el suministro eléctrico se restablecerá a las 11:30 horas y, paulatinamente, el agua potable irá normalizando su presión. Se prevé que a las 15:30 horas quede normalizada la prestación del servicio en esa zona de General Roca. Por consultas o reclamos, comunicarse vía WhatsApp al 2920 402808 o al 0800 999 24827.",
-          "source_url": "https://aguasrionegrinas.com/general-roca-interrumpido-el-servicio-de-agua-potable-por-un-corte-de-energia-electrica-en-la-planta-stefenelli/",
-          "notification_allowed": false,
-          "message": "Comunicado oficial; no acredita el estado del suministro en tiempo real.",
-          "published_on": "2026-11-28",
-          "scheduled_start": null,
-          "scheduled_end": null
-        },
-        {
-          "id": "agua-e319576419e7fb5b90",
-          "category": "agua",
-          "country": "Argentina",
-          "province": "Río Negro",
-          "company": "Aguas Rionegrinas",
-          "kind": "water_service_bulletin",
-          "status": "publication_only_not_live",
-          "locality_hint": "Bariloche",
-          "zone_detail": "Aguas Rionegrinas informa que se extendieron los trabajos de conexión de un enlace destinado a habilitar un punto de abastecimiento de camiones cisterna en la Delegación Sur de Bariloche. Se estima que las tareas finalizarán alrededor de las 21 horas. Esta infraestructura permitirá disponer de un espacio de carga para los camiones cisterna, que podrán utilizarse ante situaciones de falta de agua, incendios y otras necesidades generales de abastecimiento. Los trabajos afectan el suministro de agua potable en los barrios 28 de Abril, Eva Perón y Arrayanes. Una vez finalizada la intervención, se iniciará la recuperación progresiva del servicio, hasta alcanzar su norm",
-          "source_url": "https://aguasrionegrinas.com/bariloche-aguas-rionegrinas-extiende-hasta-las-21-horas-los-trabajos-para-finalizar-la-conexion-de-un-punto-de-abastecimiento-de-camiones-cisterna/",
-          "notification_allowed": false,
-          "message": "Comunicado oficial; no acredita el estado del suministro en tiempo real.",
-          "published_on": "2026-11-26",
-          "scheduled_start": null,
-          "scheduled_end": null
-        }
-      ],
-      "message": "Comunicados de ARSA fechados; no confirman la situación en tiempo real. Consulta PARCIAL: se pospusieron 2 artículo(s) para reducir el riesgo de HTTP 429.",
+      "notices": [],
+      "message": "No se recuperaron artículos recientes con localidad y afectación verificables. Ni el indice de interrupciones ni la portada ofrecieron enlaces reconocibles. Lectura sin verificar; no significa suministro normal.",
       "time_metadata_revision": "ARSA-ELECTRIC-WINDOW-v5.86",
       "multi_window_metadata_revision": "ARSA-TWO-DAY-IMPACT-WINDOWS-v5.87",
       "rate_limited": false,
       "article_links_skipped_after_rate_limit": 0,
       "article_links_skipped_old": 0,
-      "articles_deferred_by_budget": 2,
+      "articles_deferred_by_budget": 0,
       "max_article_requests_per_run": 2,
       "sampling_strategy": "newest_plus_fresh_hourly_rotating_secondary",
       "sampling_rotation_utc_hour": 498853,
-      "article_links_selected": [
-        "https://aguasrionegrinas.com/general-roca-interrumpido-el-servicio-de-agua-potable-por-un-corte-de-energia-electrica-en-la-planta-stefenelli/",
-        "https://aguasrionegrinas.com/bariloche-aguas-rionegrinas-extiende-hasta-las-21-horas-los-trabajos-para-finalizar-la-conexion-de-un-punto-de-abastecimiento-de-camiones-cisterna/"
-      ],
+      "article_links_selected": [],
       "index_attempts": [
         {
           "url": "https://aguasrionegrinas.com/category/interrupciones/",
-          "result": "article_links_found",
-          "html_anchors_seen": 112,
-          "visible_text_characters": 2992,
-          "html_bytes": 252397
-        }
-      ],
-      "index_mode": "category",
-      "index_warning": null,
-      "article_links_seen": 4,
-      "sampling_secondary_index": 2,
-      "sampling_secondary_pool_size": 3,
-      "sampling_older_secondary_deprioritized": 0,
-      "source_attempts": [
-        {
-          "url": "https://aguasrionegrinas.com/general-roca-interrumpido-el-servicio-de-agua-potable-por-un-corte-de-energia-electrica-en-la-planta-stefenelli/",
-          "result": "parsed",
-          "category_published_on": "2026-11-28"
+          "result": "no_recognizable_links",
+          "html_anchors_seen": 0,
+          "visible_text_characters": 73,
+          "html_bytes": 12862
         },
         {
-          "url": "https://aguasrionegrinas.com/bariloche-aguas-rionegrinas-extiende-hasta-las-21-horas-los-trabajos-para-finalizar-la-conexion-de-un-punto-de-abastecimiento-de-camiones-cisterna/",
-          "result": "parsed",
-          "category_published_on": "2026-11-26"
+          "url": "https://aguasrionegrinas.com/",
+          "result": "no_recognizable_links",
+          "html_anchors_seen": 0,
+          "visible_text_characters": 73,
+          "html_bytes": 12831
         }
       ],
-      "articles_checked": 2,
-      "records_checked": 2,
-      "latest_published_date": "2026-11-28",
-      "article_fetch_completeness": "partial"
+      "index_mode": "homepage_fallback",
+      "index_warning": "Ni el indice de interrupciones ni la portada ofrecieron enlaces reconocibles. Lectura sin verificar; no significa suministro normal.",
+      "article_links_seen": 0,
+      "sampling_secondary_index": null,
+      "sampling_secondary_pool_size": 0,
+      "sampling_older_secondary_deprioritized": 0,
+      "source_attempts": [],
+      "articles_checked": 0,
+      "records_checked": 0,
+      "article_fetch_completeness": "unverified"
     },
     "aguas_catamarca": {
       "status": "unverified",
@@ -282,7 +256,7 @@
       "province": "Catamarca",
       "country": "Argentina",
       "source_url": "https://www.adcsapem.com.ar/?page_id=240",
-      "checked_at": "2026-11-28T13:23:37Z",
+      "checked_at": "2026-11-28T13:55:35Z",
       "coverage_kind": "public_water_bulletins_only",
       "notifications_enabled": false,
       "parser_revision": "CATAMARCA-STATUS-v5.33",
@@ -297,7 +271,7 @@
       "province": "Buenos Aires / CABA",
       "country": "Argentina",
       "source_url": "https://www.aysa.com.ar/usuarios/interrupcion_servicio",
-      "checked_at": "2026-11-28T13:23:37Z",
+      "checked_at": "2026-11-28T13:55:35Z",
       "coverage_kind": "address_account_lookup_only",
       "notifications_enabled": false,
       "parser_revision": "AYSA-ACCOUNT-ONLY-v5.41",
@@ -314,7 +288,7 @@
       "province": "Buenos Aires / CABA",
       "country": "Argentina",
       "source_url": "https://www.aysa.com.ar/usuarios/Novedades",
-      "checked_at": "2026-11-28T13:23:37Z",
+      "checked_at": "2026-11-28T13:55:35Z",
       "coverage_kind": "public_dated_articles_only_not_account_status",
       "notifications_enabled": false,
       "parser_revision": "AYSA-NEWS-v5.42",
@@ -342,7 +316,7 @@
       "province": "Chaco",
       "country": "Argentina",
       "source_url": "https://sameep.gob.ar/noticias/",
-      "checked_at": "2026-11-28T13:23:37Z",
+      "checked_at": "2026-11-28T13:55:35Z",
       "coverage_kind": "dated_official_public_bulletins_only",
       "notifications_enabled": false,
       "parser_revision": "SAMEEP-ARTICLES-v5.41",
@@ -372,7 +346,7 @@
       "province": "Entre Ríos",
       "country": "Argentina",
       "source_url": "https://www.concordia.gob.ar/noticias?area=obras-sanitarias",
-      "checked_at": "2026-11-28T13:23:37Z",
+      "checked_at": "2026-11-28T13:55:35Z",
       "coverage_kind": "dated_municipal_water_bulletins_only",
       "notifications_enabled": false,
       "parser_revision": "EDOS-MUNICIPIO-v5.43",
@@ -401,7 +375,7 @@
       "province": "Buenos Aires",
       "country": "Argentina",
       "source_url": "https://www.osmgp.gov.ar/osse/noticias/",
-      "checked_at": "2026-11-28T13:23:37Z",
+      "checked_at": "2026-11-28T13:55:35Z",
       "coverage_kind": "dated_official_municipal_water_bulletins_only",
       "notifications_enabled": false,
       "parser_revision": "OSSE-RSS-HTML-v5.45",
@@ -434,7 +408,7 @@
       "province": "Misiones",
       "country": "Argentina",
       "source_url": "https://samsa.com.ar/noticias/",
-      "checked_at": "2026-11-28T13:23:37Z",
+      "checked_at": "2026-11-28T13:55:35Z",
       "coverage_kind": "dated_company_bulletins_only",
       "notifications_enabled": false,
       "parser_revision": "SAMSA-INDEX-v5.47",
@@ -452,7 +426,7 @@
       "province": "Jujuy",
       "country": "Argentina",
       "source_url": "https://prensa.jujuy.gob.ar/agua-potable-a48",
-      "checked_at": "2026-11-28T13:23:37Z",
+      "checked_at": "2026-11-28T13:55:35Z",
       "coverage_kind": "dated_official_government_water_bulletins_only",
       "notifications_enabled": false,
       "parser_revision": "JUJUY-PARAGRAPHS-NO-RELATED-NEWS-v5.85",
@@ -513,7 +487,7 @@
       "province": "Chubut",
       "country": "Argentina",
       "source_url": "https://scpl.coop/index.php/site/ver-seccion?id=2",
-      "checked_at": "2026-11-28T13:23:37Z",
+      "checked_at": "2026-11-28T13:55:35Z",
       "coverage_kind": "dated_public_scpl_bulletins_only_not_recurring_schedule",
       "notifications_enabled": false,
       "parser_revision": "SCPL-DATED-SCHEDULES-v5.81",
@@ -541,54 +515,39 @@
       "latest_published_date": "2026-11-27"
     },
     "epas_neuquen_noticias": {
-      "status": "stale",
+      "status": "unverified",
       "company": "EPAS Neuquen",
       "province": "Neuquen",
       "country": "Argentina",
       "source_url": "https://www.epas.gov.ar/comunidad/noticias/",
-      "checked_at": "2026-11-28T13:23:37Z",
+      "checked_at": "2026-11-28T13:55:35Z",
       "coverage_kind": "dated_official_epas_public_news_only",
       "notifications_enabled": false,
       "parser_revision": "EPAS-INDEX-FALLBACK-v5.53",
       "notices": [],
-      "message": "Las publicaciones del listado son antiguas; no equivale a suministro normal.",
-      "article_links_seen": 12,
-      "articles_checked": 5,
-      "articles_skipped_old": 5,
-      "source_attempts": [
-        {
-          "url": "https://www.epas.gov.ar/2026/11/11/el-epas-fortalece-su-capacidad-operativa-con-una-inversion-de-2-156-millones-en-maquinaria/",
-          "result": "old_publication"
-        },
-        {
-          "url": "https://www.epas.gov.ar/2026/10/27/la-provincia-presento-un-plan-de-mas-de-287-000-millones-para-agua-potable-y-saneamiento-en-neuquen-capital/",
-          "result": "old_publication"
-        },
-        {
-          "url": "https://www.epas.gov.ar/2026/10/01/llego-el-equipamiento-para-la-primera-planta-de-pretratamiento-de-efluentes-de-camiones-atmosfericos-de-la-provincia/",
-          "result": "old_publication"
-        },
-        {
-          "url": "https://www.epas.gov.ar/2026/09/30/epas-profundiza-su-campana-de-despapelizacion-con-la-oficina-virtual-y-el-bot-de-whatsapp/",
-          "result": "old_publication"
-        },
-        {
-          "url": "https://www.epas.gov.ar/2026/09/25/epas-profundiza-la-inversion-en-infraestructura-estrategica-para-garantizar-el-agua-potable-en-la-comarca-petrolera/",
-          "result": "old_publication"
-        }
-      ],
+      "message": "Portal accesible sin articulos EPAS reconocibles. No se detectaron enlaces en los dos indices oficiales. No confirma ausencia de avisos.",
+      "article_links_seen": 0,
+      "articles_checked": 0,
+      "articles_skipped_old": 0,
+      "source_attempts": [],
       "index_attempts": [
         {
           "url": "https://www.epas.gov.ar/comunidad/noticias/",
-          "result": "article_links_found",
-          "html_anchors_seen": 78,
-          "visible_text_characters": 4466,
-          "html_bytes": 126098
+          "result": "no_recognizable_links",
+          "html_anchors_seen": 0,
+          "visible_text_characters": 73,
+          "html_bytes": 12115
+        },
+        {
+          "url": "https://www.epas.gov.ar/category/noticias/",
+          "result": "no_recognizable_links",
+          "html_anchors_seen": 0,
+          "visible_text_characters": 73,
+          "html_bytes": 12114
         }
       ],
-      "index_mode": "news_page",
-      "index_warning": null,
-      "latest_published_date": "2026-11-11"
+      "index_mode": "official_category_fallback",
+      "index_warning": "No se detectaron enlaces en los dos indices oficiales. No confirma ausencia de avisos."
     },
     "sat_tucuman_noticias": {
       "status": "unverified",
@@ -596,7 +555,7 @@
       "province": "Tucumán",
       "country": "Argentina",
       "source_url": "https://aguasdeltucuman.com.ar/noticias",
-      "checked_at": "2026-11-28T13:23:37Z",
+      "checked_at": "2026-11-28T13:55:35Z",
       "coverage_kind": "dated_official_company_news_only_not_live_state",
       "notifications_enabled": false,
       "parser_revision": "SAT-ROUTE-DIAGNOSTIC-v5.52",
@@ -632,7 +591,7 @@
       "province": "Santiago del Estero",
       "country": "Argentina",
       "source_url": "https://aguasdesantiago.com.ar/categoria/4/novedades",
-      "checked_at": "2026-11-28T13:23:37Z",
+      "checked_at": "2026-11-28T13:55:35Z",
       "coverage_kind": "dated_official_company_news_only_not_live_state",
       "notifications_enabled": false,
       "parser_revision": "REGIONAL-NEWS-v5.51",
@@ -668,7 +627,7 @@
       "province": "San Luis",
       "country": "Argentina",
       "source_url": "https://sanluislaciudad.gob.ar/feed/",
-      "checked_at": "2026-11-28T13:23:37Z",
+      "checked_at": "2026-11-28T13:55:35Z",
       "coverage_kind": "municipal_official_dated_water_bulletins_not_live",
       "notifications_enabled": false,
       "parser_revision": "MUNICIPAL-RSS-DIAGNOSTIC-v5.58",
@@ -697,7 +656,7 @@
       "province": "La Pampa",
       "country": "Argentina",
       "source_url": "https://www.santarosa.gob.ar/rss.xml",
-      "checked_at": "2026-11-28T13:23:37Z",
+      "checked_at": "2026-11-28T13:55:35Z",
       "coverage_kind": "municipal_official_dated_water_bulletins_not_live",
       "notifications_enabled": false,
       "parser_revision": "MUNICIPAL-RSS-DIAGNOSTIC-v5.58",
@@ -749,7 +708,7 @@
       "province": "Tierra del Fuego",
       "country": "Argentina",
       "source_url": "https://dposs.gob.ar/reparaciones/",
-      "checked_at": "2026-11-28T13:23:37Z",
+      "checked_at": "2026-11-28T13:55:35Z",
       "coverage_kind": "official_dated_public_repair_records_not_live",
       "notifications_enabled": false,
       "parser_revision": "DPOSS-REPAIRS-v5.59",
@@ -775,7 +734,7 @@
       "province": "Corrientes",
       "country": "Argentina",
       "source_url": "https://aosc.gob.ar/noticias",
-      "checked_at": "2026-11-28T13:23:37Z",
+      "checked_at": "2026-11-28T13:55:35Z",
       "coverage_kind": "dated_official_public_news_not_live",
       "notifications_enabled": false,
       "parser_revision": "PUBLIC-OFFICIAL-NEWS-v5.63",
@@ -803,12 +762,12 @@
       "province": "Entre Rios",
       "country": "Argentina",
       "source_url": "https://costa.parana.gob.ar/noticias/",
-      "checked_at": "2026-11-28T13:23:37Z",
+      "checked_at": "2026-11-28T13:55:35Z",
       "coverage_kind": "dated_official_public_news_not_live",
       "notifications_enabled": false,
       "parser_revision": "PUBLIC-OFFICIAL-NEWS-v5.63",
       "notices": [],
-      "message": "Índice oficial consultado sin titulares recientes sobre afectaciones del agua potable; no confirma servicio normal.",
+      "message": "No se pudo verificar el portal oficial: URLError",
       "article_links_seen": 0,
       "articles_checked": 0,
       "source_attempts": [],
@@ -816,21 +775,16 @@
       "index_attempts": [
         {
           "url": "https://costa.parana.gob.ar/noticias/",
-          "result": "no_recent_water_headlines",
-          "html_anchors_seen": 40,
-          "valid_article_links_seen": 15,
-          "relevant_titles_seen": 0,
-          "older_headlines_skipped": 0
+          "result": "fetch_or_parse_error",
+          "error_type": "URLError"
+        },
+        {
+          "url": "https://costa.parana.gob.ar/category/locales/",
+          "result": "fetch_or_parse_error",
+          "error_type": "URLError"
         }
       ],
-      "html_anchors_seen": 40,
-      "valid_article_links_seen": 15,
-      "relevant_titles_seen": 0,
-      "older_headlines_skipped": 0,
-      "future_headlines_skipped": 0,
-      "index_dated_headlines_seen": 0,
-      "index_mode": "current_news_index",
-      "index_status": "no_recent_water_headlines"
+      "index_status": "fetch_or_parse_error"
     },
     "aguas_corrientes_prestador": {
       "status": "unverified",
@@ -838,7 +792,7 @@
       "province": "Corrientes",
       "country": "Argentina",
       "source_url": "https://www.aguasdecorrientes.com/noticias",
-      "checked_at": "2026-11-28T13:23:37Z",
+      "checked_at": "2026-11-28T13:55:35Z",
       "coverage_kind": "dated_official_company_news_not_live",
       "notifications_enabled": false,
       "parser_revision": "ADC-HEADING-PUBLISHED-DATE-v5.67",
@@ -876,7 +830,7 @@
       "province": "San Juan",
       "country": "Argentina",
       "source_url": "https://www.ossesanjuan.com.ar/",
-      "checked_at": "2026-11-28T13:23:37Z",
+      "checked_at": "2026-11-28T13:55:35Z",
       "coverage_kind": "official_public_company_news_not_live",
       "notifications_enabled": false,
       "parser_revision": "OSSE-SANJUAN-PUBLIC-NEWS-v5.68",
@@ -906,7 +860,7 @@
       "province": "Santa Cruz",
       "country": "Argentina",
       "source_url": "https://noticias.santacruz.gob.ar/organismos/entes-publicos/servicios-publicos",
-      "checked_at": "2026-11-28T13:23:37Z",
+      "checked_at": "2026-11-28T13:55:35Z",
       "coverage_kind": "official_dated_provincial_spse_bulletins_not_live",
       "notifications_enabled": false,
       "parser_revision": "SPSE-PROVINCIAL-PRESS-v5.69",
@@ -935,7 +889,7 @@
       "province": "La Rioja",
       "country": "Argentina",
       "source_url": "https://aguayenergia.larioja.gob.ar/",
-      "checked_at": "2026-11-28T13:23:37Z",
+      "checked_at": "2026-11-28T13:55:35Z",
       "coverage_kind": "official_dated_ministry_public_news_not_live",
       "notifications_enabled": false,
       "parser_revision": "LA-RIOJA-OFFICIAL-PUBLIC-NEWS-v5.71",
@@ -963,7 +917,7 @@
       "province": "Chaco",
       "country": "Argentina",
       "source_url": "https://chaco.gob.ar/",
-      "checked_at": "2026-11-28T13:23:37Z",
+      "checked_at": "2026-11-28T13:55:35Z",
       "coverage_kind": "official_dated_public_news_only_not_live",
       "notifications_enabled": false,
       "parser_revision": "THREE-REGIONAL-PUBLIC-NEWS-CHACO-INDEX-v5.73",
@@ -992,7 +946,7 @@
       "province": "Entre Ríos",
       "country": "Argentina",
       "source_url": "https://gualeguaychu.gov.ar/",
-      "checked_at": "2026-11-28T13:23:37Z",
+      "checked_at": "2026-11-28T13:55:35Z",
       "coverage_kind": "official_dated_public_news_only_not_live",
       "notifications_enabled": false,
       "parser_revision": "THREE-REGIONAL-PUBLIC-NEWS-CHACO-INDEX-v5.73",
@@ -1021,7 +975,7 @@
       "province": "La Pampa",
       "country": "Argentina",
       "source_url": "https://www.corpico.com.ar/novedades",
-      "checked_at": "2026-11-28T13:23:37Z",
+      "checked_at": "2026-11-28T13:55:35Z",
       "coverage_kind": "official_dated_public_news_only_not_live",
       "notifications_enabled": false,
       "parser_revision": "THREE-REGIONAL-PUBLIC-NEWS-CHACO-INDEX-v5.73",
@@ -1118,33 +1072,16 @@
       "scheduled_end": null
     },
     {
-      "id": "agua-e319576419e7fb5b90",
+      "id": "agua-eb45412749c58d8664",
       "category": "agua",
       "country": "Argentina",
-      "province": "Río Negro",
-      "company": "Aguas Rionegrinas",
+      "province": "Buenos Aires",
+      "company": "ABSA",
       "kind": "water_service_bulletin",
       "status": "publication_only_not_live",
-      "locality_hint": "Bariloche",
-      "zone_detail": "Aguas Rionegrinas informa que se extendieron los trabajos de conexión de un enlace destinado a habilitar un punto de abastecimiento de camiones cisterna en la Delegación Sur de Bariloche. Se estima que las tareas finalizarán alrededor de las 21 horas. Esta infraestructura permitirá disponer de un espacio de carga para los camiones cisterna, que podrán utilizarse ante situaciones de falta de agua, incendios y otras necesidades generales de abastecimiento. Los trabajos afectan el suministro de agua potable en los barrios 28 de Abril, Eva Perón y Arrayanes. Una vez finalizada la intervención, se iniciará la recuperación progresiva del servicio, hasta alcanzar su norm",
-      "source_url": "https://aguasrionegrinas.com/bariloche-aguas-rionegrinas-extiende-hasta-las-21-horas-los-trabajos-para-finalizar-la-conexion-de-un-punto-de-abastecimiento-de-camiones-cisterna/",
-      "notification_allowed": false,
-      "message": "Comunicado oficial; no acredita el estado del suministro en tiempo real.",
-      "published_on": "2026-11-26",
-      "scheduled_start": null,
-      "scheduled_end": null
-    },
-    {
-      "id": "agua-76eb9a5975620fd8a0",
-      "category": "agua",
-      "country": "Argentina",
-      "province": "Río Negro",
-      "company": "Aguas Rionegrinas",
-      "kind": "water_service_bulletin",
-      "status": "publication_only_not_live",
-      "locality_hint": "General Roca",
-      "zone_detail": "Aguas Rionegrinas informa que, debido a un corte de energía eléctrica realizado por la empresa EDERSA en el sector Roca Rugby, se encuentra afectada la Planta Potabilizadora Stefenelli. Por esta situación, se encuentra interrumpido el servicio de agua potable en la zona baja, desde el sur del Canal Principal y al noreste de la intersección de Gelonch y Maipú. Según informaron, el suministro eléctrico se restablecerá a las 11:30 horas y, paulatinamente, el agua potable irá normalizando su presión. Se prevé que a las 15:30 horas quede normalizada la prestación del servicio en esa zona de General Roca. Por consultas o reclamos, comunicarse vía WhatsApp al 2920 402808 o al 0800 999 24827.",
-      "source_url": "https://aguasrionegrinas.com/general-roca-interrumpido-el-servicio-de-agua-potable-por-un-corte-de-energia-electrica-en-la-planta-stefenelli/",
+      "locality_hint": "Ensenada",
+      "zone_detail": "Se trabaja en la reparación de una cañería de agua en Echeverría esquina Betinoti, en Ensenada. Durante la ejecución de las tareas se afecta con baja presión y posible falta de agua el sector comprendido entre las calles Moreno a 127; y de Avenida Horacio Cestino hasta Garay. Por lo expuesto, se solicita a las personas usuarias utilizar el agua de red disponible únicamente para cubrir las necesidades esenciales hasta la normalización del servicio. Se recuerda que, ante dificultades en el servicio, la empresa cuenta con los siguientes canales de contacto: línea telefónica de Asistencia Técnica 0800-999-2272.",
+      "source_url": "https://www.aguasbonaerenses.com.ar/noticias/5137",
       "notification_allowed": false,
       "message": "Comunicado oficial; no acredita el estado del suministro en tiempo real.",
       "published_on": "2026-11-28",
@@ -1155,16 +1092,15 @@
   "source_health": {
     "configured_sources": 30,
     "status_counts": {
-      "ok": 4,
-      "stale": 6,
-      "unverified": 20
+      "ok": 3,
+      "stale": 5,
+      "unverified": 22
     },
     "sources_with_accepted_bulletins": [
       "absa_buenos_aires",
-      "aguas_rionegrinas_arsa",
       "agua_potable_jujuy_prensa"
     ],
-    "accepted_public_bulletins": 6,
+    "accepted_public_bulletins": 5,
     "readable_sources_without_accepted_bulletins": [
       "aguas_del_norte_salta",
       "aysam_mendoza",
@@ -1176,11 +1112,9 @@
       "osse_mar_del_plata",
       "samsa_misiones",
       "scpl_comodoro_chubut",
-      "epas_neuquen_noticias",
       "aguas_santiago_novedades",
       "san_luis_serba_municipal",
       "dposs_tierra_del_fuego_reparaciones",
-      "parana_radio_municipal_agua",
       "aguas_corrientes_prestador",
       "osse_san_juan_prensa",
       "spse_santa_cruz_prensa",
@@ -1193,16 +1127,22 @@
       "santa_rosa_municipal_lp",
       "aosc_corrientes_regulador"
     ],
-    "all_index_requests_failed_url_error": [],
+    "all_index_requests_failed_url_error": [
+      "parana_radio_municipal_agua"
+    ],
     "account_only_sources_without_public_status": [
       "aysa_amba"
     ],
     "source_query_budget_exhausted": [],
+    "source_notice_contract_rejections": {},
     "unverified_without_readable_index": [
       "aguas_santafesinas",
+      "aguas_rionegrinas_arsa",
+      "epas_neuquen_noticias",
       "sat_tucuman_noticias",
       "santa_rosa_municipal_lp",
-      "aosc_corrientes_regulador"
+      "aosc_corrientes_regulador",
+      "parana_radio_municipal_agua"
     ],
     "interpretation": "Public official bulletins only. Reachability, status OK, or absence of notices does not confirm live water service or comprehensive geographic coverage."
   }
